@@ -20,6 +20,7 @@ find_package(Qt6 REQUIRED COMPONENTS MultimediaWidgets)
 set (${PROJECT_NAME}_SRC
     src/main.cpp
     src/mainwindow.cpp
+    src/gifextractor.cpp
 )
 
 set (${PROJECT_NAME}_UI
@@ -28,6 +29,7 @@ set (${PROJECT_NAME}_UI
 
 set (${PROJECT_NAME}_INCLUDE
     include/mainwindow.h
+    include/gifextractor.h
 )
 
 qt_add_executable(${PROJECT_NAME}
