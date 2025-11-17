@@ -8,6 +8,7 @@
 #include <QMessageBox>
 #include <QGraphicsPixmapItem>
 #include "gifextractor.h"
+#include "spriteextractor.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -52,34 +53,28 @@ void MainWindow::on_actionOpen_triggered()
   QString type = fileName.split(".").last();
   if (type == "gif") {
       GifExtractor extractor;
-      QList<QPixmap> frames = extractor.extractFrames(fileName);
-
-      if (frames.isEmpty()) {
-        } else {
-          auto view = ui->graphicsViewLayers;
-          auto scene = new QGraphicsScene(view);
-          for (int i = 0; i < frames.size(); ++i) {
-              const QPixmap &frame = frames.at(i);
-
-              QGraphicsPixmapItem *item = new QGraphicsPixmapItem(frame);
-              scene->addItem(item);
-              item->setPos(0, i * frame.height());
-            }
-          view->setScene(scene);
-          view->show();
-        }
+      frames = extractor.extractFrames(fileName);
     }
   else if ((type == "png") || (type == "jpg") ||  (type == "bmp") || (type == "gif")) {
-      auto view = ui->graphicsViewLayers;
-      auto scene = new QGraphicsScene(view);
-      view->setScene(scene);
-      QPixmap pixmap(fileName);
-      scene->addPixmap(pixmap);
-      view->show();
+      SpriteExtractor extractor;
+      frames = extractor.extractFrames(fileName);
     } else if (type == "json") {
 
     } else {
       throw;
+    }
+  if (!frames.isEmpty()) {
+      auto view = ui->graphicsViewLayers;
+      auto scene = new QGraphicsScene(view);
+      for (int i = 0; i < frames.size(); ++i) {
+          const QPixmap &frame = frames.at(i);
+
+          QGraphicsPixmapItem *item = new QGraphicsPixmapItem(frame);
+          scene->addItem(item);
+          item->setPos(0, i * frame.height());
+        }
+      view->setScene(scene);
+      view->show();
     }
 }
 

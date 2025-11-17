@@ -25,6 +25,7 @@ QList<QPixmap> GifExtractor::extractFrames(const QString &filePath)
       return m_frames;
     }
 
+  // TODO: dispatch images on a single pixmap and fill the ist with coordinates only
   movie.setCacheMode(QMovie::CacheAll);
   QObject::connect(&movie, &QMovie::frameChanged, [this, &movie]() {
     this->addFrame(movie.currentImage());

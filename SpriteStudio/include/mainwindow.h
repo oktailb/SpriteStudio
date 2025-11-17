@@ -39,6 +39,7 @@ private:
     // UI related
     int                                 timerId;
     bool                                ready;
+    QList<QPixmap>                      frames;
 
 };
 #endif // MAINWINDOW_H
