@@ -49,7 +49,13 @@ qt6_add_resources(${PROJECT_NAME} "images"
     stop.png
     plus.png
     minus.png
+)
+
+qt6_add_resources(${PROJECT_NAME} "text"
+    PREFIX "text"
+    FILES
     license.txt
+    about.txt
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES

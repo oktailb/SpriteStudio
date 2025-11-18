@@ -5,6 +5,8 @@
 #include <stdfloat>
 #include <netinet/in.h>
 #include <QtGui>
+#include <QDialog>
+#include <QTextEdit>
 #include <QMessageBox>
 #include <QGraphicsPixmapItem>
 #include "gifextractor.h"
@@ -37,14 +39,51 @@ void MainWindow::timerEvent(QTimerEvent *event)
   Q_UNUSED(event);
 }
 
+QString readTextFile(const QString &filePath)
+{
+  QFile file(filePath);
+
+  if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+      qWarning() << "Impossible d'ouvrir le fichier de ressource de licence:" << filePath;
+      return QString("Erreur: Fichier de licence non trouvé dans les ressources: ") + filePath;
+    }
+
+  QTextStream in(&file);
+  return in.readAll();
+}
+
 void MainWindow::on_actionLicence_triggered()
 {
-
+  QString licenseText = readTextFile(":/text/license.txt");
+  QDialog dialog;
+  dialog.setWindowTitle("Licence");
+  dialog.setMinimumSize(600, 400);
+  QTextEdit *textEdit = new QTextEdit(&dialog);
+  textEdit->setPlainText(licenseText);
+  textEdit->setReadOnly(true);
+  QPushButton *closeButton = new QPushButton("Close", &dialog);
+  QObject::connect(closeButton, &QPushButton::clicked, &dialog, &QDialog::accept);
+  QVBoxLayout *layout = new QVBoxLayout(&dialog);
+  layout->addWidget(textEdit);
+  layout->addWidget(closeButton);
+  dialog.exec();
 }
 
 void MainWindow::on_actionAbout_triggered()
 {
-
+  QString aboutText = readTextFile(":/text/about.txt");
+  QDialog dialog;
+  dialog.setWindowTitle("About");
+  dialog.setMinimumSize(600, 400);
+  QTextEdit *textEdit = new QTextEdit(&dialog);
+  textEdit->setPlainText(aboutText);
+  textEdit->setReadOnly(true);
+  QPushButton *closeButton = new QPushButton("Close", &dialog);
+  QObject::connect(closeButton, &QPushButton::clicked, &dialog, &QDialog::accept);
+  QVBoxLayout *layout = new QVBoxLayout(&dialog);
+  layout->addWidget(textEdit);
+  layout->addWidget(closeButton);
+  dialog.exec();
 }
 
 void MainWindow::on_actionOpen_triggered()
