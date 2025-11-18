@@ -6,7 +6,9 @@
 #include <QList>
 #include <QString>
 
-class GifExtractor : public QObject
+#include "extractor.h"
+
+class GifExtractor : public Extractor
 {
   Q_OBJECT
 public:
@@ -14,14 +16,6 @@ public:
 
   QList<QPixmap> extractFrames(const QString &filePath);
 
-private:
-  void addFrame(const QImage &image);
-
-signals:
-  void extractionFinished(int frameCount);
-
-private:
-  QList<QPixmap> m_frames;
 };
 
 #endif // GIFEXTRACTOR_H

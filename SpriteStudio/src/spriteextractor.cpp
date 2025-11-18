@@ -3,15 +3,8 @@
 #include <QDebug>
 #include <QApplication>
 
-SpriteExtractor::SpriteExtractor(QObject *parent) : QObject(parent)
+SpriteExtractor::SpriteExtractor(QObject *parent) : Extractor(parent)
 {
-}
-
-void SpriteExtractor::addFrame(const QPixmap &pixmap)
-{
-  if (!pixmap.isNull()) {
-      m_frames.append(pixmap);
-    }
 }
 
 QList<QPixmap> SpriteExtractor::extractFrames(const QString &filePath)

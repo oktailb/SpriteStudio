@@ -30,6 +30,7 @@ set (${PROJECT_NAME}_UI
 
 set (${PROJECT_NAME}_INCLUDE
     include/mainwindow.h
+    include/extractor.h
     include/gifextractor.h
     include/spriteextractor.h
 )

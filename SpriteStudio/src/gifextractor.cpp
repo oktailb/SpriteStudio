@@ -3,15 +3,8 @@
 #include <QDebug>
 #include <QApplication>
 
-GifExtractor::GifExtractor(QObject *parent) : QObject(parent)
+GifExtractor::GifExtractor(QObject *parent) : Extractor(parent)
 {
-}
-
-void GifExtractor::addFrame(const QImage &image)
-{
-  if (!image.isNull()) {
-      m_frames.append(QPixmap::fromImage(image));
-    }
 }
 
 QList<QPixmap> GifExtractor::extractFrames(const QString &filePath)
@@ -28,7 +21,7 @@ QList<QPixmap> GifExtractor::extractFrames(const QString &filePath)
   // TODO: dispatch images on a single pixmap and fill the ist with coordinates only
   movie.setCacheMode(QMovie::CacheAll);
   QObject::connect(&movie, &QMovie::frameChanged, [this, &movie]() {
-    this->addFrame(movie.currentImage());
+    this->addFrame(QPixmap::fromImage(movie.currentImage()));
   });
   movie.start();
   while (movie.state() == QMovie::Running) {
