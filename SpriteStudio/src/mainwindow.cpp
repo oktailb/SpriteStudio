@@ -24,6 +24,7 @@ MainWindow::MainWindow(QWidget *parent)
     ready = true;
     ui->framesList->setModel(frameModel);
     ui->framesList->setViewMode(QListView::IconMode);
+    ui->timingLabel->setText(" -> Timing " + QString::number(1000.0  / (double)ui->fps->value(), 'g', 4) + "ms");
 }
 
 void MainWindow::populateFrameList(const QList<QPixmap> &frameList, const QList<Extractor::Box> &boxList)
@@ -158,3 +159,7 @@ void MainWindow::on_actionExit_triggered()
     exit(EXIT_SUCCESS);
 }
 
+void MainWindow::on_fps_valueChanged(int fps)
+{
+    ui->timingLabel->setText(" -> Timing " + QString::number(1000.0  / (double)fps, 'g', 4) + "ms");
+}

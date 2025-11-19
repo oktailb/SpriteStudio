@@ -173,6 +173,27 @@
        </widget>
       </item>
       <item>
+       <widget class="QLabel" name="fpsLabel">
+        <property name="text">
+         <string>FPS</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QSpinBox" name="fps">
+        <property name="value">
+         <number>60</number>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="timingLabel">
+        <property name="text">
+         <string>Timing: </string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <spacer name="spacer">
         <property name="orientation">
          <enum>Qt::Orientation::Horizontal</enum>

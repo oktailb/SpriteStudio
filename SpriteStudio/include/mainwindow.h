@@ -34,6 +34,8 @@ private slots:
 
     void on_actionExit_triggered();
 
+    void on_fps_valueChanged(int arg1);
+
 private:
     Ui::MainWindow *ui;
     ArrangementModel                    *frameModel;
