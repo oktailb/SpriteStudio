@@ -4,8 +4,8 @@
 #include <QApplication>
 #include <QPainter>
 #include <cmath>
-#include <algorithm>
 #include <QImage>
+#include <QCoreApplication>
 
 GifExtractor::GifExtractor(QObject *parent) : Extractor(parent)
 {
@@ -22,13 +22,13 @@ QList<QPixmap> GifExtractor::extractFrames(const QString &filePath)
   QMovie movie(filePath);
 
   if (!movie.isValid()) {
-      qWarning() << "Erreur: Le fichier n'est pas un GIF valide ou n'existe pas:" << filePath;
+      qWarning() << tr("Erreur: Le fichier n'est pas un GIF valide ou n'existe pas:") << filePath;
       return m_frames;
     }
 
   int nb_frames = movie.frameCount();
   if (nb_frames <= 0) {
-      qWarning() << "Erreur: Le GIF ne contient aucune frame.";
+      qWarning() << tr("Erreur: Le GIF ne contient aucune frame.");
       return m_frames;
     }
 

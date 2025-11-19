@@ -16,6 +16,14 @@ find_package(Qt6 REQUIRED COMPONENTS Gui)
 find_package(Qt6 REQUIRED COMPONENTS Widgets)
 find_package(Qt6 REQUIRED COMPONENTS Multimedia)
 find_package(Qt6 REQUIRED COMPONENTS MultimediaWidgets)
+find_package(Qt6 REQUIRED COMPONENTS LinguistTools REQUIRED)
+
+# 1. Spécifiez les langues à supporter (code ISO 639-1 ou code Qt)
+set(${PROJECT_NAME}_TS_FILES
+    i18n/sprite_studio_fr.ts # Français
+    i18n/sprite_studio_en.ts # English
+    i18n/sprite_studio_ja.ts # Japanese
+)
 
 set (${PROJECT_NAME}_SRC
     src/main.cpp
@@ -37,11 +45,21 @@ set (${PROJECT_NAME}_INCLUDE
     include/arrangementmodel.h
 )
 
+qt_add_translations(${PROJECT_NAME}
+    SOURCES
+        ${${PROJECT_NAME}_SRC}
+        ${${PROJECT_NAME}_INCLUDE}
+    TS_FILES
+        ${${PROJECT_NAME}_TS_FILES}
+)
+
 qt_add_executable(${PROJECT_NAME}
     ${${PROJECT_NAME}_SRC}
     ${${PROJECT_NAME}_UI}
     ${${PROJECT_NAME}_INCLUDE}
 )
+
+add_custom_target(translations ALL DEPENDS ${TS_FILES})
 
 qt6_add_resources(${PROJECT_NAME} "images"
     PREFIX "drawer"
