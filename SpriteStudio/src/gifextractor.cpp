@@ -2,6 +2,10 @@
 #include <QMovie>
 #include <QDebug>
 #include <QApplication>
+#include <QPainter>
+#include <cmath>
+#include <algorithm>
+#include <QImage>
 
 GifExtractor::GifExtractor(QObject *parent) : Extractor(parent)
 {
@@ -9,58 +13,88 @@ GifExtractor::GifExtractor(QObject *parent) : Extractor(parent)
 
 QList<QPixmap> GifExtractor::extractFrames(const QString &filePath)
 {
-    m_frames.clear();
-    m_atlas_index.clear();
+  QList<QImage> extractedImages;
 
-    QMovie movie(filePath);
+  m_frames.clear();
+  m_atlas_index.clear();
+  m_atlas = QPixmap();
 
-    if (!movie.isValid()) {
-        qWarning() << "Erreur: Le fichier n'est pas un GIF valide ou n'existe pas:" << filePath;
-        return m_frames;
+  QMovie movie(filePath);
+
+  if (!movie.isValid()) {
+      qWarning() << "Erreur: Le fichier n'est pas un GIF valide ou n'existe pas:" << filePath;
+      return m_frames;
     }
 
-    movie.setCacheMode(QMovie::CacheAll);
-    if (!movie.jumpToNextFrame()) {
-        qWarning() << "Erreur lors du saut à la première frame du GIF.";
-        return m_frames;
+  int nb_frames = movie.frameCount();
+  if (nb_frames <= 0) {
+      qWarning() << "Erreur: Le GIF ne contient aucune frame.";
+      return m_frames;
     }
-    auto nb_frames = movie.frameCount();
-    int w = movie.frameRect().width();
-    int h = movie.frameRect().height();
-    int nb_cols = floor(sqrt(nb_frames));
-    int nb_lines = floor(nb_frames / nb_cols);
-    int carry = nb_frames % nb_cols;
-    nb_lines += carry;
-    m_atlas = QPixmap(w * nb_cols, h * nb_lines);
 
-    QPainter painter(&m_atlas);
-    int counter = 0;
-    movie.start();
+  movie.setCacheMode(QMovie::CacheAll);
 
-    for (int i = 0; i < nb_frames; ++i) {
-        if (!movie.jumpToFrame(i)) {
-            qWarning() << "Erreur lors du saut à la frame : " << i;
-            break;
+  QObject::connect(&movie, &QMovie::frameChanged,
+                    [&movie, &extractedImages, this](int frameNumber)
+                    {
+                      QImage currentImage = movie.currentImage();
+                      if (currentImage.isNull())
+                        return;
+                      extractedImages.append(currentImage);
+                      this->addFrame(QPixmap::fromImage(currentImage));
+                      qDebug() << "Frame extraite (QImage) :" << frameNumber;
+                    });
+
+  movie.start();
+  movie.jumpToFrame(0);
+
+  while (movie.state() == QMovie::Running) {
+      QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+
+      if (extractedImages.size() >= nb_frames) {
+          movie.stop();
+          break;
         }
-
-        if (movie.state() != QMovie::Running) {
-            movie.start();
-        }
-
-        QPixmap current = QPixmap::fromImage(movie.currentImage());
-        this->addFrame(current);
-
-        int line = floor(counter / nb_cols);
-        int col = counter % nb_cols;
-
-        painter.drawPixmap(col * w, line * h, current);
-        m_atlas_index.push_back({col * w, line * h, w, h});
-
-        counter++;
     }
-    movie.stop();
-    painter.end();
 
-    emit extractionFinished(m_frames.size());
-    return m_frames;
+  if (extractedImages.isEmpty()) {
+      qWarning() << "Extraction des frames échouée.";
+      return m_frames;
+    }
+
+  int w = movie.frameRect().width();
+  int h = movie.frameRect().height();
+  nb_frames = extractedImages.size();
+
+  int nb_cols = (int)std::floor(std::sqrt(nb_frames));
+  if (nb_cols == 0) nb_cols = 1;
+  int nb_lines = (int)std::ceil((double)nb_frames / nb_cols);
+
+  QImage atlasImage(w * nb_cols, h * nb_lines, QImage::Format_ARGB32_Premultiplied);
+  atlasImage.fill(Qt::transparent);
+
+  QPainter painter(&atlasImage);
+
+  if (!painter.isActive()) {
+      qWarning() << "Échec critique: QPainter ne peut pas démarrer même en contexte synchrone.";
+      return m_frames;
+    }
+
+  for (int i = 0; i < nb_frames; ++i) {
+      const QImage &currentImage = extractedImages.at(i);
+
+      int line = i / nb_cols;
+      int col = i % nb_cols;
+      int x = col * w;
+      int y = line * h;
+      painter.drawImage(x, y, currentImage);
+      m_atlas_index.push_back({x, y, w, h});
+    }
+
+  m_atlas = QPixmap::fromImage(atlasImage);
+
+  qDebug() << "Extraction et Assemblage de l'Atlas terminés. Frames extraites:" << m_atlas_index.size();
+  emit extractionFinished(m_frames.size());
+
+  return m_frames;
 }
