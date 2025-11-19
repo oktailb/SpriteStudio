@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <qstandarditemmodel.h>
 #include "extractor.h"
+#include "arrangementmodel.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -35,7 +36,8 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-
+    ArrangementModel                    *frameModel;
+    QList<Extractor::Box>               frameBoxes;
     double                              timestamp;
 
     // UI related
@@ -43,8 +45,6 @@ private:
     bool                                ready;
     QList<QPixmap>                      frames;
     QPixmap                             frame;
-    QStandardItemModel                  *frameModel;
-    QList<Extractor::Box>               frameBoxes;
 
     void populateFrameList(const QList<QPixmap> &frameList, const QList<Extractor::Box> &boxList);
 };

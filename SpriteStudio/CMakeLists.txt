@@ -22,6 +22,7 @@ set (${PROJECT_NAME}_SRC
     src/mainwindow.cpp
     src/gifextractor.cpp
     src/spriteextractor.cpp
+    src/arrangementmodel.cpp
 )
 
 set (${PROJECT_NAME}_UI
@@ -33,6 +34,7 @@ set (${PROJECT_NAME}_INCLUDE
     include/extractor.h
     include/gifextractor.h
     include/spriteextractor.h
+    include/arrangementmodel.h
 )
 
 qt_add_executable(${PROJECT_NAME}

@@ -15,9 +15,9 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
+    , frameModel(new ArrangementModel(this))
     , timerId(0)
     , ready(false)
-    , frameModel(new QStandardItemModel(this))
 {
     ui->setupUi(this);
     timerId = startTimer(100);

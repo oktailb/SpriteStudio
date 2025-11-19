@@ -72,7 +72,7 @@
        <number>0</number>
       </property>
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout_3" stretch="5,0,1">
+       <layout class="QVBoxLayout" name="verticalLayout_3" stretch="4,0,1">
         <item>
          <widget class="QGraphicsView" name="graphicsViewLayers"/>
         </item>
@@ -85,6 +85,24 @@
         </item>
         <item>
          <widget class="QListView" name="framesList">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>96</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>96</height>
+           </size>
+          </property>
+          <property name="baseSize">
+           <size>
+            <width>0</width>
+            <height>96</height>
+           </size>
+          </property>
           <property name="acceptDrops">
            <bool>true</bool>
           </property>
@@ -103,8 +121,14 @@
           <property name="flow">
            <enum>QListView::Flow::LeftToRight</enum>
           </property>
+          <property name="resizeMode">
+           <enum>QListView::ResizeMode::Adjust</enum>
+          </property>
           <property name="spacing">
            <number>6</number>
+          </property>
+          <property name="uniformItemSizes">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
