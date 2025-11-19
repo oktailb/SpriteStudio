@@ -2,6 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <qstandarditemmodel.h>
+#include "extractor.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -40,6 +42,10 @@ private:
     int                                 timerId;
     bool                                ready;
     QList<QPixmap>                      frames;
+    QPixmap                             frame;
+    QStandardItemModel                  *frameModel;
+    QList<Extractor::Box>               frameBoxes;
 
+    void populateFrameList(const QList<QPixmap> &frameList, const QList<Extractor::Box> &boxList);
 };
 #endif // MAINWINDOW_H

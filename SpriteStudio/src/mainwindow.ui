@@ -72,7 +72,43 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="QGraphicsView" name="graphicsViewLayers"/>
+       <layout class="QVBoxLayout" name="verticalLayout_3" stretch="5,0,1">
+        <item>
+         <widget class="QGraphicsView" name="graphicsViewLayers"/>
+        </item>
+        <item>
+         <widget class="Line" name="line_2">
+          <property name="orientation">
+           <enum>Qt::Orientation::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QListView" name="framesList">
+          <property name="acceptDrops">
+           <bool>true</bool>
+          </property>
+          <property name="dragEnabled">
+           <bool>true</bool>
+          </property>
+          <property name="dragDropMode">
+           <enum>QAbstractItemView::DragDropMode::InternalMove</enum>
+          </property>
+          <property name="defaultDropAction">
+           <enum>Qt::DropAction::MoveAction</enum>
+          </property>
+          <property name="movement">
+           <enum>QListView::Movement::Free</enum>
+          </property>
+          <property name="flow">
+           <enum>QListView::Flow::LeftToRight</enum>
+          </property>
+          <property name="spacing">
+           <number>6</number>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item>
        <widget class="Line" name="line">
@@ -202,7 +238,7 @@
      <x>0</x>
      <y>0</y>
      <width>1397</width>
-     <height>21</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

@@ -5,6 +5,7 @@
 #include <QPixmap>
 #include <QList>
 #include <QString>
+#include <qpainter.h>
 
 class Extractor : public QObject
 {
@@ -22,8 +23,16 @@ public:
             m_frames.append(pixmap);
         }
     }
+    struct Box {
+        int x;
+        int y;
+        int w;
+        int h;
+    };
 
     QList<QPixmap> m_frames;
+    QPixmap m_atlas;
+    QList<Box> m_atlas_index;
 
 signals:
     void extractionFinished(int frameCount);
