@@ -111,6 +111,12 @@ private slots:
 
     void onMergeFrames(int sourceRow, int targetRow);
 
+    void on_framesList_customContextMenuRequested(const QPoint &pos);
+
+    void deleteSelectedFrame();
+
+    void invertSelection();
+
 private:
     Ui::MainWindow *ui;
     ArrangementModel                    *frameModel;
@@ -132,5 +138,6 @@ private:
     void setupGraphicsView(const QPixmap &pixmap);
     void setMergeHighlight(const QModelIndex &index, bool show);
     void clearMergeHighlight();
+    void deleteFrame(int row);
 };
 #endif // MAINWINDOW_H
