@@ -31,6 +31,64 @@ MainWindow::MainWindow(QWidget *parent)
     ui->timingLabel->setText(" -> Timing " + QString::number(1000.0  / (double)ui->fps->value(), 'g', 4) + "ms");
     QObject::connect(ui->framesList, &QListView::clicked,
                      this, &MainWindow::on_framesList_clicked);
+    QObject::connect(frameModel, &ArrangementModel::mergeRequested,
+                     this, &MainWindow::onMergeFrames);
+}
+
+void MainWindow::onMergeFrames(int sourceRow, int targetRow)
+{
+    if (sourceRow < 0 || sourceRow >= frameBoxes.size() ||
+        targetRow < 0 || targetRow >= frameBoxes.size()) {
+        return;
+    }
+
+    // 1. Calcul et Fusion (Identique à avant)
+    Extractor::Box srcBox = frameBoxes[sourceRow];
+    Extractor::Box tgtBox = frameBoxes[targetRow];
+
+    QRect srcRect(srcBox.x, srcBox.y, srcBox.w, srcBox.h);
+    QRect tgtRect(tgtBox.x, tgtBox.y, tgtBox.w, tgtBox.h);
+    QRect unitedRect = srcRect.united(tgtRect);
+
+    QPixmap mergedPixmap = this->frame.copy(unitedRect);
+
+    // 2. Mise à jour des données internes de la CIBLE
+    Extractor::Box newBox;
+    newBox.x = unitedRect.x();
+    newBox.y = unitedRect.y();
+    newBox.w = unitedRect.width();
+    newBox.h = unitedRect.height();
+
+    frameBoxes[targetRow] = newBox;
+    frames[targetRow] = mergedPixmap;
+
+    // 3. Mise à jour VISUELLE de la CIBLE uniquement
+    QStandardItem *targetItem = frameModel->item(targetRow);
+    if (targetItem) {
+        QPixmap thumbnail = mergedPixmap.scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        targetItem->setData(thumbnail, Qt::DecorationRole);
+        // Mise à jour du texte pour refléter les nouvelles coordonnées
+        targetItem->setData(QString("Merged\n[%1,%2](%3x%4)")
+                                .arg(newBox.x).arg(newBox.y).arg(newBox.w).arg(newBox.h),
+                            Qt::DisplayRole);
+    }
+
+    // 4. SUPPRESSION DE LA SOURCE
+    // ATTENTION : On supprime uniquement des listes de données internes !
+    // On ne touche PAS au frameModel->removeRow(sourceRow) ici.
+    // Le mode InternalMove de la QListView le fera automatiquement au retour du drop.
+
+    frameBoxes.removeAt(sourceRow);
+    frames.removeAt(sourceRow);
+
+    // Nettoyage de la vue graphique
+    if (boundingBoxHighlighter) {
+        ui->graphicsViewLayers->scene()->removeItem(boundingBoxHighlighter);
+        delete boundingBoxHighlighter;
+        boundingBoxHighlighter = nullptr;
+    }
+
+    qDebug() << "Fusion terminée. Model laissé au soin de Qt InternalMove.";
 }
 
 void MainWindow::populateFrameList(const QList<QPixmap> &frameList, const QList<Extractor::Box> &boxList)

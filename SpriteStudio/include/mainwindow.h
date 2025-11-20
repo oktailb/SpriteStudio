@@ -43,6 +43,8 @@ private slots:
 
     void on_framesList_clicked(const QModelIndex &index);
 
+    void onMergeFrames(int sourceRow, int targetRow);
+
 private:
     Ui::MainWindow *ui;
     ArrangementModel                    *frameModel;

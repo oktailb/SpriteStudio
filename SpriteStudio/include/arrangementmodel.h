@@ -12,10 +12,19 @@ class ArrangementModel : public QStandardItemModel
 public:
     explicit ArrangementModel(QObject *parent = nullptr);
 
-    bool moveRows(const QModelIndex &sourceParent, int sourceRow, int count,
-                  const QModelIndex &destinationParent, int destinationChild) override;
+    // Configuration des flags pour autoriser le drop SUR un item
+    Qt::ItemFlags flags(const QModelIndex &index) const override;
+
+    // Pour transporter simplement le numéro de ligne source
+    QMimeData *mimeData(const QModelIndexList &indexes) const override;
+
+    // Gestion du lâcher (Drop)
     bool dropMimeData(const QMimeData *data, Qt::DropAction action,
                       int row, int column, const QModelIndex &parent) override;
+
+signals:
+    // Signal émis quand une fusion est demandée
+    void mergeRequested(int sourceRow, int targetRow);
 };
 
 #endif // ARRANGEMENTMODEL_H
