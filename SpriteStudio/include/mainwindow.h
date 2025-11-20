@@ -117,6 +117,8 @@ private slots:
 
     void invertSelection();
 
+    void updateAnimation();
+
 private:
     Ui::MainWindow *ui;
     ArrangementModel                    *frameModel;
@@ -132,6 +134,11 @@ private:
     QGraphicsRectItem                   *boundingBoxHighlighter= nullptr;
     QGraphicsRectItem                   *mergeHighlighter = nullptr;
     FrameDelegate                       *listDelegate;
+    QTimer                              *animationTimer;
+    int                                 currentAnimationFrameIndex;
+    QList<int>                          selectedFrameRows;
+    int                                 maxFrameWidth = 0;
+    int                                 maxFrameHeight = 0;
 
     void populateFrameList(const QList<QPixmap> &frameList, const QList<Extractor::Box> &boxList);
     void processFile(const QString &fileName);
@@ -139,5 +146,7 @@ private:
     void setMergeHighlight(const QModelIndex &index, bool show);
     void clearMergeHighlight();
     void deleteFrame(int row);
+    void startAnimation();
+    void stopAnimation();
 };
 #endif // MAINWINDOW_H

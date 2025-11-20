@@ -22,6 +22,8 @@ MainWindow::MainWindow(QWidget *parent)
       , timerId(0)
       , ready(false)
       , boundingBoxHighlighter(nullptr)
+      , animationTimer(new QTimer(this))
+      , currentAnimationFrameIndex(0)
 {
   ui->setupUi(this);
   setAcceptDrops(true);
@@ -30,6 +32,8 @@ MainWindow::MainWindow(QWidget *parent)
   ui->framesList->setModel(frameModel);
   ui->framesList->setViewMode(QListView::IconMode);
   ui->framesList->setSelectionMode(QAbstractItemView::ExtendedSelection);
+  QObject::connect(ui->framesList->selectionModel(), &QItemSelectionModel::selectionChanged,
+                    this, &MainWindow::startAnimation);
   ui->timingLabel->setText(" -> Timing " + QString::number(1000.0  / (double)ui->fps->value(), 'g', 4) + "ms");
   QObject::connect(ui->framesList, &QListView::clicked,
                     this, &MainWindow::on_framesList_clicked);
@@ -41,6 +45,79 @@ MainWindow::MainWindow(QWidget *parent)
   ui->framesList->setContextMenuPolicy(Qt::CustomContextMenu);
   QObject::connect(ui->framesList, &QListView::customContextMenuRequested,
                     this, &MainWindow::on_framesList_customContextMenuRequested);
+  QObject::connect(animationTimer, &QTimer::timeout,
+                    this, &MainWindow::updateAnimation);
+  QObject::connect(ui->fps, QOverload<int>::of(&QSpinBox::valueChanged),
+                    this, &MainWindow::startAnimation);
+  ui->graphicsViewResult->setScene(new QGraphicsScene(this));
+  startAnimation();
+}
+
+void MainWindow::startAnimation()
+{
+  if (animationTimer->isActive()) {
+      animationTimer->stop();
+    }
+
+  selectedFrameRows.clear();
+  QModelIndexList selected = ui->framesList->selectionModel()->selectedIndexes();
+
+  for (const QModelIndex &index : selected) {
+      selectedFrameRows.append(index.row());
+    }
+
+  if (selectedFrameRows.isEmpty()) {
+      stopAnimation();
+      return;
+    }
+
+  int fpsValue = ui->fps->value();
+  int intervalMs = (fpsValue > 0) ? (1000 / fpsValue) : 100;
+
+  currentAnimationFrameIndex = 0;
+
+  animationTimer->start(intervalMs);
+}
+
+void MainWindow::stopAnimation()
+{
+  animationTimer->stop();
+  currentAnimationFrameIndex = 0;
+}
+
+void MainWindow::updateAnimation()
+{
+  if (selectedFrameRows.isEmpty() || frames.isEmpty()) {
+      stopAnimation();
+      return;
+    }
+
+  int frameListIndex = selectedFrameRows.at(currentAnimationFrameIndex);
+
+  if (frameListIndex < 0 || frameListIndex >= frames.size()) {
+      qWarning() << "Erreur: Index de frame invalide pour l'animation.";
+      stopAnimation();
+      return;
+    }
+
+  const QPixmap &currentFrame = frames.at(frameListIndex);
+
+  QGraphicsScene *scene = ui->graphicsViewResult->scene();
+  scene->clear();
+
+  scene->setSceneRect(0, 0, maxFrameWidth, maxFrameHeight);
+
+  QGraphicsPixmapItem *item =scene->addPixmap(currentFrame);
+
+  // Calculer le décalage pour centrer l'image dans la zone de la scène
+  qreal x_offset = (maxFrameWidth - currentFrame.width()) / 2.0;
+  qreal y_offset = (maxFrameHeight - currentFrame.height()) / 2.0;
+  item->setPos(x_offset, y_offset); // Centrer la frame plus petite
+
+  currentAnimationFrameIndex++;
+  if (currentAnimationFrameIndex >= selectedFrameRows.size()) {
+      currentAnimationFrameIndex = 0; // Boucler
+    }
 }
 
 void MainWindow::on_framesList_customContextMenuRequested(const QPoint &pos)
@@ -333,6 +410,21 @@ void MainWindow::populateFrameList(const QList<QPixmap> &frameList, const QList<
       item->setFlags(item->flags() | Qt::ItemIsEditable);
       frameModel->appendRow(item);
       frameBoxes.append(box);
+    }
+  maxFrameWidth = 0;
+  maxFrameHeight = 0;
+  for (const QPixmap &pixmap : frameList) {
+      if (pixmap.width() > maxFrameWidth) {
+          maxFrameWidth = pixmap.width();
+        }
+      if (pixmap.height() > maxFrameHeight) {
+          maxFrameHeight = pixmap.height();
+        }
+    }
+
+  if (frameList.isEmpty()) {
+      maxFrameWidth = 0;
+      maxFrameHeight = 0;
     }
 }
 
