@@ -130,9 +130,8 @@ void MainWindow::on_framesList_customContextMenuRequested(const QPoint &pos)
          // Utilisation des éléments sélectionnés plutôt que l'index sous la souris
   QModelIndexList selected = ui->framesList->selectionModel()->selectedIndexes();
 
-  if (!selected.isEmpty()) { // On montre le menu si au moins un élément est sélectionné
+  if (!selected.isEmpty()) {
       QMenu menu(this);
-      // Le texte du menu peut être ajusté pour refléter la sélection multiple
       QString actionText = (selected.size() > 1) ? tr("Supprimer les Frames Sélectionnées") : tr("Supprimer la Frame");
       QAction *deleteAction = menu.addAction(actionText);
 
@@ -144,8 +143,70 @@ void MainWindow::on_framesList_customContextMenuRequested(const QPoint &pos)
       QAction *invertAction = menu.addAction(tr("Inverser la Sélection"));
       QObject::connect(invertAction, &QAction::triggered,
                         this, &MainWindow::invertSelection);
+
+      QAction *reverseOrderAction = menu.addAction(tr("Renverser l'Ordre des Frames Sélectionnées"));
+      QObject::connect(reverseOrderAction, &QAction::triggered,
+                        this, &MainWindow::reverseSelectedFramesOrder);
+
       menu.exec(ui->framesList->viewport()->mapToGlobal(pos));
     }
+}
+
+void MainWindow::reverseSelectedFramesOrder()
+{
+  QModelIndexList selectedIndexes = ui->framesList->selectionModel()->selectedIndexes();
+
+  if (selectedIndexes.isEmpty()) {
+      return;
+    }
+
+  std::sort(selectedIndexes.begin(), selectedIndexes.end(), [](const QModelIndex& a, const QModelIndex& b) {
+    return a.row() < b.row();
+  });
+
+  int firstRow = selectedIndexes.first().row();
+  int lastRow = selectedIndexes.last().row();
+
+  if (firstRow == lastRow) {
+      return;
+    }
+
+  int i = firstRow;
+  int j = lastRow;
+
+  frameModel->blockSignals(true);
+
+  while (i < j) {
+      Extractor::Box tempBox = frameBoxes[i];
+      frameBoxes[i] = frameBoxes[j];
+      frameBoxes[j] = tempBox;
+
+      QPixmap tempFrame = frames[i];
+      frames[i] = frames[j];
+      frames[j] = tempFrame;
+
+      QStandardItem *itemA = frameModel->item(i, 0)->clone();
+      QStandardItem *itemB = frameModel->item(j, 0)->clone();
+
+      delete frameModel->takeItem(i, 0);
+      delete frameModel->takeItem(j, 0);
+
+      frameModel->setItem(i, 0, itemB);
+      frameModel->setItem(j, 0, itemA);
+
+      frameModel->setItem(i, 0, itemB->clone());
+      frameModel->setItem(j, 0, itemA->clone());
+
+      i++;
+      j--;
+    }
+
+  frameModel->blockSignals(false);
+
+  ui->framesList->update();
+  ui->framesList->selectionModel()->select(selectedIndexes.first(), QItemSelectionModel::ClearAndSelect); // Resélectionner le premier item du nouveau bloc
+
+  startAnimation();
 }
 
 void MainWindow::invertSelection()

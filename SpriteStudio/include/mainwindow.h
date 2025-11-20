@@ -119,6 +119,8 @@ private slots:
 
     void updateAnimation();
 
+    void reverseSelectedFramesOrder();
+
 private:
     Ui::MainWindow *ui;
     ArrangementModel                    *frameModel;
