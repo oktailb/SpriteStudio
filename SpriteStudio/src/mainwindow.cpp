@@ -670,3 +670,161 @@ void MainWindow::on_framesList_clicked(const QModelIndex &index)
   scene->addItem(boundingBoxHighlighter);
 }
 
+
+void MainWindow::on_actionExport_triggered()
+{
+  // Vérifier si des frames existent
+  if (frames.isEmpty()) {
+      QMessageBox::warning(this, tr("Exportation impossible"), tr("Veuillez charger ou créer des frames avant d'exporter."));
+      return;
+    }
+
+         // 1. Définir les formats d'exportation disponibles
+  const QString filter = tr("Sprite Atlas (*.png *.json);;PNG Image (*.png)");
+
+  // 2. Ouvrir la boîte de dialogue d'enregistrement
+  // Le nom de fichier sélectionné servira de BASE pour le nom de projet et d'atlas.
+  QString selectedFile = QFileDialog::getSaveFileName(
+      this,
+      tr("Exporter le Sprite Atlas"),
+      QDir::homePath(), // Chemin par défaut
+      filter
+      );
+
+  if (selectedFile.isEmpty()) {
+      return; // Annulé par l'utilisateur
+    }
+
+         // 3. Déterminer le format et le nom de base
+  QFileInfo fileInfo(selectedFile);
+  QString filePath = fileInfo.absolutePath(); // Le dossier de destination
+  QString baseName = fileInfo.completeBaseName(); // Le nom du fichier sans extension
+  QString extension = fileInfo.suffix().toLower(); // L'extension sélectionnée
+
+  QString format;
+  if (extension == "json") {
+      format = "JSON_ATLAS"; // Notre format "Texture Packer"
+    } else if (extension == "png") {
+      // Si l'utilisateur a sélectionné *.png, nous allons demander confirmation pour exporter
+      // seulement l'image ou l'image + métadonnées. Pour l'instant, simplifions:
+      format = "JSON_ATLAS";
+    } else {
+      // Cas par défaut/inattendu. Utiliser notre format principal.
+      format = "JSON_ATLAS";
+    }
+
+         // 4. Lancer l'exportation
+  exportSpriteSheet(filePath, baseName, format);
+}
+
+void MainWindow::exportSpriteSheet(const QString &basePath, const QString &projectName, const QString &format)
+{
+  // Vérification de la méthode d'export
+  if (format != "JSON_ATLAS") {
+      // Pour les futurs formats (ex: XML, Godot, Unity)
+      QMessageBox::warning(this, tr("Exportation"), tr("Format d'exportation non supporté pour le moment."));
+      return;
+    }
+
+  // --- 1. Générer l'Image Atlas (Sprite Sheet) ---
+  // Puisque les frames dans 'frames' sont déjà bien découpées, nous devons les remonter
+  // dans une seule grande image, en utilisant les dimensions maximales que nous avons déjà.
+
+  int totalFrames = frames.size();
+  if (totalFrames == 0) return;
+
+         // Détermination de la grille (similaire à GifExtractor, mais plus simple)
+         // Nous utiliserons le même arrangement en grille que dans GifExtractor
+  int w = maxFrameWidth;
+  int h = maxFrameHeight;
+  int nb_cols = (int)std::floor(std::sqrt(totalFrames));
+  if (nb_cols == 0) nb_cols = 1;
+  int nb_lines = (int)std::ceil((double)totalFrames / nb_cols);
+
+  QImage atlasImage(w * nb_cols, h * nb_lines, QImage::Format_ARGB32_Premultiplied);
+  atlasImage.fill(Qt::transparent);
+  QPainter painter(&atlasImage);
+
+  if (!painter.isActive()) {
+      QMessageBox::critical(this, tr("Erreur Critique"), tr("Impossible de démarrer le peintre pour l'atlas."));
+      return;
+    }
+
+  QJsonArray framesArray; // JSON array pour les métadonnées
+
+  for (int i = 0; i < totalFrames; ++i) {
+      const QPixmap &currentPixmap = frames.at(i);
+      QImage currentImage = currentPixmap.toImage();
+
+      int line = i / nb_cols;
+      int col = i % nb_cols;
+      int x = col * w;
+      int y = line * h;
+
+             // Centrer la frame dans sa case (basé sur la logique d'animation)
+      int x_offset = x + (w - currentImage.width()) / 2;
+      int y_offset = y + (h - currentImage.height()) / 2;
+
+      painter.drawImage(QPoint(x_offset, y_offset), currentImage);
+
+             // --- 2. Construire les Métadonnées JSON (Coordonnées sur l'Atlas) ---
+             // Chaque frame a maintenant une position fixe sur l'atlas
+
+      QJsonObject frameData;
+      frameData["filename"] = QString("frame_%1").arg(i, 4, 10, QChar('0'));
+
+      QJsonObject frameRect;
+      frameRect["x"] = x_offset;
+      frameRect["y"] = y_offset;
+      frameRect["w"] = currentImage.width();
+      frameRect["h"] = currentImage.height();
+
+      frameData["frame"] = frameRect;
+
+      // Simuler des métadonnées de texture packer (ajoutez plus si nécessaire)
+      frameData["rotated"] = false;
+      frameData["trimmed"] = false;
+      frameData["spriteSourceSize"] = frameRect; // Simplifié pour l'exemple
+
+      framesArray.append(frameData);
+    }
+
+  painter.end();
+
+  // --- 3. Sauvegarde des Fichiers ---
+
+  // Nom des fichiers de sortie
+  QString pngFilePath = QDir(basePath).filePath(projectName + ".png");
+  QString jsonFilePath = QDir(basePath).filePath(projectName + ".json");
+
+  // a) Sauvegarde PNG
+  if (!atlasImage.save(pngFilePath, "PNG")) {
+      QMessageBox::critical(this, tr("Erreur d'écriture"), tr("Impossible d'écrire le fichier PNG. Vérifiez les permissions."));
+      return;
+    }
+
+         // b) Sauvegarde JSON
+  QJsonObject root;
+  root["frames"] = framesArray;
+
+  QJsonObject meta;
+  meta["image"] = projectName + ".png";
+  meta["size"] = QJsonObject({
+      {"w", atlasImage.width()},
+      {"h", atlasImage.height()}
+  });
+  meta["format"] = "RGBA8888";
+  root["meta"] = meta;
+
+  QJsonDocument doc(root);
+
+  QFile jsonFile(jsonFilePath);
+  if (jsonFile.open(QIODevice::WriteOnly)) {
+      jsonFile.write(doc.toJson(QJsonDocument::Indented)); // Format indenté et lisible
+      jsonFile.close();
+
+      QMessageBox::information(this, tr("Exportation réussie"), tr("L'atlas et les métadonnées ont été exportés avec succès : %1").arg(basePath));
+    } else {
+      QMessageBox::critical(this, tr("Erreur d'écriture"), tr("Impossible d'écrire le fichier JSON. Vérifiez les permissions."));
+    }
+}

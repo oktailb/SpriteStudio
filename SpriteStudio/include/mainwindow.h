@@ -121,7 +121,9 @@ private slots:
 
     void reverseSelectedFramesOrder();
 
-private:
+    void on_actionExport_triggered();
+
+  private:
     Ui::MainWindow *ui;
     ArrangementModel                    *frameModel;
     QList<Extractor::Box>               frameBoxes;
@@ -150,5 +152,6 @@ private:
     void deleteFrame(int row);
     void startAnimation();
     void stopAnimation();
+    void exportSpriteSheet(const QString &basePath, const QString &projectName, const QString &format);
 };
 #endif // MAINWINDOW_H
