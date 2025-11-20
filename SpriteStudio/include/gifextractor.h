@@ -14,7 +14,7 @@ class GifExtractor : public Extractor
 public:
   explicit GifExtractor(QObject *parent = nullptr);
 
-  QList<QPixmap> extractFrames(const QString &filePath);
+    QList<QPixmap> extractFrames(const QString &filePath, int alphaThreshold, int verticalTolerance);
 
 };
 

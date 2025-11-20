@@ -13,7 +13,7 @@ class SpriteExtractor : public Extractor
 public:
   explicit SpriteExtractor(QObject *parent = nullptr);
 
-  QList<QPixmap> extractFrames(const QString &filePath);
+  QList<QPixmap> extractFrames(const QString &filePath, int alphaThreshold, int verticalTolerance);
 };
 
 #endif // SPRITEEXTRACTOR_H

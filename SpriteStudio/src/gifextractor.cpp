@@ -11,7 +11,7 @@ GifExtractor::GifExtractor(QObject *parent) : Extractor(parent)
 {
 }
 
-QList<QPixmap> GifExtractor::extractFrames(const QString &filePath)
+QList<QPixmap> GifExtractor::extractFrames(const QString &filePath, int alphaThreshold, int verticalTolerance)
 {
   QList<QImage> extractedImages;
 

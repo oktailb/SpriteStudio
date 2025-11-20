@@ -15,7 +15,7 @@ public:
     {
     }
 
-    virtual QList<QPixmap> extractFrames(const QString &filePath) = 0;
+    virtual QList<QPixmap> extractFrames(const QString &filePath, int alphaThreshold, int verticalTolerance) = 0;
 
     void addFrame(const QPixmap &pixmap)
     {

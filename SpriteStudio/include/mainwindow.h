@@ -36,6 +36,10 @@ private slots:
 
     void on_fps_valueChanged(int arg1);
 
+    void on_alphaThreshold_valueChanged(int threshold);
+
+    void on_verticalTolerance_valueChanged(int verticalTolerance);
+
 private:
     Ui::MainWindow *ui;
     ArrangementModel                    *frameModel;
@@ -47,7 +51,8 @@ private:
     bool                                ready;
     QList<QPixmap>                      frames;
     QPixmap                             frame;
-
+    QString                             currentFilePath;
     void populateFrameList(const QList<QPixmap> &frameList, const QList<Extractor::Box> &boxList);
+    void processFile(const QString &fileName);
 };
 #endif // MAINWINDOW_H

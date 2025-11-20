@@ -2,166 +2,136 @@
 #include <QDebug>
 #include <QImage>
 #include <QStack>
+#include <QPoint>
+#include <QRect>
+#include <algorithm>
+#include <cmath>
 
 SpriteExtractor::SpriteExtractor(QObject *parent) : Extractor(parent)
 {
 }
 
-QList<QPixmap> SpriteExtractor::extractFrames(const QString &filePath)
+QList<QPixmap> SpriteExtractor::extractFrames(const QString &filePath, int alphaThreshold, int verticalTolerance)
 {
-  m_frames.clear();
-  m_atlas_index.clear();
+    m_frames.clear();
+    m_atlas_index.clear();
 
-  QPixmap atlasPixmap(filePath);
+    QPixmap atlasPixmap(filePath);
 
-  if (atlasPixmap.isNull()) {
-      qWarning() << "Erreur: Impossible de charger l'image:" << filePath;
-      return m_frames;
+    if (atlasPixmap.isNull()) {
+        qWarning() << "Erreur: Impossible de charger l'image:" << filePath;
+        return m_frames;
     }
 
-  QImage image = atlasPixmap.toImage();
+    QImage image = atlasPixmap.toImage();
 
-  if (image.format() != QImage::Format_ARGB32 && image.hasAlphaChannel()) {
-      image = image.convertToFormat(QImage::Format_ARGB32);
+    if (image.format() != QImage::Format_ARGB32 && image.hasAlphaChannel()) {
+        image = image.convertToFormat(QImage::Format_ARGB32);
     }
 
-  int w = image.width();
-  int h = image.height();
+    int w = image.width();
+    int h = image.height();
 
-  QVector<QVector<bool>> visited(h, QVector<bool>(w, false));
-  m_atlas = atlasPixmap;
-  QList<Extractor::Box> detectedBoxes;
-  for (int y = 0; y < h; ++y) {
-      for (int x = 0; x < w; ++x) {
-          if (!visited[y][x] && qAlpha(image.pixel(x, y)) > 0) {
-              int minX = w;
-              int minY = h;
-              int maxX = -1;
-              int maxY = -1;
+    const int ALPHA_THRESHOLD = alphaThreshold;
 
-              QStack<QPoint> stack;
-              stack.push(QPoint(x, y));
-              visited[y][x] = true;
+    QVector<QVector<bool>> visited(h, QVector<bool>(w, false));
+    m_atlas = atlasPixmap;
+    QList<Extractor::Box> detectedBoxes;
 
-              while (!stack.isEmpty()) {
-                  QPoint current = stack.pop();
-                  int curX = current.x();
-                  int curY = current.y();
+    for (int y = 0; y < h; ++y) {
+        for (int x = 0; x < w; ++x) {
+            if (!visited[y][x] && qAlpha(image.pixel(x, y)) > ALPHA_THRESHOLD) {
+                int minX = w;
+                int minY = h;
+                int maxX = -1;
+                int maxY = -1;
 
-                  minX = qMin(minX, curX);
-                  minY = qMin(minY, curY);
-                  maxX = qMax(maxX, curX);
-                  maxY = qMax(maxY, curY);
+                QStack<QPoint> stack;
+                stack.push(QPoint(x, y));
+                visited[y][x] = true;
 
-                  int dx[] = {0, 0, 1, -1};
-                  int dy[] = {1, -1, 0, 0};
+                while (!stack.isEmpty()) {
+                    QPoint current = stack.pop();
+                    int curX = current.x();
+                    int curY = current.y();
 
-                  for (int i = 0; i < 4; ++i) {
-                      int nextX = curX + dx[i];
-                      int nextY = curY + dy[i];
+                    minX = qMin(minX, curX);
+                    minY = qMin(minY, curY);
+                    maxX = qMax(maxX, curX);
+                    maxY = qMax(maxY, curY);
 
-                      if (nextX >= 0 && nextX < w && nextY >= 0 && nextY < h) {
-                          if (!visited[nextY][nextX] && qAlpha(image.pixel(nextX, nextY)) > 0) {
-                              visited[nextY][nextX] = true;
-                              stack.push(QPoint(nextX, nextY));
+                    int dx[] = {0, 0, 1, -1};
+                    int dy[] = {1, -1, 0, 0};
+
+                    for (int i = 0; i < 4; ++i) {
+                        int nextX = curX + dx[i];
+                        int nextY = curY + dy[i];
+
+                        if (nextX >= 0 && nextX < w && nextY >= 0 && nextY < h) {
+                            if (!visited[nextY][nextX] && qAlpha(image.pixel(nextX, nextY)) > ALPHA_THRESHOLD) {
+                                visited[nextY][nextX] = true;
+                                stack.push(QPoint(nextX, nextY));
                             }
                         }
                     }
                 }
 
-              if (minX <= maxX && minY <= maxY) {
-                  int spriteW = maxX - minX + 1;
-                  int spriteH = maxY - minY + 1;
+                if (minX <= maxX && minY <= maxY) {
+                    int spriteW = maxX - minX + 1;
+                    int spriteH = maxY - minY + 1;
 
-                  Extractor::Box box = {minX, minY, spriteW, spriteH};
-                  detectedBoxes.push_back(box);
+                    Extractor::Box box = {minX, minY, spriteW, spriteH};
+                    detectedBoxes.push_back(box);
                 }
             }
         }
     }
 
-  std::sort( detectedBoxes.begin(),
-             detectedBoxes.end(),
-             [](const Extractor::Box& a, const Extractor::Box& b) {
+    std::sort( detectedBoxes.begin(),
+              detectedBoxes.end(),
+              [&verticalTolerance](const Extractor::Box& a, const Extractor::Box& b) {
+                  const int VERTICAL_TOLERANCE = verticalTolerance;
+                  if (std::abs(a.y - b.y) <= VERTICAL_TOLERANCE) {
+                      return a.x < b.x;
+                  }
+                  return a.y < b.y;
+              });
 
-               const int TOLERANCE = 10;
-               if (std::abs(a.y - b.y) <= TOLERANCE) {
-                   return a.x < b.x;
-                 }
-               return a.y < b.y;
-             });
-
-  if (detectedBoxes.size() > 1) {
-      QList<QRect> rects;
-      for (const auto& box : detectedBoxes) {
-          rects.append(QRect(box.x, box.y, box.w, box.h));
+        if (detectedBoxes.size() > 0) {
+        QList<QRect> rects;
+        for (const auto& box : detectedBoxes) {
+            rects.append(QRect(box.x, box.y, box.w, box.h));
         }
 
-      QList<QRect> finalRects;
-      QList<bool> mergedFlags(rects.size(), false);
+        QList<QRect> masterRects;
+        QList<bool> isMaster(rects.size(), true);
 
-      for (int i = 0; i < rects.size(); ++i) {
-          if (mergedFlags[i]) continue;
+        for (int i = 0; i < rects.size(); ++i) {
+            for (int j = 0; j < rects.size(); ++j) {
+                if (i == j) continue;
 
-          QRect currentRect = rects[i];
-          bool isSatellite = false;
-          int containingIndex = -1;
-
-          for (int j = 0; j < rects.size(); ++j) {
-              if (i == j || mergedFlags[j]) continue;
-
-              QRect otherRect = rects[j];
-
-              if (otherRect.contains(currentRect)) {
-                  isSatellite = true;
-                  containingIndex = j;
-                  break;
-                }
-            }
-
-          if (isSatellite) {
-              mergedFlags[i] = true;
-            } else {
-              finalRects.append(currentRect);
-              mergedFlags[i] = true;
-            }
-        }
-
-      QList<QRect> masterRects;
-      QList<bool> isMaster(rects.size(), true);
-
-      for (int i = 0; i < rects.size(); ++i) {
-          for (int j = 0; j < rects.size(); ++j) {
-              if (i == j) continue;
-
-              if (rects[j].contains(rects[i])) {
-                  isMaster[i] = false;
-                  break;
+                if (rects[j].contains(rects[i])) {
+                    isMaster[i] = false;
+                    break;
                 }
             }
         }
 
-      for (int i = 0; i < rects.size(); ++i) {
-          if (isMaster[i]) {
-              masterRects.append(rects[i]);
+        m_atlas_index.clear();
+        for (int i = 0; i < rects.size(); ++i) {
+            if (isMaster[i]) {
+                QRect rect = rects[i];
+                m_atlas_index.push_back({rect.x(), rect.y(), rect.width(), rect.height()});
             }
         }
-
-      m_atlas_index.clear();
-      for (const auto& rect : masterRects) {
-          m_atlas_index.push_back({rect.x(), rect.y(), rect.width(), rect.height()});
-        }
-
-    } else if (detectedBoxes.size() == 1) {
-      m_atlas_index = detectedBoxes;
     }
 
-  for (const auto& box : m_atlas_index) {
-      QPixmap spriteFrame = atlasPixmap.copy(box.x, box.y, box.w, box.h);
-      this->addFrame(spriteFrame);
+    for (const auto& box : m_atlas_index) {
+        QPixmap spriteFrame = atlasPixmap.copy(box.x, box.y, box.w, box.h);
+        this->addFrame(spriteFrame);
     }
 
-  qDebug() << "Extraction du sprite sheet terminée. Frames trouvées:" << m_frames.size();
-  emit extractionFinished(m_frames.size());
-  return m_frames;
+    qDebug() << "Extraction du sprite sheet terminée. Frames finales trouvées:" << m_frames.size();
+    emit extractionFinished(m_frames.size());
+    return m_frames;
 }

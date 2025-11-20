@@ -42,7 +42,7 @@ void MainWindow::populateFrameList(const QList<QPixmap> &frameList, const QList<
 
         QPixmap thumbnail = pixmap.scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation);
         item->setData(thumbnail, Qt::DecorationRole);
-        item->setData(QString("Frame %1").arg(i + 1), Qt::DisplayRole);
+        item->setData(QString("Frame %1\n[%2,%3](%4x%5)").arg(i + 1).arg(box.x).arg(box.y).arg(box.w).arg(box.h), Qt::DisplayRole);
         item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsDragEnabled);
         item->setFlags(item->flags() | Qt::ItemIsEditable);
         frameModel->appendRow(item);
@@ -117,6 +117,16 @@ void MainWindow::on_actionOpen_triggered()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"), "", tr("Images (*.png *.jpg *.bmp *.gif *.json)"));
     QString type = fileName.split(".").last();
+    currentFilePath = fileName;
+    processFile(currentFilePath);
+}
+
+void MainWindow::processFile(const QString &fileName)
+{
+    int alphaThreshold = ui->alphaThreshold->value();
+    int verticalTolerance = ui->verticalTolerance->value();
+
+    QString type = fileName.split(".").last();
 
     frames.clear();
     frame = QPixmap();
@@ -124,13 +134,13 @@ void MainWindow::on_actionOpen_triggered()
 
     if (type == "gif") {
         GifExtractor extractor;
-        frames = extractor.extractFrames(fileName);
+        frames = extractor.extractFrames(fileName, alphaThreshold, verticalTolerance);
         frame = extractor.m_atlas;
         boxes = extractor.m_atlas_index;
     }
     else if ((type == "png") || (type == "jpg") ||  (type == "bmp") || (type == "gif")) {
         SpriteExtractor extractor;
-        frames = extractor.extractFrames(fileName);
+        frames = extractor.extractFrames(fileName, alphaThreshold, verticalTolerance);
         frame = extractor.m_atlas;
         boxes = extractor.m_atlas_index;
     } else if (type == "json") {
@@ -163,3 +173,21 @@ void MainWindow::on_fps_valueChanged(int fps)
 {
     ui->timingLabel->setText(" -> Timing " + QString::number(1000.0  / (double)fps, 'g', 4) + "ms");
 }
+
+void MainWindow::on_alphaThreshold_valueChanged(int threshold)
+{
+    Q_UNUSED(threshold);
+    if (!currentFilePath.isEmpty()) {
+        processFile(currentFilePath);
+    }
+}
+
+
+void MainWindow::on_verticalTolerance_valueChanged(int verticalTolerance)
+{
+    Q_UNUSED(verticalTolerance);
+    if (!currentFilePath.isEmpty()) {
+        processFile(currentFilePath);
+    }
+}
+
