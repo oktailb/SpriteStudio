@@ -9,6 +9,9 @@
 #include <QTextEdit>
 #include <QMessageBox>
 #include <QGraphicsPixmapItem>
+#include <QGraphicsScene>
+#include <QPen>
+#include <QGraphicsRectItem>
 #include "gifextractor.h"
 #include "spriteextractor.h"
 
@@ -18,6 +21,7 @@ MainWindow::MainWindow(QWidget *parent)
     , frameModel(new ArrangementModel(this))
     , timerId(0)
     , ready(false)
+    , boundingBoxHighlighter(nullptr)
 {
     ui->setupUi(this);
     timerId = startTimer(100);
@@ -25,6 +29,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->framesList->setModel(frameModel);
     ui->framesList->setViewMode(QListView::IconMode);
     ui->timingLabel->setText(" -> Timing " + QString::number(1000.0  / (double)ui->fps->value(), 'g', 4) + "ms");
+    QObject::connect(ui->framesList, &QListView::clicked,
+                     this, &MainWindow::on_framesList_clicked);
 }
 
 void MainWindow::populateFrameList(const QList<QPixmap> &frameList, const QList<Extractor::Box> &boxList)
@@ -149,7 +155,13 @@ void MainWindow::processFile(const QString &fileName)
         QMessageBox::warning(this, "Erreur d'ouverture", "Format de fichier non supporté.");
         return;
     }
-
+    if (boundingBoxHighlighter) {
+        if (ui->graphicsViewLayers->scene()) {
+            ui->graphicsViewLayers->scene()->removeItem(boundingBoxHighlighter);
+        }
+        delete boundingBoxHighlighter;
+        boundingBoxHighlighter = nullptr;
+    }
     if (!frames.isEmpty()) {
         auto view = ui->graphicsViewLayers;
         auto scene = new QGraphicsScene(view);
@@ -189,5 +201,39 @@ void MainWindow::on_verticalTolerance_valueChanged(int verticalTolerance)
     if (!currentFilePath.isEmpty()) {
         processFile(currentFilePath);
     }
+}
+
+
+void MainWindow::on_framesList_clicked(const QModelIndex &index)
+{
+    if (!ui->graphicsViewLayers->scene() || index.row() >= frameBoxes.size()) {
+        return; // Pas de scène ou index invalide
+    }
+
+    QGraphicsScene *scene = ui->graphicsViewLayers->scene();
+    const Extractor::Box &box = frameBoxes.at(index.row());
+
+    // 1. Supprimer l'ancien highlighter s'il existe
+    if (boundingBoxHighlighter) {
+        scene->removeItem(boundingBoxHighlighter);
+        delete boundingBoxHighlighter;
+        boundingBoxHighlighter = nullptr;
+    }
+
+    // 2. Créer le nouveau rectangle (QGraphicsRectItem)
+    // La Box est {x, y, w, h}
+    QRectF rect(box.x, box.y, box.w, box.h);
+
+    // 3. Définir le style du dessin (couleur, épaisseur)
+    QPen pen(Qt::red); // Utiliser une couleur vive pour le surlignage
+    pen.setWidth(2);   // Épaisseur du trait
+    pen.setStyle(Qt::DashLine); // Ligne pointillée ou continue (DashLine est souvent bien visible)
+
+    // 4. Dessiner et ajouter à la scène
+    boundingBoxHighlighter = new QGraphicsRectItem(rect);
+    boundingBoxHighlighter->setPen(pen);
+    boundingBoxHighlighter->setBrush(QBrush(QColor(255, 0, 0, 50))); // Remplissage semi-transparent
+
+    scene->addItem(boundingBoxHighlighter);
 }
 

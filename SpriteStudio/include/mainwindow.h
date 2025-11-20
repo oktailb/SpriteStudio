@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <qgraphicsitem.h>
 #include <qstandarditemmodel.h>
 #include "extractor.h"
 #include "arrangementmodel.h"
@@ -40,6 +41,8 @@ private slots:
 
     void on_verticalTolerance_valueChanged(int verticalTolerance);
 
+    void on_framesList_clicked(const QModelIndex &index);
+
 private:
     Ui::MainWindow *ui;
     ArrangementModel                    *frameModel;
@@ -52,6 +55,7 @@ private:
     QList<QPixmap>                      frames;
     QPixmap                             frame;
     QString                             currentFilePath;
+    QGraphicsRectItem                   *boundingBoxHighlighter;
     void populateFrameList(const QList<QPixmap> &frameList, const QList<Extractor::Box> &boxList);
     void processFile(const QString &fileName);
 };
