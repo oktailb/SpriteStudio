@@ -24,6 +24,7 @@ MainWindow::MainWindow(QWidget *parent)
     , boundingBoxHighlighter(nullptr)
 {
     ui->setupUi(this);
+    setAcceptDrops(true);
     timerId = startTimer(100);
     ready = true;
     ui->framesList->setModel(frameModel);
@@ -33,6 +34,106 @@ MainWindow::MainWindow(QWidget *parent)
                      this, &MainWindow::on_framesList_clicked);
     QObject::connect(frameModel, &ArrangementModel::mergeRequested,
                      this, &MainWindow::onMergeFrames);
+    listDelegate = new FrameDelegate(this);
+    ui->framesList->setItemDelegate(listDelegate);
+    ui->framesList->viewport()->installEventFilter(this);
+}
+
+void MainWindow::setMergeHighlight(const QModelIndex &index, bool show)
+{
+    // Nettoyage préventif
+    if (!show || !index.isValid()) {
+        clearMergeHighlight();
+        return;
+    }
+
+    int row = index.row();
+    if (row >= 0 && row < frameBoxes.size()) {
+        // On récupère la box correspondante
+        Extractor::Box box = frameBoxes[row];
+        QRectF rect(box.x, box.y, box.w, box.h);
+
+        // Création lazy du rectangle
+        if (!mergeHighlighter) {
+            mergeHighlighter = new QGraphicsRectItem();
+            QPen pen(Qt::magenta);
+            pen.setWidth(3);
+            pen.setStyle(Qt::DotLine);
+            mergeHighlighter->setPen(pen);
+            // Important : ZValue élevé pour être au-dessus de l'image
+            mergeHighlighter->setZValue(10);
+
+            if (ui->graphicsViewLayers->scene()) {
+                ui->graphicsViewLayers->scene()->addItem(mergeHighlighter);
+            }
+        }
+
+        // Si la scène a changé entre temps (rechargement de fichier)
+        if (mergeHighlighter->scene() != ui->graphicsViewLayers->scene()) {
+            if (ui->graphicsViewLayers->scene()) {
+                ui->graphicsViewLayers->scene()->addItem(mergeHighlighter);
+            }
+        }
+
+        mergeHighlighter->setRect(rect);
+        mergeHighlighter->setVisible(true);
+    }
+}
+
+bool MainWindow::eventFilter(QObject *watched, QEvent *event)
+{
+    if (watched == ui->framesList->viewport()) {
+
+        if (event->type() == QEvent::DragMove) {
+            QDragMoveEvent *dmEvent = static_cast<QDragMoveEvent *>(event);
+            QModelIndex index = ui->framesList->indexAt(dmEvent->pos());
+
+            if (index.isValid()) {
+                // === CAS FUSION (Souris SUR un item) ===
+
+                // 1. Visuel QListView : On dit au délégué de dessiner le cadre Magenta sur cet item
+                listDelegate->setMergeTarget(index.row());
+
+                // 2. Visuel QListView : On cache la barre d'insertion noire (trait entre les items)
+                ui->framesList->setDropIndicatorShown(false);
+
+                // 3. Visuel Atlas (votre code existant)
+                setMergeHighlight(index, true);
+            }
+            else {
+                // === CAS INSERTION (Souris ENTRE deux items) ===
+
+                // 1. Visuel QListView : On dit au délégué de ne rien dessiner de spécial
+                listDelegate->setMergeTarget(-1);
+
+                // 2. Visuel QListView : On AFFICHE la barre d'insertion noire standard
+                // (C'est le visuel standard "Insertion" de Qt, très clair pour l'utilisateur)
+                ui->framesList->setDropIndicatorShown(true);
+
+                // 3. Visuel Atlas : On efface le rectangle
+                clearMergeHighlight();
+            }
+
+            // IMPORTANT : Forcer la liste à se redessiner immédiatement pour voir les changements
+            ui->framesList->viewport()->update();
+        }
+        else if (event->type() == QEvent::DragLeave || event->type() == QEvent::Drop) {
+            // Nettoyage quand on quitte
+            listDelegate->setMergeTarget(-1);
+            ui->framesList->setDropIndicatorShown(true);
+            clearMergeHighlight();
+            ui->framesList->viewport()->update();
+        }
+    }
+
+    return QMainWindow::eventFilter(watched, event);
+}
+
+void MainWindow::clearMergeHighlight()
+{
+    if (mergeHighlighter) {
+        mergeHighlighter->setVisible(false);
+    }
 }
 
 void MainWindow::onMergeFrames(int sourceRow, int targetRow)
