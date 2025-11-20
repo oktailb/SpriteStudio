@@ -86,41 +86,51 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
 
         if (event->type() == QEvent::DragMove) {
             QDragMoveEvent *dmEvent = static_cast<QDragMoveEvent *>(event);
-            QModelIndex index = ui->framesList->indexAt(dmEvent->pos());
+            QPoint pos = dmEvent->pos();
+            QModelIndex index = ui->framesList->indexAt(pos);
+
+            // On désactive TOUJOURS l'indicateur par défaut de Qt car on dessine le nôtre
+            ui->framesList->setDropIndicatorShown(false);
 
             if (index.isValid()) {
-                // === CAS FUSION (Souris SUR un item) ===
+                // Récupérer la géométrie visuelle de l'item survolé
+                QRect rect = ui->framesList->visualRect(index);
 
-                // 1. Visuel QListView : On dit au délégué de dessiner le cadre Magenta sur cet item
-                listDelegate->setMergeTarget(index.row());
+                // Calculer la position de la souris relative à l'item (0 à width)
+                int relativeX = pos.x() - rect.left();
+                int width = rect.width();
 
-                // 2. Visuel QListView : On cache la barre d'insertion noire (trait entre les items)
-                ui->framesList->setDropIndicatorShown(false);
+                // ZONES DE DÉTECTION
+                // Marge de 20% sur les bords pour l'insertion
+                int margin = width * 0.2;
 
-                // 3. Visuel Atlas (votre code existant)
-                setMergeHighlight(index, true);
-            }
-            else {
-                // === CAS INSERTION (Souris ENTRE deux items) ===
-
-                // 1. Visuel QListView : On dit au délégué de ne rien dessiner de spécial
-                listDelegate->setMergeTarget(-1);
-
-                // 2. Visuel QListView : On AFFICHE la barre d'insertion noire standard
-                // (C'est le visuel standard "Insertion" de Qt, très clair pour l'utilisateur)
-                ui->framesList->setDropIndicatorShown(true);
-
-                // 3. Visuel Atlas : On efface le rectangle
+                if (relativeX < margin) {
+                    // --- CAS : INSERTION GAUCHE ---
+                    listDelegate->setHighlight(index.row(), FrameDelegate::InsertLeft);
+                    clearMergeHighlight(); // Pas de visuel sur l'atlas
+                }
+                else if (relativeX > (width - margin)) {
+                    // --- CAS : INSERTION DROITE ---
+                    listDelegate->setHighlight(index.row(), FrameDelegate::InsertRight);
+                    clearMergeHighlight(); // Pas de visuel sur l'atlas
+                }
+                else {
+                    // --- CAS : FUSION (CENTRE) ---
+                    listDelegate->setHighlight(index.row(), FrameDelegate::Merge);
+                    setMergeHighlight(index, true); // On active le visuel sur l'atlas
+                }
+            } else {
+                // Si on est dans le vide (après la dernière frame)
+                listDelegate->setHighlight(-1, FrameDelegate::None);
                 clearMergeHighlight();
             }
 
-            // IMPORTANT : Forcer la liste à se redessiner immédiatement pour voir les changements
             ui->framesList->viewport()->update();
+            // Important : ne pas bloquer l'événement pour que le drag continue
         }
         else if (event->type() == QEvent::DragLeave || event->type() == QEvent::Drop) {
-            // Nettoyage quand on quitte
-            listDelegate->setMergeTarget(-1);
-            ui->framesList->setDropIndicatorShown(true);
+            // Nettoyage
+            listDelegate->setHighlight(-1, FrameDelegate::None);
             clearMergeHighlight();
             ui->framesList->viewport()->update();
         }

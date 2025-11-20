@@ -19,41 +19,63 @@ QT_END_NAMESPACE
 class FrameDelegate : public QStyledItemDelegate
 {
 public:
+    // On définit les états possibles
+    enum HighlightState {
+        None,
+        Merge,       // Au centre (Fusion)
+        InsertLeft,  // Bord gauche (Insertion avant)
+        InsertRight  // Bord droit (Insertion après)
+    };
+
     explicit FrameDelegate(QObject *parent = nullptr) : QStyledItemDelegate(parent) {}
 
-    // Méthode pour définir quelle ligne doit être surlignée
-    void setMergeTarget(int row) {
+    // Une seule fonction pour tout configurer
+    void setHighlight(int row, HighlightState state) {
         m_targetRow = row;
+        m_state = state;
     }
 
     void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override
     {
-        // 1. Dessin standard (texte, icône, sélection bleue normale)
         QStyledItemDelegate::paint(painter, option, index);
 
-        // 2. Dessin personnalisé pour la FUSION
-        // Si c'est la ligne ciblée par le drag & drop
-        if (index.row() == m_targetRow && m_targetRow != -1) {
-            painter->save();
+        // Si on n'est pas sur la ligne concernée, on ne fait rien
+        if (index.row() != m_targetRow || m_state == None) {
+            return;
+        }
 
-            // Configuration du stylo Magenta Pointillé
+        painter->save();
+
+        if (m_state == Merge) {
+            // --- DESSIN FUSION (Cadre Magenta) ---
             QPen pen(Qt::magenta);
             pen.setWidth(3);
             pen.setStyle(Qt::DotLine);
-
-            // On réduit légèrement le rectangle pour qu'il soit bien à l'intérieur
             QRect rect = option.rect.adjusted(2, 2, -2, -2);
-
             painter->setPen(pen);
             painter->setBrush(Qt::NoBrush);
             painter->drawRect(rect);
-
-            painter->restore();
         }
+        else if (m_state == InsertLeft || m_state == InsertRight) {
+            // --- DESSIN INSERTION (Barre Noire) ---
+            // On dessine une ligne verticale noire épaisse sur le côté approprié
+            int xPos = (m_state == InsertLeft) ? option.rect.left() : option.rect.right();
+
+            // On ajuste pour que la ligne soit bien visible
+            if (m_state == InsertRight) xPos -= 2;
+
+            painter->setPen(Qt::NoPen);
+            painter->setBrush(Qt::black);
+            // Une barre de 3px de large, sur toute la hauteur de l'item
+            painter->drawRect(xPos, option.rect.top(), 3, option.rect.height());
+        }
+
+        painter->restore();
     }
 
 private:
-    int m_targetRow = -1; // -1 signifie "pas de cible"
+    int m_targetRow = -1;
+    HighlightState m_state = None;
 };
 
 class MainWindow : public QMainWindow
