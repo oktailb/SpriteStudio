@@ -34,6 +34,8 @@ public:
     QList<QPixmap> m_frames;
     QPixmap m_atlas;
     QList<Box> m_atlas_index;
+    int maxFrameWidth;
+    int maxFrameHeight;
 
 signals:
     void extractionFinished(int frameCount);

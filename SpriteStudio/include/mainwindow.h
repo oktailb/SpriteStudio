@@ -156,6 +156,5 @@ private:
     void deleteFrame(int row);
     void startAnimation();
     void stopAnimation();
-    void exportSpriteSheet(const QString &basePath, const QString &projectName, const QString &format);
 };
 #endif // MAINWINDOW_H
