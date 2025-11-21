@@ -107,7 +107,7 @@ QList<QPixmap> GifExtractor::extractFrames(const QString &filePath, int alphaThr
     return m_frames;
 }
 
-bool GifExtractor::exportFrames(const QString &basePath, const QString &projectName)
+bool GifExtractor::exportFrames(const QString &basePath, const QString &projectName, Extractor *in)
 {
     return false;
 }

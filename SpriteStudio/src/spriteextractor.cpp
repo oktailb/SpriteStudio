@@ -142,7 +142,7 @@ QList<QPixmap> SpriteExtractor::extractFrames(const QString &filePath, int alpha
     return m_frames;
 }
 
-bool SpriteExtractor::exportFrames(const QString &basePath, const QString &projectName)
+bool SpriteExtractor::exportFrames(const QString &basePath, const QString &projectName, Extractor *in)
 {
     return false;
 }

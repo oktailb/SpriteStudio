@@ -110,14 +110,14 @@ void MainWindow::stopAnimation()
 
 void MainWindow::updateAnimation()
 {
-    if (selectedFrameRows.isEmpty() || frames.isEmpty()) {
+    if (selectedFrameRows.isEmpty() || extractor->m_frames.isEmpty()) {
         stopAnimation();
         return;
     }
 
     int frameListIndex = selectedFrameRows.at(currentAnimationFrameIndex);
 
-    if (frameListIndex < 0 || frameListIndex >= frames.size()) {
+    if (frameListIndex < 0 || frameListIndex >= extractor->m_frames.size()) {
         qWarning() << "Erreur: Index de frame invalide pour l'animation.";
         stopAnimation();
         return;
@@ -140,7 +140,7 @@ void MainWindow::updateAnimation()
     ui->timeFrom->setTime(currentTime);
 
 
-    const QPixmap &currentFrame = frames.at(frameListIndex);
+    const QPixmap &currentFrame = extractor->m_frames.at(frameListIndex);
 
     QGraphicsScene *scene = ui->graphicsViewResult->scene();
     scene->clear();
@@ -217,13 +217,13 @@ void MainWindow::reverseSelectedFramesOrder()
     frameModel->blockSignals(true);
 
     while (i < j) {
-        Extractor::Box tempBox = frameBoxes[i];
-        frameBoxes[i] = frameBoxes[j];
-        frameBoxes[j] = tempBox;
+        Extractor::Box tempBox = extractor->m_atlas_index[i];
+        extractor->m_atlas_index[i] = extractor->m_atlas_index[j];
+        extractor->m_atlas_index[j] = tempBox;
 
-        QPixmap tempFrame = frames[i];
-        frames[i] = frames[j];
-        frames[j] = tempFrame;
+        QPixmap tempFrame = extractor->m_frames[i];
+        extractor->m_frames[i] = extractor->m_frames[j];
+        extractor->m_frames[j] = tempFrame;
 
         QStandardItem *itemA = frameModel->item(i, 0)->clone();
         QStandardItem *itemB = frameModel->item(j, 0)->clone();
@@ -274,13 +274,13 @@ void MainWindow::invertSelection()
 
 void MainWindow::deleteFrame(int row)
 {
-    if (row < 0 || row >= frameBoxes.size()) {
+    if (row < 0 || row >= extractor->m_atlas_index.size()) {
         return;
     }
 
     // 1. SUPPRESSION des données internes
-    frameBoxes.removeAt(row);
-    frames.removeAt(row); // Si vous utilisez cette liste pour la prévisualisation/animation
+    extractor->m_atlas_index.removeAt(row);
+    extractor->m_frames.removeAt(row); // Si vous utilisez cette liste pour la prévisualisation/animation
 
     // 2. SUPPRESSION du modèle (visuel)
     frameModel->removeRow(row);
@@ -295,7 +295,7 @@ void MainWindow::deleteFrame(int row)
 
     // Si vous aviez un aperçu actif, vous pouvez le mettre à jour ici.
 
-    qDebug() << "Frame supprimée. Frames restantes:" << frameBoxes.size();
+    qDebug() << "Frame supprimée. Frames restantes:" << extractor->m_atlas_index.size();
 }
 
 void MainWindow::deleteSelectedFrame()
@@ -337,9 +337,9 @@ void MainWindow::setMergeHighlight(const QModelIndex &index, bool show)
     }
 
     int row = index.row();
-    if (row >= 0 && row < frameBoxes.size()) {
+    if (row >= 0 && row < extractor->m_atlas_index.size()) {
         // On récupère la box correspondante
-        Extractor::Box box = frameBoxes[row];
+        Extractor::Box box = extractor->m_atlas_index[row];
         QRectF rect(box.x, box.y, box.w, box.h);
 
         // Création lazy du rectangle
@@ -437,20 +437,20 @@ void MainWindow::clearMergeHighlight()
 
 void MainWindow::onMergeFrames(int sourceRow, int targetRow)
 {
-    if (sourceRow < 0 || sourceRow >= frameBoxes.size() ||
-        targetRow < 0 || targetRow >= frameBoxes.size()) {
+    if (sourceRow < 0 || sourceRow >= extractor->m_atlas_index.size() ||
+        targetRow < 0 || targetRow >= extractor->m_atlas_index.size()) {
         return;
     }
 
     // 1. Calcul et Fusion (Identique à avant)
-    Extractor::Box srcBox = frameBoxes[sourceRow];
-    Extractor::Box tgtBox = frameBoxes[targetRow];
+    Extractor::Box srcBox = extractor->m_atlas_index[sourceRow];
+    Extractor::Box tgtBox = extractor->m_atlas_index[targetRow];
 
     QRect srcRect(srcBox.x, srcBox.y, srcBox.w, srcBox.h);
     QRect tgtRect(tgtBox.x, tgtBox.y, tgtBox.w, tgtBox.h);
     QRect unitedRect = srcRect.united(tgtRect);
 
-    QPixmap mergedPixmap = this->frame.copy(unitedRect);
+    QPixmap mergedPixmap = this->extractor->m_atlas.copy(unitedRect);
 
     // 2. Mise à jour des données internes de la CIBLE
     Extractor::Box newBox;
@@ -459,8 +459,8 @@ void MainWindow::onMergeFrames(int sourceRow, int targetRow)
     newBox.w = unitedRect.width();
     newBox.h = unitedRect.height();
 
-    frameBoxes[targetRow] = newBox;
-    frames[targetRow] = mergedPixmap;
+    extractor->m_atlas_index[targetRow] = newBox;
+    extractor->m_frames[targetRow] = mergedPixmap;
 
     // 3. Mise à jour VISUELLE de la CIBLE uniquement
     QStandardItem *targetItem = frameModel->item(targetRow);
@@ -478,8 +478,8 @@ void MainWindow::onMergeFrames(int sourceRow, int targetRow)
     // On ne touche PAS au frameModel->removeRow(sourceRow) ici.
     // Le mode InternalMove de la QListView le fera automatiquement au retour du drop.
 
-    frameBoxes.removeAt(sourceRow);
-    frames.removeAt(sourceRow);
+    extractor->m_atlas_index.removeAt(sourceRow);
+    extractor->m_frames.removeAt(sourceRow);
 
     // Nettoyage de la vue graphique
     if (boundingBoxHighlighter) {
@@ -494,7 +494,7 @@ void MainWindow::onMergeFrames(int sourceRow, int targetRow)
 void MainWindow::populateFrameList(const QList<QPixmap> &frameList, const QList<Extractor::Box> &boxList)
 {
     frameModel->clear();
-    frameBoxes.clear();
+    //extractor->m_atlas_index.clear();
 
     frameModel->setColumnCount(1);
 
@@ -510,7 +510,7 @@ void MainWindow::populateFrameList(const QList<QPixmap> &frameList, const QList<
         item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsDragEnabled);
         item->setFlags(item->flags() | Qt::ItemIsEditable);
         frameModel->appendRow(item);
-        frameBoxes.append(box);
+        extractor->m_atlas_index.append(box);
     }
     maxFrameWidth = 0;
     maxFrameHeight = 0;
@@ -607,21 +607,13 @@ void MainWindow::processFile(const QString &fileName)
 
     QString type = fileName.split(".").last();
 
-    frames.clear();
-    frame = QPixmap();
-    QList<Extractor::Box> boxes;
-
     if (type == "gif") {
-        GifExtractor extractor;
-        frames = extractor.extractFrames(fileName, alphaThreshold, verticalTolerance);
-        frame = extractor.m_atlas;
-        boxes = extractor.m_atlas_index;
+        extractor = new GifExtractor();
+        extractor->extractFrames(fileName, alphaThreshold, verticalTolerance);
     }
     else if ((type == "png") || (type == "jpg") ||  (type == "bmp") || (type == "gif")) {
-        SpriteExtractor extractor;
-        frames = extractor.extractFrames(fileName, alphaThreshold, verticalTolerance);
-        frame = extractor.m_atlas;
-        boxes = extractor.m_atlas_index;
+        extractor = new SpriteExtractor();
+        extractor->extractFrames(fileName, alphaThreshold, verticalTolerance);
     } else if (type == "json") {
 
     } else {
@@ -635,17 +627,17 @@ void MainWindow::processFile(const QString &fileName)
         delete boundingBoxHighlighter;
         boundingBoxHighlighter = nullptr;
     }
-    if (!frames.isEmpty()) {
+    if (!extractor->m_frames.isEmpty()) {
         auto view = ui->graphicsViewLayers;
         auto scene = new QGraphicsScene(view);
 
-        QGraphicsPixmapItem *item = new QGraphicsPixmapItem(frame);
+        QGraphicsPixmapItem *item = new QGraphicsPixmapItem(extractor->m_atlas);
         scene->addItem(item);
         item->setPos(0, 0);
         view->setScene(scene);
         view->show();
 
-        populateFrameList(frames, boxes);
+        populateFrameList(extractor->m_frames, extractor->m_atlas_index);
     }
 }
 
@@ -679,12 +671,12 @@ void MainWindow::on_verticalTolerance_valueChanged(int verticalTolerance)
 
 void MainWindow::on_framesList_clicked(const QModelIndex &index)
 {
-    if (!ui->graphicsViewLayers->scene() || index.row() >= frameBoxes.size()) {
+    if (!ui->graphicsViewLayers->scene() || index.row() >= extractor->m_atlas_index.size()) {
         return; // Pas de scène ou index invalide
     }
 
     QGraphicsScene *scene = ui->graphicsViewLayers->scene();
-    const Extractor::Box &box = frameBoxes.at(index.row());
+    const Extractor::Box &box = extractor->m_atlas_index.at(index.row());
 
     // 1. Supprimer l'ancien highlighter s'il existe
     if (boundingBoxHighlighter) {
@@ -713,11 +705,11 @@ void MainWindow::on_framesList_clicked(const QModelIndex &index)
 void MainWindow::on_actionExport_triggered()
 {
     // Vérifier si des frames existent
-    if (frames.isEmpty()) {
+    if (extractor->m_frames.isEmpty()) {
         QMessageBox::warning(this, tr("Exportation impossible"), tr("Veuillez charger ou créer des frames avant d'exporter."));
         return;
     }
-    Extractor * extractor = nullptr;
+    Extractor * extractorOut = nullptr;
     const QString filter = tr("Sprite Atlas (*.png *.json);;PNG Image (*.png)");
 
     QString selectedFile = QFileDialog::getSaveFileName(
@@ -737,16 +729,16 @@ void MainWindow::on_actionExport_triggered()
     QString extension = fileInfo.suffix().toLower();
 
     if (extension == "json") {
-        extractor = new JsonExtractor();
+        extractorOut = new JsonExtractor();
     } else if (extension == "png") {
-        extractor = new SpriteExtractor();
+        extractorOut = new SpriteExtractor();
     } else if (extension == "gif") {
-        extractor = new GifExtractor();
+        extractorOut = new GifExtractor();
     } else {
-        extractor = new JsonExtractor();
+        extractorOut = new JsonExtractor();
     }
 
-    extractor->exportFrames(filePath, baseName);
+    extractorOut->exportFrames(filePath, baseName, extractor);
 }
 
 void MainWindow::on_Play_clicked()

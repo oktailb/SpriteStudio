@@ -130,14 +130,12 @@ private slots:
 private:
     Ui::MainWindow *ui;
     ArrangementModel                    *frameModel;
-    QList<Extractor::Box>               frameBoxes;
     double                              timestamp;
 
     // UI related
     int                                 timerId;
     bool                                ready;
-    QList<QPixmap>                      frames;
-    QPixmap                             frame;
+    Extractor                           *extractor;
     QString                             currentFilePath;
     QGraphicsRectItem                   *boundingBoxHighlighter= nullptr;
     QGraphicsRectItem                   *mergeHighlighter = nullptr;

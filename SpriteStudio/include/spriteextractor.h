@@ -14,7 +14,7 @@ public:
     explicit SpriteExtractor(QObject *parent = nullptr);
 
     QList<QPixmap> extractFrames(const QString &filePath, int alphaThreshold, int verticalTolerance);
-    bool           exportFrames(const QString &basePath, const QString &projectName);
+    bool           exportFrames(const QString &basePath, const QString &projectName, Extractor* in);
 };
 
 #endif // SPRITEEXTRACTOR_H
