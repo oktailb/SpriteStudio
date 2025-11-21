@@ -13,6 +13,8 @@ class Extractor : public QObject
 public:
     explicit Extractor(QObject *parent = nullptr) : QObject(parent)
     {
+      maxFrameWidth = 0;
+      maxFrameHeight = 0;
     }
 
     virtual QList<QPixmap> extractFrames(const QString &filePath, int alphaThreshold, int verticalTolerance) = 0;

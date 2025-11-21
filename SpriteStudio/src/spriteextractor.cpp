@@ -129,11 +129,11 @@ QList<QPixmap> SpriteExtractor::extractFrames(const QString &filePath, int alpha
     for (const auto& box : m_atlas_index) {
         QPixmap spriteFrame = atlasPixmap.copy(box.x, box.y, box.w, box.h);
         this->addFrame(spriteFrame);
-        if (box.w > maxFrameWidth) {
-            maxFrameWidth = box.w;
+        if (spriteFrame.width() > maxFrameWidth) {
+            maxFrameWidth = spriteFrame.width();
         }
-        if (box.h > maxFrameHeight) {
-            maxFrameHeight = box.h;
+        if (spriteFrame.height() > maxFrameHeight) {
+            maxFrameHeight = spriteFrame.height();
         }
     }
 

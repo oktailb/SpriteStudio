@@ -145,13 +145,13 @@ void MainWindow::updateAnimation()
     QGraphicsScene *scene = ui->graphicsViewResult->scene();
     scene->clear();
 
-    scene->setSceneRect(0, 0, maxFrameWidth, maxFrameHeight);
+    scene->setSceneRect(0, 0, extractor->maxFrameWidth, extractor->maxFrameHeight);
 
     QGraphicsPixmapItem *item =scene->addPixmap(currentFrame);
 
     // Calculer le décalage pour centrer l'image dans la zone de la scène
-    qreal x_offset = (maxFrameWidth - currentFrame.width()) / 2.0;
-    qreal y_offset = (maxFrameHeight - currentFrame.height()) / 2.0;
+    qreal x_offset = (extractor->maxFrameWidth - currentFrame.width()) / 2.0;
+    qreal y_offset = (extractor->maxFrameHeight - currentFrame.height()) / 2.0;
     item->setPos(x_offset, y_offset); // Centrer la frame plus petite
 
     currentAnimationFrameIndex++;
@@ -512,21 +512,6 @@ void MainWindow::populateFrameList(const QList<QPixmap> &frameList, const QList<
         frameModel->appendRow(item);
         extractor->m_atlas_index.append(box);
     }
-    maxFrameWidth = 0;
-    maxFrameHeight = 0;
-    for (const QPixmap &pixmap : frameList) {
-        if (pixmap.width() > maxFrameWidth) {
-            maxFrameWidth = pixmap.width();
-        }
-        if (pixmap.height() > maxFrameHeight) {
-            maxFrameHeight = pixmap.height();
-        }
-    }
-
-    if (frameList.isEmpty()) {
-        maxFrameWidth = 0;
-        maxFrameHeight = 0;
-    }
 }
 
 void MainWindow::closeEvent(QCloseEvent *e)
@@ -598,6 +583,7 @@ void MainWindow::on_actionOpen_triggered()
     QString type = fileName.split(".").last();
     currentFilePath = fileName;
     processFile(currentFilePath);
+    ui->verticalTolerance->setValue(extractor->maxFrameHeight / 3);
 }
 
 void MainWindow::processFile(const QString &fileName)

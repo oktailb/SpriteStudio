@@ -143,8 +143,6 @@ private:
     QTimer                              *animationTimer;
     int                                 currentAnimationFrameIndex;
     QList<int>                          selectedFrameRows;
-    int                                 maxFrameWidth = 0;
-    int                                 maxFrameHeight = 0;
 
     void populateFrameList(const QList<QPixmap> &frameList, const QList<Extractor::Box> &boxList);
     void processFile(const QString &fileName);
