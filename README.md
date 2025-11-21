@@ -16,6 +16,7 @@
 
 ### Editing & Sequencing
 * **Frame Merging:** Easily merge frames by dropping one item onto another to combine them into a single frame.
+![Fusion of two sprites.](SFusion.gif)
 * **Batch Operations (Multi-Selection):**
     * **Group Deletion** for selected frames.
     * **Invert Selection** to quickly select all unselected frames.
