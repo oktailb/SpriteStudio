@@ -66,6 +66,25 @@ void MainWindow::startAnimation()
       selectedFrameRows.append(index.row());
     }
 
+  int frameCount = selectedFrameRows.size();
+  int fps = ui->fps->value();
+  if (fps <= 0) fps = 1;
+
+  double msPerFrame = 1000.0 / (double)fps;
+  int totalDurationMs = (int)(frameCount * msPerFrame);
+
+  QTime durationTime(0, 0, 0);
+  durationTime = durationTime.addMSecs(totalDurationMs);
+
+  ui->timeTo->setDisplayFormat("mm:ss:zzz");
+  ui->timeTo->setTime(durationTime);
+
+  if (frameCount > 0) {
+      ui->sliderFrom->setMaximum(frameCount - 1);
+  } else {
+      ui->sliderFrom->setMaximum(0);
+  }
+
   if (selectedFrameRows.isEmpty()) {
       stopAnimation();
       return;
