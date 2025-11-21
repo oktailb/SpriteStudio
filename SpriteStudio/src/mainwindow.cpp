@@ -53,8 +53,104 @@ MainWindow::MainWindow(QWidget *parent)
     ui->graphicsViewResult->setScene(new QGraphicsScene(this));
     ui->Play->setVisible(false);
     ui->Pause->setVisible(true);
+    ui->graphicsViewLayers->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->graphicsViewLayers, &QWidget::customContextMenuRequested,
+             this, &MainWindow::onAtlasContextMenuRequested);
 
     startAnimation();
+}
+
+void MainWindow::onAtlasContextMenuRequested(const QPoint &pos)
+{
+  // On vérifie qu'on a bien une image chargée
+  if (!extractor || extractor->m_atlas.isNull()) return;
+
+  QMenu menu(this);
+  QAction *removeBgAction = menu.addAction(tr("Supprimer le fond (Auto)"));
+
+  // On connecte l'action à notre fonction de traitement
+  connect(removeBgAction, &QAction::triggered, this, &MainWindow::removeAtlasBackground);
+
+  menu.exec(ui->graphicsViewLayers->mapToGlobal(pos));
+}
+
+void MainWindow::removeAtlasBackground()
+{
+  if (!extractor || extractor->m_atlas.isNull()) return;
+
+  QImage image = extractor->m_atlas.toImage();
+  image = image.convertToFormat(QImage::Format_ARGB32);
+
+         // 1. Trouver la couleur de fond (La plus fréquente / Mode)
+         // On pourrait aussi prendre le pixel (0,0) par défaut
+  QMap<QRgb, int> histogram;
+  int maxCount = 0;
+  QRgb backgroundColor = 0;
+
+         // Optimisation : on ne scanne qu'un pixel sur 4 pour aller vite
+  for (int y = 0; y < image.height(); y += 2) {
+      for (int x = 0; x < image.width(); x += 2) {
+          QRgb pixel = image.pixel(x, y);
+          // On ignore les pixels déjà transparents
+          if (qAlpha(pixel) < 10) continue;
+
+          histogram[pixel]++;
+          if (histogram[pixel] > maxCount) {
+              maxCount = histogram[pixel];
+              backgroundColor = pixel;
+            }
+        }
+    }
+
+  // Si on a rien trouvé (image vide ou full transparent)
+  if (maxCount == 0) return;
+
+  QColor bgCol(backgroundColor);
+  qDebug() << "Fond détecté :" << bgCol.name();
+
+         // 2. Remplacement par la transparence
+         // On utilise une petite tolérance pour les artefacts de compression JPG
+  int tolerance = 10;
+
+  for (int y = 0; y < image.height(); ++y) {
+      for (int x = 0; x < image.width(); ++x) {
+          QColor pixCol(image.pixel(x, y));
+
+          // Calcul de distance simple (Manhattan)
+          int diff = std::abs(pixCol.red() - bgCol.red()) +
+                     std::abs(pixCol.green() - bgCol.green()) +
+                     std::abs(pixCol.blue() - bgCol.blue());
+
+          if (diff <= tolerance) {
+              image.setPixel(x, y, Qt::transparent);
+            }
+        }
+    }
+
+         // 3. Mise à jour et Relance de l'extraction
+         // Attention : Il faut caster l'extractor vers SpriteExtractor pour accéder à la nouvelle méthode
+  SpriteExtractor *spriteExt = dynamic_cast<SpriteExtractor*>(extractor);
+  if (spriteExt) {
+      // On relance la détection sur l'image modifiée
+      spriteExt->extractFromPixmap(QPixmap::fromImage(image),
+                                    ui->alphaThreshold->value(),
+                                    ui->verticalTolerance->value());
+
+      // Mise à jour de l'affichage
+      // Note: extractFromPixmap a déjà mis à jour m_atlas et m_frames
+
+      // On rafraîchit la vue Layers
+      QGraphicsScene *scene = ui->graphicsViewLayers->scene();
+      if (!scene) {
+          scene = new QGraphicsScene(this);
+          ui->graphicsViewLayers->setScene(scene);
+        }
+      scene->clear();
+      scene->addPixmap(extractor->m_atlas);
+
+      // On rafraîchit la liste
+      populateFrameList(extractor->m_frames, extractor->m_atlas_index);
+    }
 }
 
 void MainWindow::startAnimation()
@@ -579,7 +675,7 @@ void MainWindow::on_actionAbout_triggered()
 
 void MainWindow::on_actionOpen_triggered()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"), "", tr("Images (*.png *.jpg *.bmp *.gif *.json)"));
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"), "", tr("Images (*.png *.jpg *.jpeg *.bmp *.gif *.json)"));
     QString type = fileName.split(".").last();
     currentFilePath = fileName;
     processFile(currentFilePath);
@@ -597,7 +693,7 @@ void MainWindow::processFile(const QString &fileName)
         extractor = new GifExtractor();
         extractor->extractFrames(fileName, alphaThreshold, verticalTolerance);
     }
-    else if ((type == "png") || (type == "jpg") ||  (type == "bmp") || (type == "gif")) {
+    else if ((type == "png") || (type == "jpg") || (type == "jpeg") ||  (type == "bmp") || (type == "gif")) {
         extractor = new SpriteExtractor();
         extractor->extractFrames(fileName, alphaThreshold, verticalTolerance);
     } else if (type == "json") {

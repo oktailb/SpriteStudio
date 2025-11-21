@@ -127,6 +127,10 @@ private slots:
 
     void on_Pause_clicked();
 
+    void onAtlasContextMenuRequested(const QPoint &pos);
+
+    void removeAtlasBackground();
+
 private:
     Ui::MainWindow *ui;
     ArrangementModel                    *frameModel;
