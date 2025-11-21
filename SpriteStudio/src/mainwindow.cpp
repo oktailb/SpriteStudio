@@ -131,25 +131,38 @@ void MainWindow::removeAtlasBackground()
          // Attention : Il faut caster l'extractor vers SpriteExtractor pour accéder à la nouvelle méthode
   SpriteExtractor *spriteExt = dynamic_cast<SpriteExtractor*>(extractor);
   if (spriteExt) {
-      // On relance la détection sur l'image modifiée
-      spriteExt->extractFromPixmap(QPixmap::fromImage(image),
+
+      // 1. Mettre à jour l'atlas interne de l'extracteur AVANT l'extraction
+      extractor->m_atlas = QPixmap::fromImage(image);
+
+             // 2. Relancer l'extraction (cela va recalculer maxFrameWidth/Height)
+      spriteExt->extractFromPixmap(extractor->m_atlas,
                                     ui->alphaThreshold->value(),
                                     ui->verticalTolerance->value());
 
-      // Mise à jour de l'affichage
-      // Note: extractFromPixmap a déjà mis à jour m_atlas et m_frames
-
-      // On rafraîchit la vue Layers
-      QGraphicsScene *scene = ui->graphicsViewLayers->scene();
-      if (!scene) {
-          scene = new QGraphicsScene(this);
-          ui->graphicsViewLayers->setScene(scene);
+      // 3. Mettre à jour la vue principale (Layers) avec la nouvelle image transparente
+      QGraphicsScene *sceneLayers = ui->graphicsViewLayers->scene();
+      if (!sceneLayers) {
+          sceneLayers = new QGraphicsScene(this);
+          ui->graphicsViewLayers->setScene(sceneLayers);
         }
-      scene->clear();
-      scene->addPixmap(extractor->m_atlas);
+      sceneLayers->clear();
 
-      // On rafraîchit la liste
+      // On ajoute la nouvelle image modifiée
+      QGraphicsPixmapItem *item = sceneLayers->addPixmap(extractor->m_atlas);
+
+      // On ajuste la taille de la scène à la taille de l'atlas
+      sceneLayers->setSceneRect(extractor->m_atlas.rect());
+
+      // On demande à la vue de tout afficher proprement
+      ui->graphicsViewLayers->fitInView(item, Qt::KeepAspectRatio);
+
+             // 4. Mettre à jour la liste des frames
       populateFrameList(extractor->m_frames, extractor->m_atlas_index);
+
+      // 5. Réinitialiser l'animation pour prendre en compte les nouvelles dimensions
+      stopAnimation();
+      startAnimation(); // Relance avec les nouvelles tailles (maxFrameWidth corrigé)
     }
 }
 

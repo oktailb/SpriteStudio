@@ -30,6 +30,9 @@ QList<QPixmap> SpriteExtractor::extractFromPixmap(QPixmap atlasPixmap, int alpha
          // Important : on stocke l'atlas courant (qui peut être celui modifié avec transparence)
   m_atlas = atlasPixmap;
 
+  maxFrameWidth = 0;
+  maxFrameHeight = 0;
+
   QImage image = m_atlas.toImage();
 
   if (image.format() != QImage::Format_ARGB32 && image.hasAlphaChannel()) {
