@@ -30,6 +30,7 @@ set (${PROJECT_NAME}_SRC
     src/mainwindow.cpp
     src/gifextractor.cpp
     src/spriteextractor.cpp
+    src/jsonextractor.cpp
     src/arrangementmodel.cpp
 )
 
@@ -42,6 +43,7 @@ set (${PROJECT_NAME}_INCLUDE
     include/extractor.h
     include/gifextractor.h
     include/spriteextractor.h
+    include/jsonextractor.h
     include/arrangementmodel.h
 )
 

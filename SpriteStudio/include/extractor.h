@@ -16,6 +16,7 @@ public:
     }
 
     virtual QList<QPixmap> extractFrames(const QString &filePath, int alphaThreshold, int verticalTolerance) = 0;
+    virtual bool           exportFrames(const QString &basePath, const QString &projectName) = 0;
 
     void addFrame(const QPixmap &pixmap)
     {
