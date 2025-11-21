@@ -123,7 +123,11 @@ private slots:
 
     void on_actionExport_triggered();
 
-  private:
+    void on_Play_clicked();
+
+    void on_Pause_clicked();
+
+private:
     Ui::MainWindow *ui;
     ArrangementModel                    *frameModel;
     QList<Extractor::Box>               frameBoxes;

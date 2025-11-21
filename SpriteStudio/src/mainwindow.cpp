@@ -50,6 +50,9 @@ MainWindow::MainWindow(QWidget *parent)
   QObject::connect(ui->fps, QOverload<int>::of(&QSpinBox::valueChanged),
                     this, &MainWindow::startAnimation);
   ui->graphicsViewResult->setScene(new QGraphicsScene(this));
+  ui->Play->setVisible(false);
+  ui->Pause->setVisible(true);
+
   startAnimation();
 }
 
@@ -864,3 +867,34 @@ void MainWindow::exportSpriteSheet(const QString &basePath, const QString &proje
       QMessageBox::critical(this, tr("Erreur d'écriture"), tr("Impossible d'écrire le fichier JSON. Vérifiez les permissions."));
     }
 }
+
+void MainWindow::on_Play_clicked()
+{
+    if (selectedFrameRows.isEmpty()) {
+        startAnimation();
+        return;
+    }
+
+    int fpsValue = ui->fps->value();
+    int intervalMs = (fpsValue > 0) ? (1000 / fpsValue) : 100;
+    animationTimer->setInterval(intervalMs);
+
+    if (!animationTimer->isActive()) {
+        animationTimer->start();
+    }
+
+    ui->Pause->setVisible(true);
+    ui->Play->setVisible(false);
+}
+
+
+void MainWindow::on_Pause_clicked()
+{
+    if (animationTimer->isActive()) {
+        animationTimer->stop();
+    }
+    ui->Play->setVisible(true);
+    ui->Pause->setVisible(false);
+
+}
+
