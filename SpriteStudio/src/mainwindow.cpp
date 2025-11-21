@@ -119,6 +119,23 @@ void MainWindow::updateAnimation()
       return;
     }
 
+  ui->sliderFrom->blockSignals(true);
+  ui->sliderFrom->setValue(currentAnimationFrameIndex);
+  ui->sliderFrom->blockSignals(false);
+
+  int fps = ui->fps->value();
+  if (fps <= 0) fps = 60;
+
+  double msPerFrame = 1000.0 / (double)fps;
+  int currentMs = (int)(currentAnimationFrameIndex * msPerFrame);
+
+  QTime currentTime(0, 0, 0);
+  currentTime = currentTime.addMSecs(currentMs);
+
+  ui->timeFrom->setDisplayFormat("mm:ss:zzz");
+  ui->timeFrom->setTime(currentTime);
+
+
   const QPixmap &currentFrame = frames.at(frameListIndex);
 
   QGraphicsScene *scene = ui->graphicsViewResult->scene();
