@@ -76,6 +76,21 @@ MainWindow::MainWindow(QWidget *parent)
   connect(ui->graphicsViewLayers, &QWidget::customContextMenuRequested,
            this, &MainWindow::onAtlasContextMenuRequested);
 
+  // Configure the view that displays the sprite atlas (ui->graphicsViewLayers).
+  // QGraphicsView::FitInView ensures the entire scene fits inside the view, scaling if necessary.
+  ui->graphicsViewLayers->setRenderHint(QPainter::Antialiasing, true);
+  ui->graphicsViewLayers->setOptimizationFlag(QGraphicsView::DontAdjustForAntialiasing, true);
+  ui->graphicsViewLayers->setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+  ui->graphicsViewLayers->setResizeAnchor(QGraphicsView::AnchorViewCenter);
+  ui->graphicsViewLayers->fitInView(ui->graphicsViewLayers->sceneRect(), Qt::KeepAspectRatio);
+
+  // Configure the view that displays the animation preview (ui->graphicsViewResult).
+  ui->graphicsViewResult->setRenderHint(QPainter::Antialiasing, true);
+  ui->graphicsViewResult->setOptimizationFlag(QGraphicsView::DontAdjustForAntialiasing, true);
+  ui->graphicsViewResult->setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+  ui->graphicsViewResult->setResizeAnchor(QGraphicsView::AnchorViewCenter);
+  ui->graphicsViewResult->fitInView(ui->graphicsViewResult->sceneRect(), Qt::KeepAspectRatio);
+
   // Start the animation immediately (it will likely run with a single frame until a file is loaded).
   startAnimation();
   // Set the ready flag to true now that basic initialization is complete.
@@ -741,6 +756,7 @@ void MainWindow::processFile(const QString &fileName)
 
              this->populateFrameList(extractor->m_frames, extractor->m_atlas_index);
              // Ensure animation is started after the loading
+             this->setupGraphicsView(extractor->m_atlas);
              this->stopAnimation();
              this->startAnimation();
              ui->verticalTolerance->setValue(extractor->m_maxFrameHeight / 3);
@@ -764,6 +780,66 @@ void MainWindow::processFile(const QString &fileName)
       view->show();
 
       populateFrameList(extractor->m_frames, extractor->m_atlas_index);
+    }
+}
+
+void MainWindow::setupGraphicsView(const QPixmap &pixmap)
+{
+  // Get the existing scene or create a new one if it's the first time.
+  QGraphicsScene *scene = ui->graphicsViewLayers->scene();
+  if (!scene) {
+      scene = new QGraphicsScene(this);
+      ui->graphicsViewLayers->setScene(scene);
+    }
+
+  // Clear any previous items (old atlas, old bounding boxes) from the scene.
+  scene->clear();
+
+  // 1. Add the main atlas image to the scene.
+  QGraphicsPixmapItem *atlasItem = new QGraphicsPixmapItem(pixmap);
+  scene->addItem(atlasItem);
+
+  // 2. Set the scene's bounding rect to the exact size of the atlas image.
+  // This is crucial for fitInView() to know what dimensions to scale.
+  scene->setSceneRect(pixmap.rect());
+
+  // 3. Configure the view to display the entire scene, preserving aspect ratio.
+  // This makes the atlas occupy the maximum space without cropping or distortion.
+  // Qt::KeepAspectRatio ensures the image doesn't stretch to fill the view if the aspect ratios differ.
+  ui->graphicsViewLayers->fitInView(atlasItem, Qt::KeepAspectRatio);
+
+  // The animation preview view (graphicsViewResult) must also have its scene initialized,
+  // although it will display individual frames later. We set its sceneRect to the max frame size.
+  QGraphicsScene *resultScene = ui->graphicsViewResult->scene();
+  if (!resultScene) {
+      resultScene = new QGraphicsScene(this);
+      ui->graphicsViewResult->setScene(resultScene);
+    }
+
+  // Set the scene size for the animation preview to the maximum bounding box size.
+  // This prevents the frame from jumping around and maintains a fixed aspect ratio for the preview.
+  if (extractor) {
+      resultScene->setSceneRect(0, 0, extractor->m_maxFrameWidth, extractor->m_maxFrameHeight);
+      // Force the result view to fit the scene rect.
+      ui->graphicsViewResult->fitInView(resultScene->sceneRect(), Qt::KeepAspectRatio);
+    }
+}
+
+void MainWindow::resizeEvent(QResizeEvent *event)
+{
+  // Call the base class implementation first.
+  QMainWindow::resizeEvent(event);
+
+  // Re-fit the atlas view (graphicsViewLayers)
+  QGraphicsScene *atlasScene = ui->graphicsViewLayers->scene();
+  if (atlasScene && !atlasScene->sceneRect().isEmpty()) {
+      ui->graphicsViewLayers->fitInView(atlasScene->sceneRect(), Qt::KeepAspectRatio);
+    }
+
+  // Re-fit the animation preview view (graphicsViewResult)
+  QGraphicsScene *resultScene = ui->graphicsViewResult->scene();
+  if (resultScene && !resultScene->sceneRect().isEmpty()) {
+      ui->graphicsViewResult->fitInView(resultScene->sceneRect(), Qt::KeepAspectRatio);
     }
 }
 

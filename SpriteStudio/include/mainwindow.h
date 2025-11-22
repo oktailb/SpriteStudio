@@ -148,6 +148,14 @@ protected:
   void closeEvent(QCloseEvent *e) override;
 
   /**
+   * @brief Handles the window resize event.
+   * * When the main window is resized, we must manually force the QGraphicsViews
+   * to re-scale their contents to fit the new viewport size.
+   * * @param event The resize event object.
+   */
+  void resizeEvent(QResizeEvent *event) override;
+
+  /**
    * @brief Custom event filter used to monitor events on specific watched objects.
    *    * This is typically used to capture mouse events on the frames list view
    * to provide custom drag-and-drop feedback (e.g., controlling the FrameDelegate).
@@ -306,8 +314,10 @@ private:
   void processFile(const QString &fileName);
 
   /**
-   * @brief Sets up the central QGraphicsView to display the full sprite atlas.
-   * @param pixmap The QPixmap of the atlas image.
+   * @brief Sets up the graphics view to display the main sprite atlas.
+   * * This method is called after a new image file (sprite sheet or GIF) is loaded.
+   * It resets the scene, adds the new atlas pixmap, and ensures the view scales to fit it.
+   * * @param pixmap The QPixmap of the full sprite atlas.
    */
   void setupGraphicsView(const QPixmap &pixmap);
 
