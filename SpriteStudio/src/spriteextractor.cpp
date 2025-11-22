@@ -20,7 +20,7 @@ QList<QPixmap> SpriteExtractor::extractFrames(const QString &filePath, int alpha
     }
   m_atlas = atlasPixmap;
   m_filePath = filePath;
-  // On délègue le travail à la méthode qui traite la pixmap
+
   return extractFromPixmap(alphaThreshold, verticalTolerance);
 }
 
@@ -37,7 +37,7 @@ QList<QPixmap> SpriteExtractor::extractFromPixmap(int alphaThreshold, int vertic
   if (image.format() != QImage::Format_ARGB32 && image.hasAlphaChannel()) {
       image = image.convertToFormat(QImage::Format_ARGB32);
     } else if (!image.hasAlphaChannel()) {
-      // Force le canal Alpha si c'est un BMP/JPG
+      // Force Alpha layer if BMP/JPG
       image = image.convertToFormat(QImage::Format_ARGB32);
     }
 

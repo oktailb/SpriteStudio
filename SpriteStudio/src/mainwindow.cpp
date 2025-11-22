@@ -29,29 +29,46 @@ MainWindow::MainWindow(QWidget *parent)
       , currentAnimationFrameIndex(0)
 {
   ui->setupUi(this);
+  // Enable drag and drop events for the main window (to handle file drops).
   setAcceptDrops(true);
+  // Start a low-frequency system timer (100ms interval) for general background checks/updates.
   timerId = startTimer(100);
-  ready = true;
+
+  // --- Frame List (QListView) Setup ---
+
+  // Assign the custom model to the frames list view.
   ui->framesList->setModel(frameModel);
   ui->framesList->setViewMode(QListView::IconMode);
   ui->framesList->setSelectionMode(QAbstractItemView::ExtendedSelection);
+
+  // Connect the selection change signal to automatically start/restart the animation
+  // when the user selects or deselects frames.
   QObject::connect(ui->framesList->selectionModel(), &QItemSelectionModel::selectionChanged,
                     this, &MainWindow::startAnimation);
   ui->timingLabel->setText(" -> Timing " + QString::number(1000.0  / (double)ui->fps->value(), 'g', 4) + "ms");
+
+  // Connect the click signal to the slot that handles highlighting the frame in the atlas view.
   QObject::connect(ui->framesList, &QListView::clicked,
                     this, &MainWindow::on_framesList_clicked);
   QObject::connect(frameModel, &ArrangementModel::mergeRequested,
                     this, &MainWindow::onMergeFrames);
   listDelegate = new FrameDelegate(this);
   ui->framesList->setItemDelegate(listDelegate);
+
+  // Install the main window as an event filter on the list view's viewport.
+  // This allows the main window to intercept mouse/drag events for the custom drag-and-drop delegate logic.
   ui->framesList->viewport()->installEventFilter(this);
   ui->framesList->setContextMenuPolicy(Qt::CustomContextMenu);
   QObject::connect(ui->framesList, &QListView::customContextMenuRequested,
                     this, &MainWindow::on_framesList_customContextMenuRequested);
+
+  // --- Animation Setup ---
   QObject::connect(animationTimer, &QTimer::timeout,
                     this, &MainWindow::updateAnimation);
   QObject::connect(ui->fps, QOverload<int>::of(&QSpinBox::valueChanged),
                     this, &MainWindow::startAnimation);
+
+  // --- Graphics View Setup ---
   ui->graphicsViewResult->setScene(new QGraphicsScene(this));
   ui->Play->setVisible(false);
   ui->Pause->setVisible(true);
@@ -59,18 +76,22 @@ MainWindow::MainWindow(QWidget *parent)
   connect(ui->graphicsViewLayers, &QWidget::customContextMenuRequested,
            this, &MainWindow::onAtlasContextMenuRequested);
 
+  // Start the animation immediately (it will likely run with a single frame until a file is loaded).
   startAnimation();
+  // Set the ready flag to true now that basic initialization is complete.
+  ready = true;
 }
 
 void MainWindow::onAtlasContextMenuRequested(const QPoint &pos)
 {
-  // On vérifie qu'on a bien une image chargée
-  if (!extractor || extractor->m_atlas.isNull()) return;
+  // Cjeck if a frame is loaded
+  if (!extractor || extractor->m_atlas.isNull())
+    return;
 
   QMenu menu(this);
   QAction *removeBgAction = menu.addAction(tr("Supprimer le fond (Auto)"));
 
-         // On connecte l'action à notre fonction de traitement
+  // Connect the action to the treatment method
   connect(removeBgAction, &QAction::triggered, this, &MainWindow::removeAtlasBackground);
 
   menu.exec(ui->graphicsViewLayers->mapToGlobal(pos));
@@ -83,17 +104,16 @@ void MainWindow::removeAtlasBackground()
   QImage image = extractor->m_atlas.toImage();
   image = image.convertToFormat(QImage::Format_ARGB32);
 
-         // 1. Trouver la couleur de fond (La plus fréquente / Mode)
-         // On pourrait aussi prendre le pixel (0,0) par défaut
+  // Find the most frequet color
   QMap<QRgb, int> histogram;
   int maxCount = 0;
   QRgb backgroundColor = 0;
 
-         // Optimisation : on ne scanne qu'un pixel sur 4 pour aller vite
+  // Optimisation : scan only even pixels / lines to be faster. Statiscally same result
   for (int y = 0; y < image.height(); y += 2) {
       for (int x = 0; x < image.width(); x += 2) {
           QRgb pixel = image.pixel(x, y);
-          // On ignore les pixels déjà transparents
+          // Ignore pixels near of pure alpha already
           if (qAlpha(pixel) < 10) continue;
 
           histogram[pixel]++;
@@ -104,21 +124,21 @@ void MainWindow::removeAtlasBackground()
         }
     }
 
-         // Si on a rien trouvé (image vide ou full transparent)
-  if (maxCount == 0) return;
+  // Case of pure transparent background
+  if (maxCount == 0)
+    return;
 
   QColor bgCol(backgroundColor);
-  qDebug() << "Fond détecté :" << bgCol.name();
 
-         // 2. Remplacement par la transparence
-         // On utilise une petite tolérance pour les artefacts de compression JPG
+  // 2. Replacement of the detected color by alpha
+  // Use a tolerance value to avoid compression artefacts
   int tolerance = 10;
 
   for (int y = 0; y < image.height(); ++y) {
       for (int x = 0; x < image.width(); ++x) {
           QColor pixCol(image.pixel(x, y));
 
-                 // Calcul de distance simple (Manhattan)
+          // Compute distance from tolerance
           int diff = std::abs(pixCol.red() - bgCol.red()) +
                      std::abs(pixCol.green() - bgCol.green()) +
                      std::abs(pixCol.blue() - bgCol.blue());
@@ -129,19 +149,18 @@ void MainWindow::removeAtlasBackground()
         }
     }
 
-         // 3. Mise à jour et Relance de l'extraction
-         // Attention : Il faut caster l'extractor vers SpriteExtractor pour accéder à la nouvelle méthode
+  // Re-launch sprites extraction with a cleared background
   SpriteExtractor *spriteExt = dynamic_cast<SpriteExtractor*>(extractor);
   if (spriteExt) {
 
-      // 1. Mettre à jour l'atlas interne de l'extracteur AVANT l'extraction
+      // 1. Update sprite atlas on extractor data model
       extractor->m_atlas = QPixmap::fromImage(image);
 
-             // 2. Relancer l'extraction (cela va recalculer maxFrameWidth/Height)
+      // 2. Recompute extraction and max width/height
       spriteExt->extractFromPixmap(ui->alphaThreshold->value(),
                                    ui->verticalTolerance->value());
 
-             // 3. Mettre à jour la vue principale (Layers) avec la nouvelle image transparente
+      // 3. Refresh main view
       QGraphicsScene *sceneLayers = ui->graphicsViewLayers->scene();
       if (!sceneLayers) {
           sceneLayers = new QGraphicsScene(this);
@@ -149,21 +168,19 @@ void MainWindow::removeAtlasBackground()
         }
       sceneLayers->clear();
 
-             // On ajoute la nouvelle image modifiée
+      // Add modified picture
       QGraphicsPixmapItem *item = sceneLayers->addPixmap(extractor->m_atlas);
 
-             // On ajuste la taille de la scène à la taille de l'atlas
+      // Re-adjust scene to the picture size
       sceneLayers->setSceneRect(extractor->m_atlas.rect());
-
-             // On demande à la vue de tout afficher proprement
       ui->graphicsViewLayers->fitInView(item, Qt::KeepAspectRatio);
 
-             // 4. Mettre à jour la liste des frames
+      // 4. Refresn frame list view
       populateFrameList(extractor->m_frames, extractor->m_atlas_index);
 
-             // 5. Réinitialiser l'animation pour prendre en compte les nouvelles dimensions
+      // 5. Relaunch animation in consequence
       stopAnimation();
-      startAnimation(); // Relance avec les nouvelles tailles (maxFrameWidth corrigé)
+      startAnimation();
     }
 }
 
@@ -259,14 +276,14 @@ void MainWindow::updateAnimation()
 
   QGraphicsPixmapItem *item =scene->addPixmap(currentFrame);
 
-         // Calculer le décalage pour centrer l'image dans la zone de la scène
+  // Center the animation
   qreal x_offset = (extractor->m_maxFrameWidth - currentFrame.width()) / 2.0;
   qreal y_offset = (extractor->m_maxFrameHeight - currentFrame.height()) / 2.0;
-  item->setPos(x_offset, y_offset); // Centrer la frame plus petite
+  item->setPos(x_offset, y_offset);
 
   currentAnimationFrameIndex++;
   if (currentAnimationFrameIndex >= selectedFrameRows.size()) {
-      currentAnimationFrameIndex = 0; // Boucler
+      currentAnimationFrameIndex = 0; // Forever loop
     }
 }
 
@@ -348,7 +365,7 @@ void MainWindow::reverseSelectedFramesOrder()
   frameModel->blockSignals(false);
 
   ui->framesList->update();
-  ui->framesList->selectionModel()->select(selectedIndexes.first(), QItemSelectionModel::ClearAndSelect); // Resélectionner le premier item du nouveau bloc
+  ui->framesList->selectionModel()->select(selectedIndexes.first(), QItemSelectionModel::ClearAndSelect); // Reselect first item of the block
 
   startAnimation();
 }
@@ -382,24 +399,19 @@ void MainWindow::deleteFrame(int row)
       return;
     }
 
-         // 1. SUPPRESSION des données internes
+  // 1. Cleanup internal data
   extractor->m_atlas_index.removeAt(row);
-  extractor->m_frames.removeAt(row); // Si vous utilisez cette liste pour la prévisualisation/animation
+  extractor->m_frames.removeAt(row);
 
-         // 2. SUPPRESSION du modèle (visuel)
+  // 2. Cleanup model
   frameModel->removeRow(row);
 
-         // 3. Nettoyage et rafraîchissement
-         // Si la frame supprimée était sélectionnée ou mise en évidence
+  // 3. Cleanup and refresh if the frame was selected
   if (boundingBoxHighlighter) {
       ui->graphicsViewLayers->scene()->removeItem(boundingBoxHighlighter);
       delete boundingBoxHighlighter;
       boundingBoxHighlighter = nullptr;
     }
-
-         // Si vous aviez un aperçu actif, vous pouvez le mettre à jour ici.
-
-  qDebug() << "Frame supprimée. Frames restantes:" << extractor->m_atlas_index.size();
 }
 
 void MainWindow::deleteSelectedFrame()
@@ -410,21 +422,21 @@ void MainWindow::deleteSelectedFrame()
       return;
     }
 
-         // 1. Trier les index par ordre décroissant (important pour la suppression)
+  // 1. Sort by decreasing index (allows more safe deletion on the list)
   std::sort(selectedIndexes.begin(), selectedIndexes.end(), [](const QModelIndex& a, const QModelIndex& b) {
-    return a.row() > b.row(); // Trier par row décroissant
+    return a.row() > b.row();
   });
 
-         // 2. Supprimer la sélection actuelle du QListView pour éviter des problèmes d'index
+  // 2. Remove selection to avoid visualisation of deleted data
   ui->framesList->selectionModel()->clearSelection();
 
-         // 3. Itérer et supprimer du plus grand index vers le plus petit
+  // 3. Delete from upper index to lower
   for (const QModelIndex &index : selectedIndexes) {
       int rowToDelete = index.row();
       this->deleteFrame(rowToDelete);
     }
 
-         // 4. Nettoyer l'highlighter après toutes les suppressions
+  // 4. Cleanup highlighter
   if (boundingBoxHighlighter) {
       ui->graphicsViewLayers->scene()->removeItem(boundingBoxHighlighter);
       delete boundingBoxHighlighter;
@@ -434,7 +446,7 @@ void MainWindow::deleteSelectedFrame()
 
 void MainWindow::setMergeHighlight(const QModelIndex &index, bool show)
 {
-  // Nettoyage préventif
+  // PReventative cleanup
   if (!show || !index.isValid()) {
       clearMergeHighlight();
       return;
@@ -442,18 +454,18 @@ void MainWindow::setMergeHighlight(const QModelIndex &index, bool show)
 
   int row = index.row();
   if (row >= 0 && row < extractor->m_atlas_index.size()) {
-      // On récupère la box correspondante
+      // Get the matching box
       Extractor::Box box = extractor->m_atlas_index[row];
       QRectF rect(box.x, box.y, box.w, box.h);
 
-             // Création lazy du rectangle
+      // Rectangle lazy creation
       if (!mergeHighlighter) {
           mergeHighlighter = new QGraphicsRectItem();
           QPen pen(Qt::magenta);
           pen.setWidth(3);
           pen.setStyle(Qt::DotLine);
           mergeHighlighter->setPen(pen);
-          // Important : ZValue élevé pour être au-dessus de l'image
+          // Important : Ensure to be over the image
           mergeHighlighter->setZValue(10);
 
           if (ui->graphicsViewLayers->scene()) {
@@ -461,7 +473,7 @@ void MainWindow::setMergeHighlight(const QModelIndex &index, bool show)
             }
         }
 
-             // Si la scène a changé entre temps (rechargement de fichier)
+      // Force reload if the scene have been altered
       if (mergeHighlighter->scene() != ui->graphicsViewLayers->scene()) {
           if (ui->graphicsViewLayers->scene()) {
               ui->graphicsViewLayers->scene()->addItem(mergeHighlighter);
@@ -482,44 +494,44 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
           QPoint pos = dmEvent->position().toPoint();
           QModelIndex index = ui->framesList->indexAt(pos);
 
-                 // On désactive TOUJOURS l'indicateur par défaut de Qt car on dessine le nôtre
+          // We will draw our wn indicator -> sisable the default one
           ui->framesList->setDropIndicatorShown(false);
 
           if (index.isValid()) {
-              // Récupérer la géométrie visuelle de l'item survolé
+              // Catch overred item geometry
               QRect rect = ui->framesList->visualRect(index);
 
-                     // Calculer la position de la souris relative à l'item (0 à width)
+              // Compute mouse relative position
               int relativeX = pos.x() - rect.left();
               int width = rect.width();
 
-                     // ZONES DE DÉTECTION
-                     // Marge de 20% sur les bords pour l'insertion
+              // DETECTION AREA
+              // 20% TOLERANCY -> TOO MUCH ? May merge when insertion requested
               int margin = width * 0.2;
 
               if (relativeX < margin) {
-                  // --- CAS : INSERTION GAUCHE ---
+                  // --- CASE : LEFT SIDE INSERTION ---
                   listDelegate->setHighlight(index.row(), FrameDelegate::InsertLeft);
-                  clearMergeHighlight(); // Pas de visuel sur l'atlas
+                  clearMergeHighlight(); // not visible on atlas
                 }
               else if (relativeX > (width - margin)) {
-                  // --- CAS : INSERTION DROITE ---
+                  // --- CASE : RIGHT SIDE INSERTION ---
                   listDelegate->setHighlight(index.row(), FrameDelegate::InsertRight);
-                  clearMergeHighlight(); // Pas de visuel sur l'atlas
+                  clearMergeHighlight(); // not visible on atlas
                 }
               else {
-                  // --- CAS : FUSION (CENTRE) ---
+                  // --- CASE : FUSION (CENTER) ---
                   listDelegate->setHighlight(index.row(), FrameDelegate::Merge);
-                  setMergeHighlight(index, true); // On active le visuel sur l'atlas
+                  setMergeHighlight(index, true); // shall be visible on atlas
                 }
             } else {
-              // Si on est dans le vide (après la dernière frame)
+              // empty space (start or end of the list)
               listDelegate->setHighlight(-1, FrameDelegate::None);
               clearMergeHighlight();
             }
 
           ui->framesList->viewport()->update();
-          // Important : ne pas bloquer l'événement pour que le drag continue
+          // Important : Let the drag continue
         }
       else if (event->type() == QEvent::DragLeave || event->type() == QEvent::Drop) {
           // Nettoyage
@@ -546,7 +558,7 @@ void MainWindow::onMergeFrames(int sourceRow, int targetRow)
       return;
     }
 
-         // 1. Calcul et Fusion (Identique à avant)
+  // 1. Compute and merge
   Extractor::Box srcBox = extractor->m_atlas_index[sourceRow];
   Extractor::Box tgtBox = extractor->m_atlas_index[targetRow];
 
@@ -556,7 +568,7 @@ void MainWindow::onMergeFrames(int sourceRow, int targetRow)
 
   QPixmap mergedPixmap = this->extractor->m_atlas.copy(unitedRect);
 
-         // 2. Mise à jour des données internes de la CIBLE
+  // 2. Update target internal data
   Extractor::Box newBox;
   newBox.x = unitedRect.x();
   newBox.y = unitedRect.y();
@@ -566,33 +578,27 @@ void MainWindow::onMergeFrames(int sourceRow, int targetRow)
   extractor->m_atlas_index[targetRow] = newBox;
   extractor->m_frames[targetRow] = mergedPixmap;
 
-         // 3. Mise à jour VISUELLE de la CIBLE uniquement
+  // 3. Update target visual
   QStandardItem *targetItem = frameModel->item(targetRow);
   if (targetItem) {
       QPixmap thumbnail = mergedPixmap.scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation);
       targetItem->setData(thumbnail, Qt::DecorationRole);
-      // Mise à jour du texte pour refléter les nouvelles coordonnées
-      targetItem->setData(QString("Merged\n[%1,%2](%3x%4)")
-                               .arg(newBox.x).arg(newBox.y).arg(newBox.w).arg(newBox.h),
+      // Make the merge operation visible on the list
+      targetItem->setData(QString("%1 + %2 merge\n[%3,%4](%5x%6)")
+                               .arg(sourceRow).arg(targetRow).arg(newBox.x).arg(newBox.y).arg(newBox.w).arg(newBox.h),
                            Qt::DisplayRole);
     }
 
-         // 4. SUPPRESSION DE LA SOURCE
-         // ATTENTION : On supprime uniquement des listes de données internes !
-         // On ne touche PAS au frameModel->removeRow(sourceRow) ici.
-         // Le mode InternalMove de la QListView le fera automatiquement au retour du drop.
-
+  // 4. SOURCE DELETION
   extractor->m_atlas_index.removeAt(sourceRow);
   extractor->m_frames.removeAt(sourceRow);
 
-         // Nettoyage de la vue graphique
+  // Graphical cleanup
   if (boundingBoxHighlighter) {
       ui->graphicsViewLayers->scene()->removeItem(boundingBoxHighlighter);
       delete boundingBoxHighlighter;
       boundingBoxHighlighter = nullptr;
     }
-
-  qDebug() << "Fusion terminée. Model laissé au soin de Qt InternalMove.";
 }
 
 void MainWindow::populateFrameList(const QList<QPixmap> &frameList, const QList<Extractor::Box> &boxList)
@@ -698,7 +704,7 @@ void MainWindow::processFile(const QString &fileName)
   QFileInfo fileInfo(fileName);
   QString extension = fileInfo.suffix().toLower();
 
-         // Nettoyage de l'extracteur précédent
+  // Cleanup previous extractor
   if (extractor) {
       delete extractor;
       extractor = nullptr;
@@ -711,17 +717,14 @@ void MainWindow::processFile(const QString &fileName)
           return;
         }
 
-      // Vérification du nombre de frames
+      // Check frames number
       int frameCount = movie.frameCount();
 
       if (frameCount > 1) {
-          // CAS 1 : GIF animé (plusieurs frames) -> Utiliser GifExtractor
-          qDebug() << "Fichier GIF : Détecté" << frameCount << "frames. Utilisation de GifExtractor.";
+          // CASE 1 : Animated GIF -> Use GifExtractor
           extractor = new GifExtractor(this);
         } else {
-          // CAS 2 : GIF statique (0 ou 1 frame) -> Utiliser SpriteExtractor
-          // Cela permet l'extraction de sprites et l'application du "Magic Wand" (suppression de fond).
-          qDebug() << "Fichier GIF : Détecté 1 frame ou moins. Utilisation de SpriteExtractor.";
+          // CASE 2 : non animated GIF (0 ou 1 frame) -> Use SpriteExtractor
           extractor = new SpriteExtractor(this);
         }
     }
@@ -736,9 +739,8 @@ void MainWindow::processFile(const QString &fileName)
   connect(extractor, &Extractor::extractionFinished,
            this, [this]() {
 
-             //this->setupGraphicsView(extractor->m_atlas);
              this->populateFrameList(extractor->m_frames, extractor->m_atlas_index);
-             // On s'assure que l'animation est lancée ou arrêtée correctement après l'extraction
+             // Ensure animation is started after the loading
              this->stopAnimation();
              this->startAnimation();
              ui->verticalTolerance->setValue(extractor->m_maxFrameHeight / 3);
@@ -802,39 +804,39 @@ void MainWindow::on_verticalTolerance_valueChanged(int verticalTolerance)
 void MainWindow::on_framesList_clicked(const QModelIndex &index)
 {
   if (!ui->graphicsViewLayers->scene() || index.row() >= extractor->m_atlas_index.size()) {
-      return; // Pas de scène ou index invalide
+      return; // No scene or invalid index
     }
 
   QGraphicsScene *scene = ui->graphicsViewLayers->scene();
   const Extractor::Box &box = extractor->m_atlas_index.at(index.row());
 
-         // 1. Supprimer l'ancien highlighter s'il existe
+  // 1. Remove existing highlighter
   if (boundingBoxHighlighter) {
       scene->removeItem(boundingBoxHighlighter);
       delete boundingBoxHighlighter;
       boundingBoxHighlighter = nullptr;
     }
 
-         // 2. Créer le nouveau rectangle (QGraphicsRectItem)
-         // La Box est {x, y, w, h}
+  // 2. Create new rectangle (QGraphicsRectItem)
+  // La Box est {x, y, w, h}
   QRectF rect(box.x, box.y, box.w, box.h);
 
-         // 3. Définir le style du dessin (couleur, épaisseur)
-  QPen pen(Qt::red); // Utiliser une couleur vive pour le surlignage
-  pen.setWidth(2);   // Épaisseur du trait
-  pen.setStyle(Qt::DashLine); // Ligne pointillée ou continue (DashLine est souvent bien visible)
+  // 3. Drawing style definition
+  QPen pen(Qt::red); // Use obvious color
+  pen.setWidth(2);   // and a visible fat line
+  pen.setStyle(Qt::DashLine); // Dashe line to increase visibility
 
-         // 4. Dessiner et ajouter à la scène
+  // 4. Draw the rectangle and add it to the scene
   boundingBoxHighlighter = new QGraphicsRectItem(rect);
   boundingBoxHighlighter->setPen(pen);
-  boundingBoxHighlighter->setBrush(QBrush(QColor(255, 0, 0, 50))); // Remplissage semi-transparent
+  boundingBoxHighlighter->setBrush(QBrush(QColor(255, 0, 0, 50))); // Fill with mid alpha
 
   scene->addItem(boundingBoxHighlighter);
 }
 
 void MainWindow::on_actionExport_triggered()
 {
-  // Vérifier si des frames existent
+  // Check if have frames
   if (extractor->m_frames.isEmpty()) {
       QMessageBox::warning(this, tr("Exportation impossible"), tr("Veuillez charger ou créer des frames avant d'exporter."));
       return;
@@ -845,12 +847,12 @@ void MainWindow::on_actionExport_triggered()
   QString selectedFile = QFileDialog::getSaveFileName(
       this,
       tr("Exporter le Sprite Atlas"),
-      QDir::homePath(), // Chemin par défaut
+      QDir::homePath(), // Default path TODO: remember previous if export is used multiple times
       filter
       );
 
   if (selectedFile.isEmpty()) {
-      return; // Annulé par l'utilisateur
+      return; // Cancel case
     }
 
   QFileInfo fileInfo(selectedFile);
