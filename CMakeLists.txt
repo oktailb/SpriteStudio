@@ -25,10 +25,6 @@ install(TARGETS
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
-install(FILES ${CMAKE_CURRENT_LIST_DIR}/config.ini
-    DESTINATION .
-)
-
 if (WIN32)
 #    install(FILES ${CMAKE_CXX_COMPILER}/bin/*.dll
 
