@@ -271,12 +271,6 @@ void MainWindow::updateAnimation()
 
 void MainWindow::on_framesList_customContextMenuRequested(const QPoint &pos)
 {
-  // On vérifie si n'importe quel élément est sous la souris
-  // Note : On pourrait aussi vérifier si la sélection est non-vide
-  // pour garder le menu contextuel utilisable même si la souris n'est pas sur un item.
-  QModelIndex index = ui->framesList->indexAt(pos);
-
-         // Utilisation des éléments sélectionnés plutôt que l'index sous la souris
   QModelIndexList selected = ui->framesList->selectionModel()->selectedIndexes();
 
   if (!selected.isEmpty()) {
@@ -484,7 +478,7 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
 
       if (event->type() == QEvent::DragMove) {
           QDragMoveEvent *dmEvent = static_cast<QDragMoveEvent *>(event);
-          QPoint pos = dmEvent->pos();
+          QPoint pos = dmEvent->position().toPoint();
           QModelIndex index = ui->framesList->indexAt(pos);
 
                  // On désactive TOUJOURS l'indicateur par défaut de Qt car on dessine le nôtre
@@ -689,7 +683,6 @@ void MainWindow::on_actionAbout_triggered()
 void MainWindow::on_actionOpen_triggered()
 {
   QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"), "", tr("Images (*.png *.jpg *.jpeg *.bmp *.gif *.json)"));
-  QString type = fileName.split(".").last();
   currentFilePath = fileName;
   processFile(currentFilePath);
   ui->verticalTolerance->setValue(extractor->maxFrameHeight / 3);

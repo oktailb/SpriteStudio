@@ -23,6 +23,8 @@ QList<QPixmap> GifExtractor::extractFrames(const QString &filePath, int alphaThr
 
 QList<QPixmap> GifExtractor::extractFromPixmap(int alphaThreshold, int verticalTolerance)
 {
+  Q_UNUSED(alphaThreshold);
+  Q_UNUSED(verticalTolerance);
   QList<QImage> extractedImages;
   QMovie movie(m_filePath);
 
@@ -114,5 +116,9 @@ QList<QPixmap> GifExtractor::extractFromPixmap(int alphaThreshold, int verticalT
 
 bool GifExtractor::exportFrames(const QString &basePath, const QString &projectName, Extractor *in)
 {
+  Q_UNUSED(basePath);
+  Q_UNUSED(projectName);
+  Q_UNUSED(in);
+
   return false;
 }

@@ -14,6 +14,9 @@ JsonExtractor::JsonExtractor(QObject *parent) : Extractor(parent)
 
 QList<QPixmap> JsonExtractor::extractFrames(const QString &filePath, int alphaThreshold, int verticalTolerance)
 {
+  Q_UNUSED(alphaThreshold);
+  Q_UNUSED(verticalTolerance);
+
   m_frames.clear();
   m_atlas_index.clear();
   m_filePath = filePath;
@@ -22,6 +25,9 @@ QList<QPixmap> JsonExtractor::extractFrames(const QString &filePath, int alphaTh
 
 QList<QPixmap> JsonExtractor::extractFromPixmap(int alphaThreshold, int verticalTolerance)
 {
+  Q_UNUSED(alphaThreshold);
+  Q_UNUSED(verticalTolerance);
+
   return m_frames;
 }
 

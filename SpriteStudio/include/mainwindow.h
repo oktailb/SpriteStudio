@@ -132,7 +132,7 @@ private slots:
     void removeAtlasBackground();
 
 private:
-    Ui::MainWindow *ui;
+    Ui::MainWindow *                    ui;
     ArrangementModel                    *frameModel;
     double                              timestamp;
 

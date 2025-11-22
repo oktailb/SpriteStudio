@@ -113,7 +113,6 @@ QList<QPixmap> SpriteExtractor::extractFromPixmap(int alphaThreshold, int vertic
           rects.append(QRect(box.x, box.y, box.w, box.h));
         }
 
-      QList<QRect> masterRects;
       QList<bool> isMaster(rects.size(), true);
 
       for (int i = 0; i < rects.size(); ++i) {
@@ -154,5 +153,9 @@ QList<QPixmap> SpriteExtractor::extractFromPixmap(int alphaThreshold, int vertic
 
 bool SpriteExtractor::exportFrames(const QString &basePath, const QString &projectName, Extractor *in)
 {
+  Q_UNUSED(basePath);
+  Q_UNUSED(projectName);
+  Q_UNUSED(in);
+
   return false;
 }
