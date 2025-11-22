@@ -739,15 +739,16 @@ void MainWindow::processFile(const QString &fileName)
       QMessageBox::warning(this, "Erreur d'ouverture", "Format de fichier non supporté.");
       return;
     }
-  // connect(extractor, &Extractor::extractionFinished,
-  //          this, [this](int frameCount) {
+  connect(extractor, &Extractor::extractionFinished,
+           this, [this]() {
 
-  //            this->setupGraphicsView(extractor->m_atlas);
-  //            this->populateFrameList(extractor->m_frames, extractor->m_atlas_index);
-  //            // On s'assure que l'animation est lancée ou arrêtée correctement après l'extraction
-  //            this->stopAnimation();
-  //            this->startAnimation();
-  //          });
+             //this->setupGraphicsView(extractor->m_atlas);
+             this->populateFrameList(extractor->m_frames, extractor->m_atlas_index);
+             // On s'assure que l'animation est lancée ou arrêtée correctement après l'extraction
+             this->stopAnimation();
+             this->startAnimation();
+             ui->verticalTolerance->setValue(extractor->maxFrameHeight / 3);
+           });
   extractor->extractFrames(fileName, alphaThreshold, verticalTolerance);
   if (boundingBoxHighlighter) {
       if (ui->graphicsViewLayers->scene()) {
