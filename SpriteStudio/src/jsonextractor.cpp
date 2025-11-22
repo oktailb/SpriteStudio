@@ -16,7 +16,12 @@ QList<QPixmap> JsonExtractor::extractFrames(const QString &filePath, int alphaTh
 {
   m_frames.clear();
   m_atlas_index.clear();
+  m_filePath = filePath;
+  return m_frames;
+}
 
+QList<QPixmap> JsonExtractor::extractFromPixmap(int alphaThreshold, int verticalTolerance)
+{
   return m_frames;
 }
 

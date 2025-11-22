@@ -18,17 +18,16 @@ QList<QPixmap> SpriteExtractor::extractFrames(const QString &filePath, int alpha
       qWarning() << "Erreur: Impossible de charger l'image:" << filePath;
       return m_frames;
     }
+  m_atlas = atlasPixmap;
+  m_filePath = filePath;
   // On délègue le travail à la méthode qui traite la pixmap
-  return extractFromPixmap(atlasPixmap, alphaThreshold, verticalTolerance);
+  return extractFromPixmap(alphaThreshold, verticalTolerance);
 }
 
-QList<QPixmap> SpriteExtractor::extractFromPixmap(QPixmap atlasPixmap, int alphaThreshold, int verticalTolerance)
+QList<QPixmap> SpriteExtractor::extractFromPixmap(int alphaThreshold, int verticalTolerance)
 {
   m_frames.clear();
   m_atlas_index.clear();
-
-         // Important : on stocke l'atlas courant (qui peut être celui modifié avec transparence)
-  m_atlas = atlasPixmap;
 
   maxFrameWidth = 0;
   maxFrameHeight = 0;
@@ -138,7 +137,7 @@ QList<QPixmap> SpriteExtractor::extractFromPixmap(QPixmap atlasPixmap, int alpha
     }
 
   for (const auto& box : m_atlas_index) {
-      QPixmap spriteFrame = atlasPixmap.copy(box.x, box.y, box.w, box.h);
+      QPixmap spriteFrame = m_atlas.copy(box.x, box.y, box.w, box.h);
       this->addFrame(spriteFrame);
       if (spriteFrame.width() > maxFrameWidth) {
           maxFrameWidth = spriteFrame.width();

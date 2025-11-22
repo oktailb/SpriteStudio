@@ -137,9 +137,8 @@ void MainWindow::removeAtlasBackground()
       extractor->m_atlas = QPixmap::fromImage(image);
 
              // 2. Relancer l'extraction (cela va recalculer maxFrameWidth/Height)
-      spriteExt->extractFromPixmap(extractor->m_atlas,
-                                    ui->alphaThreshold->value(),
-                                    ui->verticalTolerance->value());
+      spriteExt->extractFromPixmap(ui->alphaThreshold->value(),
+                                   ui->verticalTolerance->value());
 
              // 3. Mettre à jour la vue principale (Layers) avec la nouvelle image transparente
       QGraphicsScene *sceneLayers = ui->graphicsViewLayers->scene();
@@ -793,8 +792,14 @@ void MainWindow::on_alphaThreshold_valueChanged(int threshold)
 void MainWindow::on_verticalTolerance_valueChanged(int verticalTolerance)
 {
   Q_UNUSED(verticalTolerance);
-  if (!currentFilePath.isEmpty()) {
-      processFile(currentFilePath);
+  if (!extractor) {
+      if (!currentFilePath.isEmpty()) {
+          processFile(currentFilePath);
+        }
+    }
+  else
+    {
+      extractor->extractFromPixmap(ui->alphaThreshold->value(), ui->verticalTolerance->value());
     }
 }
 

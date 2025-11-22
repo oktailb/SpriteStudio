@@ -18,6 +18,7 @@ public:
     }
 
     virtual QList<QPixmap> extractFrames(const QString &filePath, int alphaThreshold, int verticalTolerance) = 0;
+    virtual QList<QPixmap> extractFromPixmap(int alphaThreshold, int verticalTolerance) = 0;
     virtual bool           exportFrames(const QString &basePath, const QString &projectName, Extractor* in) = 0;
 
     void addFrame(const QPixmap &pixmap)
@@ -33,14 +34,15 @@ public:
         int h;
     };
 
-    QList<QPixmap> m_frames;
-    QPixmap m_atlas;
-    QList<Box> m_atlas_index;
-    int maxFrameWidth;
-    int maxFrameHeight;
+    QList<QPixmap>  m_frames;
+    QPixmap         m_atlas;
+    QList<Box>      m_atlas_index;
+    QString         m_filePath;
+    int             maxFrameWidth;
+    int             maxFrameHeight;
 
 signals:
-    void extractionFinished(int frameCount);
+    void            extractionFinished(int frameCount);
 
 };
 
