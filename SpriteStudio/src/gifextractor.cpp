@@ -87,8 +87,8 @@ QList<QPixmap> GifExtractor::extractFromPixmap(int alphaThreshold, int verticalT
       return m_frames;
     }
 
-  maxFrameWidth = 0;
-  maxFrameHeight = 0;
+  m_maxFrameWidth = 0;
+  m_maxFrameHeight = 0;
   for (int i = 0; i < nb_frames; ++i) {
       const QImage &currentImage = extractedImages.at(i);
 
@@ -98,11 +98,11 @@ QList<QPixmap> GifExtractor::extractFromPixmap(int alphaThreshold, int verticalT
       int y = line * h;
       painter.drawImage(x, y, currentImage);
       m_atlas_index.push_back({x, y, w, h});
-      if (w > maxFrameWidth) {
-          maxFrameWidth = w;
+      if (w > m_maxFrameWidth) {
+          m_maxFrameWidth = w;
         }
-      if (h > maxFrameHeight) {
-          maxFrameHeight = h;
+      if (h > m_maxFrameHeight) {
+          m_maxFrameHeight = h;
         }
     }
 

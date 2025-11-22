@@ -254,13 +254,13 @@ void MainWindow::updateAnimation()
   QGraphicsScene *scene = ui->graphicsViewResult->scene();
   scene->clear();
 
-  scene->setSceneRect(0, 0, extractor->maxFrameWidth, extractor->maxFrameHeight);
+  scene->setSceneRect(0, 0, extractor->m_maxFrameWidth, extractor->m_maxFrameHeight);
 
   QGraphicsPixmapItem *item =scene->addPixmap(currentFrame);
 
          // Calculer le décalage pour centrer l'image dans la zone de la scène
-  qreal x_offset = (extractor->maxFrameWidth - currentFrame.width()) / 2.0;
-  qreal y_offset = (extractor->maxFrameHeight - currentFrame.height()) / 2.0;
+  qreal x_offset = (extractor->m_maxFrameWidth - currentFrame.width()) / 2.0;
+  qreal y_offset = (extractor->m_maxFrameHeight - currentFrame.height()) / 2.0;
   item->setPos(x_offset, y_offset); // Centrer la frame plus petite
 
   currentAnimationFrameIndex++;
@@ -685,7 +685,7 @@ void MainWindow::on_actionOpen_triggered()
   QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"), "", tr("Images (*.png *.jpg *.jpeg *.bmp *.gif *.json)"));
   currentFilePath = fileName;
   processFile(currentFilePath);
-  ui->verticalTolerance->setValue(extractor->maxFrameHeight / 3);
+  ui->verticalTolerance->setValue(extractor->m_maxFrameHeight / 3);
 }
 
 void MainWindow::processFile(const QString &fileName)
@@ -740,7 +740,7 @@ void MainWindow::processFile(const QString &fileName)
              // On s'assure que l'animation est lancée ou arrêtée correctement après l'extraction
              this->stopAnimation();
              this->startAnimation();
-             ui->verticalTolerance->setValue(extractor->maxFrameHeight / 3);
+             ui->verticalTolerance->setValue(extractor->m_maxFrameHeight / 3);
            });
   extractor->extractFrames(fileName, alphaThreshold, verticalTolerance);
   if (boundingBoxHighlighter) {

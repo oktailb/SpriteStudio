@@ -1,3 +1,8 @@
+/**
+ * @file extractor.h
+ * @brief Defines the abstract base class Extractor, the interface for all sprite extraction types.
+ */
+
 #ifndef EXTRACTOR_H
 #define EXTRACTOR_H
 
@@ -7,26 +12,88 @@
 #include <QString>
 #include <qpainter.h>
 
+/**
+ * @brief Abstract base class (interface) for all sprite extractors.
+ *
+ * This class defines the common interface that all sprite import mechanisms
+ * must implement (e.g., SpriteExtractor for static sheets, GifExtractor for animated GIFs, etc.).
+ * It manages the central state of the extracted data: individual frames, the composite atlas,
+ * and maximum frame size metadata.
+ *
+ * It inherits from QObject to enable signal/slot mechanisms (essential for asynchronous operations like GIFs).
+ */
 class Extractor : public QObject
 {
     Q_OBJECT
 public:
+    /**
+     * @brief Constructor for the Extractor class.
+     * @param parent The parent QObject.
+     */
     explicit Extractor(QObject *parent = nullptr) : QObject(parent)
     {
-      maxFrameWidth = 0;
-      maxFrameHeight = 0;
+      m_maxFrameWidth = 0;
+      m_maxFrameHeight = 0;
     }
 
+    /**
+     * @brief Extracts frames from the source file.
+     *
+     * This is the primary function for loading and slicing. It is implemented
+     * differently by each subclass (e.g., alpha detection for SpriteExtractor,
+     * sequential reading for GifExtractor).
+     *
+     * @param filePath Path to the source file (PNG, GIF, etc.).
+     * @param alphaThreshold Alpha threshold used for edge detection (used by SpriteExtractor).
+     * @param verticalTolerance Vertical tolerance between sprites (used by SpriteExtractor).
+     * @return QList of QPixmap containing all extracted frames.
+     */
     virtual QList<QPixmap> extractFrames(const QString &filePath, int alphaThreshold, int verticalTolerance) = 0;
+
+    /**
+     * @brief Re-runs the extraction algorithm on the atlas currently held in memory (m_atlas).
+     *
+     * Used to update the frames after an in-memory modification of the atlas (e.g., background removal)
+     * or a change in detection parameters (e.g., verticalTolerance).
+     *
+     * @note This is a pure virtual function. For non-detection based extractors (GifExtractor, JsonExtractor),
+     * it should be implemented as a no-operation (no-op).
+     *
+     * @param alphaThreshold Alpha threshold.
+     * @param verticalTolerance Vertical tolerance.
+     * @return QList of QPixmap containing the re-extracted frames.
+     */
     virtual QList<QPixmap> extractFromPixmap(int alphaThreshold, int verticalTolerance) = 0;
+
+    /**
+     * @brief Exports the extracted frames and metadata to a specified format.
+     *
+     * The export logic is often delegated to a specific exporter implementation (e.g., JsonExtractor for JSON format).
+     *
+     * @param basePath Base path for saving the output files.
+     * @param projectName Base name for the files (without extension).
+     * @param in Pointer to the source extractor containing the data to be exported.
+     * @return true if the export was successful, false otherwise.
+     */
     virtual bool           exportFrames(const QString &basePath, const QString &projectName, Extractor* in) = 0;
 
+    /**
+     * @brief Adds a frame to the internal m_frames list.
+     * @param pixmap The QPixmap frame to add.
+     */
     void addFrame(const QPixmap &pixmap)
     {
         if (!pixmap.isNull()) {
             m_frames.append(pixmap);
         }
     }
+
+    /**
+     * @brief Structure representing the Bounding Box of a sprite within the atlas.
+     *
+     * These coordinates (x, y, w, h) are used to generate the metadata file (e.g., JSON)
+     * during the export process.
+     */
     struct Box {
         int x;
         int y;
@@ -34,14 +101,18 @@ public:
         int h;
     };
 
-    QList<QPixmap>  m_frames;
-    QPixmap         m_atlas;
-    QList<Box>      m_atlas_index;
-    QString         m_filePath;
-    int             maxFrameWidth;
-    int             maxFrameHeight;
+    QList<QPixmap>  m_frames;         /**< List of individual frames (used by the Frame List and Animation). */
+    QPixmap         m_atlas;          /**< The complete source image (possibly composite, used by the 'Layers' view). */
+    QList<Box>      m_atlas_index;    /**< List of Box coordinates for each frame within m_atlas. */
+    QString         m_filePath;       /**< The original data file from a supported format. */
+    int             m_maxFrameWidth;  /**< Maximum width among all extracted frames (used for animation bounding box). */
+    int             m_maxFrameHeight; /**< Maximum height among all extracted frames (used for animation bounding box). */
 
 signals:
+    /**
+     * @brief Signal emitted when the frame extraction process is complete.
+     * @param frameCount The total number of frames successfully extracted.
+     */
     void            extractionFinished(int frameCount);
 
 };

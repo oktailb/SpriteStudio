@@ -9,53 +9,62 @@ ArrangementModel::ArrangementModel(QObject *parent)
 
 Qt::ItemFlags ArrangementModel::flags(const QModelIndex &index) const
 {
-    Qt::ItemFlags defaultFlags = QStandardItemModel::flags(index);
-    if (index.isValid()) {
-        // IMPORTANT : ItemIsDropEnabled permet de lâcher SUR l'item
-        return defaultFlags | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled;
+  // Retrieve the default flags for the item
+  Qt::ItemFlags defaultFlags = QStandardItemModel::flags(index);
+
+  if (index.isValid()) {
+      // For a valid item, enable dragging (source) and dropping (target for merge)
+      return defaultFlags | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled;
     }
-    // Si index invalide (espace vide), on autorise le drop pour la réorganisation
-    return defaultFlags | Qt::ItemIsDropEnabled;
+
+  // If the index is invalid (dropping into empty space/list end), still allow dropping
+  // for standard reordering functionality (handled by the base class).
+  return defaultFlags | Qt::ItemIsDropEnabled;
 }
 
 QMimeData *ArrangementModel::mimeData(const QModelIndexList &indexes) const
 {
-    // On utilise l'implémentation par défaut pour les données standard
-    QMimeData *mimeData = QStandardItemModel::mimeData(indexes);
+  // Use the default implementation for standard data
+  QMimeData *mimeData = QStandardItemModel::mimeData(indexes);
 
-    // On ajoute une données perso pour identifier facilement la ligne source
-    if (!indexes.isEmpty()) {
-        QByteArray encodedData;
-        QDataStream stream(&encodedData, QIODevice::WriteOnly);
-        // On prend juste la première ligne sélectionnée pour simplifier
-        stream << indexes.first().row();
-        mimeData->setData("application/x-sprite-row", encodedData);
+         // Add custom data to easily identify the source row
+  if (!indexes.isEmpty()) {
+      QByteArray encodedData;
+      QDataStream stream(&encodedData, QIODevice::WriteOnly);
+
+      // We only care about the first selected row for the drag source
+      stream << indexes.first().row();
+
+      // Custom mime type used to transport the source row index
+      mimeData->setData("application/x-sprite-row", encodedData);
     }
-    return mimeData;
+  return mimeData;
 }
 
 bool ArrangementModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
-                                    int row, int column, const QModelIndex &parent)
+                                int row, int column, const QModelIndex &parent)
 {
-    // Vérifions si c'est une fusion (Drop SUR un item existant)
-    // Si 'parent' est valide, cela signifie qu'on a lâché sur cet item
-    if (parent.isValid() && data->hasFormat("application/x-sprite-row")) {
+  // 1. Check for MERGE operation (Drop ONTO an existing item)
+  // 'parent.isValid()' is true when an item is dropped directly onto another item.
+  if (parent.isValid() && data->hasFormat("application/x-sprite-row")) {
 
-        QByteArray encodedData = data->data("application/x-sprite-row");
-        QDataStream stream(&encodedData, QIODevice::ReadOnly);
-        int sourceRow;
-        stream >> sourceRow;
+      // Extract the source row from the custom mime data
+      QByteArray encodedData = data->data("application/x-sprite-row");
+      QDataStream stream(&encodedData, QIODevice::ReadOnly);
+      int sourceRow;
+      stream >> sourceRow;
 
-        int targetRow = parent.row();
+      int targetRow = parent.row();
 
-        // On évite de fusionner sur soi-même
-        if (sourceRow != targetRow) {
-            qDebug() << "Fusion demandée : Source" << sourceRow << "vers Cible" << targetRow;
-            emit mergeRequested(sourceRow, targetRow);
-            return true; // Drop accepté et traité
+      // Prevent dropping an item onto itself
+      if (sourceRow != targetRow) {
+          qDebug() << "Merge requested: Source" << sourceRow << "to Target" << targetRow;
+          // Emit a signal to MainWindow to execute the heavy-lifting merge logic
+          emit mergeRequested(sourceRow, targetRow);
+          return true; // Drop successfully accepted and handled (no standard reordering needed)
         }
     }
 
-    // Sinon, comportement standard (réorganisation)
-    return QStandardItemModel::dropMimeData(data, action, row, column, parent);
+  // 2. Otherwise, perform STANDARD REORDERING (Drop BETWEEN items or into empty space)
+  return QStandardItemModel::dropMimeData(data, action, row, column, parent);
 }

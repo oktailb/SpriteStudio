@@ -7,6 +7,10 @@
 #include <QString>
 #include "extractor.h"
 
+/**
+ * @brief Extractor derivated class for JSON sprite databases used in industry.
+ *
+ */
 class JsonExtractor : public Extractor
 {
     Q_OBJECT

@@ -7,6 +7,10 @@
 #include <QString>
 #include "extractor.h"
 
+/**
+ * @brief Extractor derivated class for Sprite Atlas (many aprites on the same picture).
+ *
+ */
 class SpriteExtractor : public Extractor
 {
     Q_OBJECT

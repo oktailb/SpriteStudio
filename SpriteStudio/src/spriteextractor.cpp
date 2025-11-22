@@ -29,8 +29,8 @@ QList<QPixmap> SpriteExtractor::extractFromPixmap(int alphaThreshold, int vertic
   m_frames.clear();
   m_atlas_index.clear();
 
-  maxFrameWidth = 0;
-  maxFrameHeight = 0;
+  m_maxFrameWidth = 0;
+  m_maxFrameHeight = 0;
 
   QImage image = m_atlas.toImage();
 
@@ -138,11 +138,11 @@ QList<QPixmap> SpriteExtractor::extractFromPixmap(int alphaThreshold, int vertic
   for (const auto& box : m_atlas_index) {
       QPixmap spriteFrame = m_atlas.copy(box.x, box.y, box.w, box.h);
       this->addFrame(spriteFrame);
-      if (spriteFrame.width() > maxFrameWidth) {
-          maxFrameWidth = spriteFrame.width();
+      if (spriteFrame.width() > m_maxFrameWidth) {
+          m_maxFrameWidth = spriteFrame.width();
         }
-      if (spriteFrame.height() > maxFrameHeight) {
-          maxFrameHeight = spriteFrame.height();
+      if (spriteFrame.height() > m_maxFrameHeight) {
+          m_maxFrameHeight = spriteFrame.height();
         }
     }
 

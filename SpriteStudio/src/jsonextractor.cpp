@@ -37,8 +37,8 @@ bool JsonExtractor::exportFrames(const QString &basePath, const QString &project
   int totalFrames = in->m_frames.size();
   if (totalFrames == 0) return false;
 
-  int w = in->maxFrameWidth;
-  int h = in->maxFrameHeight;
+  int w = in->m_maxFrameWidth;
+  int h = in->m_maxFrameHeight;
   int nb_cols = (int)std::floor(std::sqrt(totalFrames));
   if (nb_cols == 0) nb_cols = 1;
   int nb_lines = (int)std::ceil((double)totalFrames / nb_cols);

@@ -8,6 +8,10 @@
 
 #include "extractor.h"
 
+/**
+ * @brief Extractor derivated class for Animated GIF sprites.
+ *
+ */
 class GifExtractor : public Extractor
 {
   Q_OBJECT
