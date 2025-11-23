@@ -38,14 +38,14 @@ QList<QPixmap> GifExtractor::extractFromPixmap(int alphaThreshold, int verticalT
 
   if (!movie.isValid()) {
       // Log an error if the GIF file is invalid or doesn't exist.
-      qWarning() << tr("Erreur: Le fichier n'est pas un GIF valide ou n'existe pas:") << m_filePath;
+      qWarning() << tr("_error") << tr("_invalid_gif") << m_filePath;
       return m_frames;
     }
 
   int nb_frames = movie.frameCount();
   if (nb_frames <= 0) {
       // Log an error if the GIF reports zero frames.
-      qWarning() << tr("Erreur: Le GIF ne contient aucune frame.");
+      qWarning() << tr("_gif_no_frames");
       return m_frames;
     }
 
@@ -66,7 +66,7 @@ QList<QPixmap> GifExtractor::extractFromPixmap(int alphaThreshold, int verticalT
                       // Store the QPixmap in the Extractor's internal list (m_frames)
                       // for the frames list view in the main window.
                       this->addFrame(QPixmap::fromImage(currentImage));
-                      qDebug() << "Frame extraite (QImage) :" << frameNumber;
+                      qDebug() << tr("_extracted_frames") << ": " << frameNumber;
                     });
 
   // Start playback and jump to the first frame to initiate frame extraction via the signal.

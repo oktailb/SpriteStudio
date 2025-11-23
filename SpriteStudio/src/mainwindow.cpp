@@ -45,7 +45,7 @@ MainWindow::MainWindow(QWidget *parent)
   // when the user selects or deselects frames.
   QObject::connect(ui->framesList->selectionModel(), &QItemSelectionModel::selectionChanged,
                     this, &MainWindow::startAnimation);
-  ui->timingLabel->setText(" -> Timing " + QString::number(1000.0  / (double)ui->fps->value(), 'g', 4) + "ms");
+  ui->timingLabel->setText(" -> " + tr("_timing") + ": " + QString::number(1000.0  / (double)ui->fps->value(), 'g', 4) + "ms");
 
   // Connect the click signal to the slot that handles highlighting the frame in the atlas view.
   QObject::connect(ui->framesList, &QListView::clicked,
@@ -104,7 +104,7 @@ void MainWindow::onAtlasContextMenuRequested(const QPoint &pos)
     return;
 
   QMenu menu(this);
-  QAction *removeBgAction = menu.addAction(tr("Supprimer le fond (Auto)"));
+  QAction *removeBgAction = menu.addAction(tr("_delete_background"));
 
   // Connect the action to the treatment method
   connect(removeBgAction, &QAction::triggered, this, &MainWindow::removeAtlasBackground);
@@ -308,7 +308,7 @@ void MainWindow::on_framesList_customContextMenuRequested(const QPoint &pos)
 
   if (!selected.isEmpty()) {
       QMenu menu(this);
-      QString actionText = (selected.size() > 1) ? tr("Supprimer les Frames Sélectionnées") : tr("Supprimer la Frame");
+      QString actionText = (selected.size() > 1) ? tr("_delete_selected_frames") : tr("_delete_frame");
       QAction *deleteAction = menu.addAction(actionText);
 
       QObject::connect(deleteAction, &QAction::triggered,
@@ -316,11 +316,11 @@ void MainWindow::on_framesList_customContextMenuRequested(const QPoint &pos)
 
       menu.addSeparator();
 
-      QAction *invertAction = menu.addAction(tr("Inverser la Sélection"));
+      QAction *invertAction = menu.addAction(tr("_invert_selection"));
       QObject::connect(invertAction, &QAction::triggered,
                         this, &MainWindow::invertSelection);
 
-      QAction *reverseOrderAction = menu.addAction(tr("Renverser l'Ordre des Frames Sélectionnées"));
+      QAction *reverseOrderAction = menu.addAction(tr("_reverse_order"));
       QObject::connect(reverseOrderAction, &QAction::triggered,
                         this, &MainWindow::reverseSelectedFramesOrder);
 
@@ -704,7 +704,9 @@ void MainWindow::on_actionAbout_triggered()
 
 void MainWindow::on_actionOpen_triggered()
 {
-  QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"), "", tr("Images (*.png *.jpg *.jpeg *.bmp *.gif *.json)"));
+  const QString title = tr("_open_file");
+  const QString formats = tr("_images") + " (*.png *.jpg *.jpeg *.bmp *.gif *.json)";
+  QString fileName = QFileDialog::getOpenFileName(this, title, "", formats);
   currentFilePath = fileName;
   processFile(currentFilePath);
   ui->verticalTolerance->setValue(extractor->m_maxFrameHeight / 3);
@@ -728,7 +730,7 @@ void MainWindow::processFile(const QString &fileName)
   if (extension == "gif") {
       QMovie movie(fileName);
       if (!movie.isValid()) {
-          QMessageBox::critical(this, tr("Erreur de Fichier"), tr("Le fichier GIF n'est pas valide."));
+          QMessageBox::critical(this, tr("_file_error"), tr("_gif_error"));
           return;
         }
 
@@ -850,7 +852,7 @@ void MainWindow::on_actionExit_triggered()
 
 void MainWindow::on_fps_valueChanged(int fps)
 {
-  ui->timingLabel->setText(" -> Timing " + QString::number(1000.0  / (double)fps, 'g', 4) + "ms");
+  ui->timingLabel->setText(" -> " + tr("_timing") + ": " + QString::number(1000.0  / (double)fps, 'g', 4) + "ms");
 }
 
 void MainWindow::on_alphaThreshold_valueChanged(int threshold)
@@ -914,15 +916,15 @@ void MainWindow::on_actionExport_triggered()
 {
   // Check if have frames
   if (extractor->m_frames.isEmpty()) {
-      QMessageBox::warning(this, tr("Exportation impossible"), tr("Veuillez charger ou créer des frames avant d'exporter."));
+      QMessageBox::warning(this, tr("_export_error"), tr("_please_load_frames"));
       return;
     }
   Extractor * extractorOut = nullptr;
-  const QString filter = tr("Sprite Atlas (*.png *.json);;PNG Image (*.png)");
+  const QString filter = tr("_export_formats_json") + "(*.png *.json);;" + tr("_export_formats_png") + "(*.png)";
 
   QString selectedFile = QFileDialog::getSaveFileName(
       this,
-      tr("Exporter le Sprite Atlas"),
+      tr("_export_atlas"),
       QDir::homePath(), // Default path TODO: remember previous if export is used multiple times
       filter
       );

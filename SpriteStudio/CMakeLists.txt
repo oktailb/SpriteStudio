@@ -20,9 +20,9 @@ find_package(Qt6 REQUIRED COMPONENTS LinguistTools REQUIRED)
 
 # 1. Spécifiez les langues à supporter (code ISO 639-1 ou code Qt)
 set(${PROJECT_NAME}_TS_FILES
-    i18n/sprite_studio_fr.ts # Français
-    i18n/sprite_studio_en.ts # English
-    i18n/sprite_studio_ja.ts # Japanese
+    i18n/sprite_studio_fr_FR.ts # Français
+    i18n/sprite_studio_en_US.ts # English
+    i18n/sprite_studio_ja_JA.ts # Japanese
 )
 
 set (${PROJECT_NAME}_SRC
@@ -71,6 +71,12 @@ qt6_add_resources(${PROJECT_NAME} "images"
     stop.png
     plus.png
     minus.png
+)
+
+qt6_add_resources(${PROJECT_NAME} "images"
+    PREFIX "i18n"
+    FILES
+    ${${PROJECT_NAME}_TS_FILES}
 )
 
 qt6_add_resources(${PROJECT_NAME} "text"

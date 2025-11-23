@@ -59,7 +59,7 @@ bool JsonExtractor::exportFrames(const QString &basePath, const QString &project
   QPainter painter(&atlasImage); // Start drawing on the atlas image.
 
   if (!painter.isActive()) {
-      qDebug() << tr("Erreur Critique"), tr("Impossible de démarrer le peintre pour l'atlas.");
+      qDebug() << tr("_critical_error") << ": " << tr("_painter_start");
       return false;
     }
 
@@ -112,7 +112,7 @@ bool JsonExtractor::exportFrames(const QString &basePath, const QString &project
 
   // a) Save PNG Atlas
   if (!atlasImage.save(pngFilePath, "PNG")) {
-      qDebug() << tr("Erreur d'écriture"), tr("Impossible d'écrire le fichier PNG. Vérifiez les permissions.");
+      qDebug() << tr("_write_error") << ": " <<  tr("_png_permissions");
       return false;
     }
 
@@ -138,9 +138,9 @@ bool JsonExtractor::exportFrames(const QString &basePath, const QString &project
       jsonFile.write(doc.toJson(QJsonDocument::Indented));
       jsonFile.close();
 
-      qDebug() << tr("Export Successful"), tr("Atlas and metadata exported successfully to: %1").arg(basePath);
+      qDebug() << tr("_export_success") << tr("_export_atlas_success") << basePath;
     } else {
-      qDebug() << tr("Write Error"), tr("Failed to write JSON file. Check permissions.");
+      qDebug() << tr("_write_error") << tr("_json_permissions");
       return false;
     }
   return true; // Export completed successfully.
