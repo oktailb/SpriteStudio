@@ -355,6 +355,13 @@ private:
    * @brief Stops the animation preview timer.
    */
   void stopAnimation();
+
+  /**
+   * @brief Read a text file full content and retrun it as QString
+   * @param filePath
+   * @return
+   */
+  QString readTextFile(const QString &filePath);
 };
 
 #endif // MAINWINDOW_H

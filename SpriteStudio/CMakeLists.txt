@@ -28,6 +28,11 @@ set(${PROJECT_NAME}_TS_FILES
 set (${PROJECT_NAME}_SRC
     src/main.cpp
     src/mainwindow.cpp
+    src/mainwindow_events.cpp
+    src/mainwindow_callbacks.cpp
+    src/mainwindow_animation.cpp
+    src/mainwindow_frames.cpp
+    src/mainwindow_atlas.cpp
     src/gifextractor.cpp
     src/spriteextractor.cpp
     src/jsonextractor.cpp
