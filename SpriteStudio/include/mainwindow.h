@@ -156,6 +156,13 @@ protected:
   void resizeEvent(QResizeEvent *event) override;
 
   /**
+   * @brief wheelEvent
+   * * Allows to zoom on atlas view
+   * @param event The mouse wheel event
+   */
+  void wheelEvent(QWheelEvent *event) override;
+
+  /**
    * @brief Custom event filter used to monitor events on specific watched objects.
    *    * This is typically used to capture mouse events on the frames list view
    * to provide custom drag-and-drop feedback (e.g., controlling the FrameDelegate).

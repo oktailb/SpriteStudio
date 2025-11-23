@@ -500,6 +500,18 @@ void MainWindow::setMergeHighlight(const QModelIndex &index, bool show)
     }
 }
 
+void MainWindow::wheelEvent(QWheelEvent *event)
+{
+  if (event->modifiers() & Qt::ControlModifier) {
+      QGraphicsView *view = ui->graphicsViewLayers;
+      double factor = (event->angleDelta().y() > 0) ? 1.1 : 0.9;
+      view->scale(factor, factor);
+      event->accept();
+    } else {
+      QMainWindow::wheelEvent(event);
+    }
+}
+
 bool MainWindow::eventFilter(QObject *watched, QEvent *event)
 {
   if (watched == ui->framesList->viewport()) {
