@@ -17,7 +17,7 @@
 ### Editing & Sequencing
 * **Frame Merging:** Easily merge frames by dropping one item onto another to combine them into a single frame.
 ![Fusion of two sprites.](Fusion.gif)
-* **Background removal ** Easily remove background color on sprite maps to have nicely usable transparent animations
+* **Background removal:** Easily remove background color on sprite maps to have nicely usable transparent animations
 ![Background removal feature.](RemoveBackground.gif)
 * **Batch Operations (Multi-Selection):**
     * **Group Deletion** for selected frames.
