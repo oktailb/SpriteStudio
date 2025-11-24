@@ -19,13 +19,8 @@ provides {
 }
 
 requires {
-    haiku >= r1~alpha4_pm_hrev46213-1
-    lib:libqt6_6
-    lib:libqt6_core6
-    lib:libqt6_gui6
-    lib:libqt6_widgets6
-    lib:libqt6_multimedia6
-    cmd:git
+    qt6_core
+    qt6_multimedia
 }
 
 urls {
