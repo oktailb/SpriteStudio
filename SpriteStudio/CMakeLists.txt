@@ -36,6 +36,7 @@ set (${PROJECT_NAME}_SRC
     src/arrangementmodel.cpp
     src/aboutdialog.cpp
     src/version.h.in
+    src/haiku.PackageInfo.in
     generated/version.h
 )
 
@@ -110,3 +111,13 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     ../lib/include
     ${CMAKE_BUILD_RPATH}/
 )
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Haiku")
+    set(CPACK_GENERATOR "External")
+    add_custom_command(
+        TARGET ${PROJECT_NAME}
+        POST_BUILD
+        COMMAND package create -i ${CMAKE_BINARY_DIR}/generated/haiku.PackageInfo -C ${PROJECT_NAME} ${PROJECT_NAME}-${PROJECT_VERSION}-1-x86_64.hpkg
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    )
+endif()

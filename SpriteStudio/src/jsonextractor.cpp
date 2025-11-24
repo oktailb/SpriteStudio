@@ -4,10 +4,10 @@
 #include <QStack>
 #include <QPoint>
 #include <QRect>
-#include <qdir.h>
-#include <qjsonarray.h>
-#include <qjsonobject.h>
+#include <QDir>
 #include <QJsonDocument>
+#include <QJsonArray>
+#include <QJsonObject>
 
 JsonExtractor::JsonExtractor(QObject *parent) : Extractor(parent)
 {
