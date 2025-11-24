@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.30)
 
 set(PROJECT_VERSION_MAJOR 0)
 set(PROJECT_VERSION_MINOR 9)
-set(PROJECT_VERSION_PATCH 1)
+set(PROJECT_VERSION_PATCH 2)
 set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
 
 project(SpriteStudio    VERSION ${PROJECT_VERSION}
@@ -11,6 +11,13 @@ project(SpriteStudio    VERSION ${PROJECT_VERSION}
             )
 
 include("build.cmake")
+
+find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(Qt6 REQUIRED COMPONENTS Gui)
+find_package(Qt6 REQUIRED COMPONENTS Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Multimedia)
+find_package(Qt6 REQUIRED COMPONENTS MultimediaWidgets)
+find_package(Qt6 REQUIRED COMPONENTS LinguistTools REQUIRED)
 
 add_subdirectory(SpriteStudio)
 
