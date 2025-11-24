@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.30)
 
-project(SpriteStudio VERSION 0.1 LANGUAGES CXX)
+# Créer un fichier d'en-tête avec les informations de version
+configure_file(
+    src/version.h.in
+    generated/version.h
+)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -37,6 +41,9 @@ set (${PROJECT_NAME}_SRC
     src/spriteextractor.cpp
     src/jsonextractor.cpp
     src/arrangementmodel.cpp
+    src/aboutdialog.cpp
+    src/version.h.in
+    generated/version.h
 )
 
 set (${PROJECT_NAME}_UI
@@ -50,6 +57,7 @@ set (${PROJECT_NAME}_INCLUDE
     include/spriteextractor.h
     include/jsonextractor.h
     include/arrangementmodel.h
+    include/aboutdialog.h
 )
 
 qt_add_translations(${PROJECT_NAME}
@@ -103,8 +111,9 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     Qt${QT_VERSION_MAJOR}::Multimedia
     Qt${QT_VERSION_MAJOR}::MultimediaWidgets
 )
-
+#message(FATAL_ERROR "TEST: ")
 target_include_directories(${PROJECT_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ../lib/include
+    ${CMAKE_BUILD_RPATH}/
 )

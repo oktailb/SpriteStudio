@@ -1,11 +1,18 @@
 cmake_minimum_required(VERSION 3.30)
 
-project(SpriteStudio    VERSION 0.9
+set(PROJECT_VERSION_MAJOR 0)
+set(PROJECT_VERSION_MINOR 9)
+set(PROJECT_VERSION_PATCH 1)
+set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
+
+project(SpriteStudio    VERSION ${PROJECT_VERSION}
                         LANGUAGES CXX
                         DESCRIPTION "Little sprites and animated texture management tool"
             )
 
 include("build.cmake")
+
+add_subdirectory(SpriteStudio)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -15,9 +22,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
-
-#add_subdirectory(lib)
-add_subdirectory(SpriteStudio)
 
 install(TARGETS
     SpriteStudio

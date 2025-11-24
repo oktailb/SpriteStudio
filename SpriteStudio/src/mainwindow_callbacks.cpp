@@ -1,4 +1,5 @@
-#include "include/mainwindow.h"
+#include "mainwindow.h"
+#include "aboutdialog.h"
 #include "./ui_mainwindow.h"
 #include "qfiledialog.h"
 #include "ui_mainwindow.h"
@@ -104,6 +105,16 @@ void MainWindow::onMergeFrames(int sourceRow, int targetRow)
   clearBoundingBoxHighlighters();
 }
 
+QString readTextFile(const QString &filePath)
+{
+  QFile file(filePath);
+  if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+      return QString("Error: Cannot open file %1").arg(filePath);
+    }
+  QTextStream in(&file);
+  return in.readAll();
+}
+
 void MainWindow::on_actionLicence_triggered()
 {
   QString licenseText = readTextFile(":/text/license.txt");
@@ -123,19 +134,8 @@ void MainWindow::on_actionLicence_triggered()
 
 void MainWindow::on_actionAbout_triggered()
 {
-  QString aboutText = readTextFile(":/text/about.txt");
-  QDialog dialog;
-  dialog.setWindowTitle("About");
-  dialog.setMinimumSize(600, 400);
-  QTextEdit *textEdit = new QTextEdit(&dialog);
-  textEdit->setPlainText(aboutText);
-  textEdit->setReadOnly(true);
-  QPushButton *closeButton = new QPushButton("Close", &dialog);
-  QObject::connect(closeButton, &QPushButton::clicked, &dialog, &QDialog::accept);
-  QVBoxLayout *layout = new QVBoxLayout(&dialog);
-  layout->addWidget(textEdit);
-  layout->addWidget(closeButton);
-  dialog.exec();
+  AboutDialog aboutDialog(this);
+  aboutDialog.exec();
 }
 
 void MainWindow::on_actionOpen_triggered()

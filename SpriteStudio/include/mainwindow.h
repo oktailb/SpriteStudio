@@ -361,13 +361,6 @@ private:
   void stopAnimation();
 
   /**
-   * @brief Read a text file full content and retrun it as QString
-   * @param filePath
-   * @return
-   */
-  QString readTextFile(const QString &filePath);
-
-  /**
    * @brief Clean up all bounding box highlighter on atlas view
    */
   void clearBoundingBoxHighlighters();

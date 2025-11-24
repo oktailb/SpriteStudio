@@ -109,15 +109,3 @@ MainWindow::~MainWindow()
   delete ui;
 }
 
-QString MainWindow::readTextFile(const QString &filePath)
-{
-  QFile file(filePath);
-
-  if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-      qWarning() << "Impossible d'ouvrir le fichier de ressource de licence:" << filePath;
-      return QString("Erreur: Fichier de licence non trouvé dans les ressources: ") + filePath;
-    }
-
-  QTextStream in(&file);
-  return in.readAll();
-}
