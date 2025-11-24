@@ -7,6 +7,7 @@
 #include <qdir.h>
 #include <qjsonarray.h>
 #include <qjsonobject.h>
+#include <QJsonDocument>
 
 JsonExtractor::JsonExtractor(QObject *parent) : Extractor(parent)
 {
