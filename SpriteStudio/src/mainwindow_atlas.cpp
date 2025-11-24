@@ -155,13 +155,7 @@ void MainWindow::processFile(const QString &fileName)
              ui->verticalTolerance->setValue(extractor->m_maxFrameHeight / 3);
            });
   extractor->extractFrames(fileName, alphaThreshold, verticalTolerance);
-  if (boundingBoxHighlighter) {
-      if (ui->graphicsViewLayers->scene()) {
-          ui->graphicsViewLayers->scene()->removeItem(boundingBoxHighlighter);
-        }
-      delete boundingBoxHighlighter;
-      boundingBoxHighlighter = nullptr;
-    }
+  clearBoundingBoxHighlighters();
   if (!extractor->m_frames.isEmpty()) {
       auto view = ui->graphicsViewLayers;
       auto scene = new QGraphicsScene(view);
@@ -216,4 +210,33 @@ void MainWindow::setupGraphicsView(const QPixmap &pixmap)
       // Force the result view to fit the scene rect.
       ui->graphicsViewResult->fitInView(resultScene->sceneRect(), Qt::KeepAspectRatio);
     }
+}
+
+void MainWindow::clearBoundingBoxHighlighters()
+{
+  for (QGraphicsRectItem *highlighter : boundingBoxHighlighters) {
+      if (highlighter && highlighter->scene()) {
+          highlighter->scene()->removeItem(highlighter);
+          delete highlighter;
+        }
+    }
+  boundingBoxHighlighters.clear();
+}
+
+void MainWindow::fitSelectedFramesInView()
+{
+  if (boundingBoxHighlighters.isEmpty() || !extractor) return;
+
+  QRectF unitedRect;
+  for (QGraphicsRectItem *highlighter : boundingBoxHighlighters) {
+      if (unitedRect.isNull()) {
+          unitedRect = highlighter->rect();
+        } else {
+          unitedRect = unitedRect.united(highlighter->rect());
+        }
+    }
+
+  unitedRect.adjust(-100, -100, 100, 100); // enought large to facilitate next selction
+
+  ui->graphicsViewLayers->fitInView(unitedRect, Qt::KeepAspectRatio);
 }

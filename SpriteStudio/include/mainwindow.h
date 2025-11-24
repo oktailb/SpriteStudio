@@ -300,7 +300,7 @@ private:
   bool ready;                                             /**< Flag indicating if the main window initialization is complete. */
   Extractor *extractor;                                   /**< Base pointer to the current file handler (SpriteExtractor, GifExtractor, etc.). */
   QString currentFilePath;                                /**< Path to the currently loaded file. */
-  QGraphicsRectItem *boundingBoxHighlighter = nullptr;    /**< Graphic item used to highlight the bounding box of a selected frame in the atlas view. */
+  QList<QGraphicsRectItem*> boundingBoxHighlighters;      /**< Graphic item used to highlight the bounding box of a selected frame in the atlas view. */
   QGraphicsRectItem *mergeHighlighter = nullptr;          /**< Graphic item used to highlight the merge target in the frames list. */
   FrameDelegate *listDelegate;                            /**< Custom delegate used to draw drag-and-drop feedback in the frames list. */
   QTimer *animationTimer;                                 /**< Timer controlling the frame rate of the animation preview. */
@@ -362,6 +362,17 @@ private:
    * @return
    */
   QString readTextFile(const QString &filePath);
+
+  /**
+   * @brief Clean up all bounding box highlighter on atlas view
+   */
+  void clearBoundingBoxHighlighters();
+
+  /**
+   * @brief Set zoom/position on atlas view to fit current selection
+   */
+  void fitSelectedFramesInView();
+
 };
 
 #endif // MAINWINDOW_H

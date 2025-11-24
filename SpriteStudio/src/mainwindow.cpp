@@ -20,7 +20,6 @@ MainWindow::MainWindow(QWidget *parent)
       , timerId(0)
       , ready(false)
       , extractor(nullptr)
-      , boundingBoxHighlighter(nullptr)
       , animationTimer(new QTimer(this))
       , currentAnimationFrameIndex(0)
 {
@@ -97,6 +96,7 @@ MainWindow::~MainWindow()
 {
   killTimer(timerId);
   stopAnimation();
+  clearBoundingBoxHighlighters();
   delete ui;
 }
 

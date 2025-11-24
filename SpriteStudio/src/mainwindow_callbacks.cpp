@@ -101,11 +101,7 @@ void MainWindow::onMergeFrames(int sourceRow, int targetRow)
   extractor->m_frames.removeAt(sourceRow);
 
   // Graphical cleanup
-  if (boundingBoxHighlighter) {
-      ui->graphicsViewLayers->scene()->removeItem(boundingBoxHighlighter);
-      delete boundingBoxHighlighter;
-      boundingBoxHighlighter = nullptr;
-    }
+  clearBoundingBoxHighlighters();
 }
 
 void MainWindow::on_actionLicence_triggered()
@@ -184,37 +180,74 @@ void MainWindow::on_verticalTolerance_valueChanged(int verticalTolerance)
     }
 }
 
+QColor getHighlightColor(int index, int total)
+{
+  if (total == 1) return Qt::magenta; // Single selection => magenta
+
+  // Multiple selection => rainbow
+  static QList<QColor> colorPalette = {
+    QColor(255, 0, 0, 50),
+    QColor(0, 150, 0, 50),
+    QColor(0, 0, 255, 50),
+    QColor(255, 165, 0, 50),
+    QColor(128, 0, 128, 50),
+    QColor(0, 128, 128, 50),
+    QColor(165, 42, 42, 50),
+    QColor(255, 192, 203, 50)
+  };
+
+  return colorPalette.at(index % colorPalette.size());
+}
+
 void MainWindow::on_framesList_clicked(const QModelIndex &index)
 {
-  if (!ui->graphicsViewLayers->scene() || index.row() >= extractor->m_atlas_index.size()) {
-      return; // No scene or invalid index
+  Q_UNUSED(index); // Selection is internaly managed, current index have not real purpose
+
+  if (!ui->graphicsViewLayers->scene() || !extractor) {
+      return;
     }
+
+  QModelIndexList selectedIndexes = ui->framesList->selectionModel()->selectedIndexes();
+
+  clearBoundingBoxHighlighters();
 
   QGraphicsScene *scene = ui->graphicsViewLayers->scene();
-  const Extractor::Box &box = extractor->m_atlas_index.at(index.row());
 
-  // 1. Remove existing highlighter
-  if (boundingBoxHighlighter) {
-      scene->removeItem(boundingBoxHighlighter);
-      delete boundingBoxHighlighter;
-      boundingBoxHighlighter = nullptr;
+  for (int i = 0; i < selectedIndexes.size(); ++i) {
+      const QModelIndex &currentIndex = selectedIndexes.at(i);
+      int row = currentIndex.row();
+
+      if (row >= 0 && row < extractor->m_atlas_index.size()) {
+          const Extractor::Box &box = extractor->m_atlas_index.at(row);
+          QRectF rect(box.x, box.y, box.w, box.h);
+
+          QColor color = getHighlightColor(i, selectedIndexes.size());
+          color.setAlpha(50);
+          QPen pen(Qt::red);
+          pen.setWidth(2);
+          pen.setStyle(Qt::DashLine);
+
+          QGraphicsRectItem *highlighter = new QGraphicsRectItem(rect);
+          highlighter->setPen(pen);
+          highlighter->setBrush(QBrush(color));
+          highlighter->setToolTip(QString("Frame %1\nPosition: (%2, %3)\nSize: %4x%5")
+                                       .arg(row + 1)
+                                       .arg(box.x).arg(box.y)
+                                       .arg(box.w).arg(box.h));
+
+          QGraphicsSimpleTextItem *label = new QGraphicsSimpleTextItem(QString::number(row + 1), highlighter);
+          label->setPos(rect.topLeft());
+          label->setBrush(Qt::black);
+          label->setFont(QFont("Arial", 10, QFont::Bold));
+
+          scene->addItem(highlighter);
+          boundingBoxHighlighters.append(highlighter);
+        }
     }
 
-  // 2. Create new rectangle (QGraphicsRectItem)
-  // La Box est {x, y, w, h}
-  QRectF rect(box.x, box.y, box.w, box.h);
-
-  // 3. Drawing style definition
-  QPen pen(Qt::red); // Use obvious color
-  pen.setWidth(2);   // and a visible fat line
-  pen.setStyle(Qt::DashLine); // Dashe line to increase visibility
-
-  // 4. Draw the rectangle and add it to the scene
-  boundingBoxHighlighter = new QGraphicsRectItem(rect);
-  boundingBoxHighlighter->setPen(pen);
-  boundingBoxHighlighter->setBrush(QBrush(QColor(255, 0, 0, 50))); // Fill with mid alpha
-
-  scene->addItem(boundingBoxHighlighter);
+  if (!selectedIndexes.isEmpty()) {
+      fitSelectedFramesInView();
+    }
 }
 
 void MainWindow::on_actionExport_triggered()

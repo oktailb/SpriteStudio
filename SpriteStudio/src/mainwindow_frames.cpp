@@ -108,11 +108,7 @@ void MainWindow::deleteFrame(int row)
   frameModel->removeRow(row);
 
   // 3. Cleanup and refresh if the frame was selected
-  if (boundingBoxHighlighter) {
-      ui->graphicsViewLayers->scene()->removeItem(boundingBoxHighlighter);
-      delete boundingBoxHighlighter;
-      boundingBoxHighlighter = nullptr;
-    }
+  clearBoundingBoxHighlighters();
 }
 
 void MainWindow::deleteSelectedFrame()
@@ -138,11 +134,7 @@ void MainWindow::deleteSelectedFrame()
     }
 
   // 4. Cleanup highlighter
-  if (boundingBoxHighlighter) {
-      ui->graphicsViewLayers->scene()->removeItem(boundingBoxHighlighter);
-      delete boundingBoxHighlighter;
-      boundingBoxHighlighter = nullptr;
-    }
+  clearBoundingBoxHighlighters();
 }
 
 void MainWindow::setMergeHighlight(const QModelIndex &index, bool show)
@@ -196,7 +188,7 @@ void MainWindow::clearMergeHighlight()
 void MainWindow::populateFrameList(const QList<QPixmap> &frameList, const QList<Extractor::Box> &boxList)
 {
   frameModel->clear();
-  //extractor->m_atlas_index.clear();
+  clearBoundingBoxHighlighters();
 
   frameModel->setColumnCount(1);
 
