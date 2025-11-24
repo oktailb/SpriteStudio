@@ -306,6 +306,10 @@ private:
   QTimer *animationTimer;                                 /**< Timer controlling the frame rate of the animation preview. */
   int currentAnimationFrameIndex;                         /**< Index of the frame currently displayed in the animation preview. */
   QList<int> selectedFrameRows;                           /**< List of row indices for all currently selected frames. */
+  QGraphicsRectItem *selectionRectItem = nullptr;
+  QPointF selectionStartPoint;
+  bool isSelecting = false;
+  Qt::KeyboardModifiers selectionModifiers;
 
   /**
    * @brief Populates the frame list model with frames and metadata from the extractor.
@@ -371,8 +375,37 @@ private:
   /**
    * @brief Set zoom/position on atlas view to fit current selection
    */
-  void fitSelectedFramesInView();
+  void fitSelectedFramesInView(int padding);
 
+  /**
+   * @brief Called when a rectangular selection is made from Atlas view
+   * @param scenePos
+   */
+  void startSelection(const QPointF &scenePos);
+
+  /**
+   * @brief Called during muve move on rectagular selection to update the selected frames list in real time
+   * @param scenePos
+   */
+  void updateSelection(const QPointF &scenePos);
+
+  /**
+   * @brief Reflect atlas selection to the bottom list selected frames
+   * @param frameIndices
+   */
+  void selectFramesInList(const QList<int> &frameIndices);
+
+  /**
+   * @brief Clean up rectangular selection
+   */
+  void endSelection();
+
+  /**
+   * @brief findFramesInSelectionRect
+   * @param rect
+   * @return
+   */
+  QList<int> findFramesInSelectionRect(const QRectF &rect);
 };
 
 #endif // MAINWINDOW_H

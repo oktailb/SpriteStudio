@@ -53,6 +53,8 @@ MainWindow::MainWindow(QWidget *parent)
   // Install the main window as an event filter on the list view's viewport.
   // This allows the main window to intercept mouse/drag events for the custom drag-and-drop delegate logic.
   ui->framesList->viewport()->installEventFilter(this);
+  // Another event filter for Atlas view selection features
+  ui->graphicsViewLayers->viewport()->installEventFilter(this);
   ui->framesList->setContextMenuPolicy(Qt::CustomContextMenu);
   QObject::connect(ui->framesList, &QListView::customContextMenuRequested,
                     this, &MainWindow::on_framesList_customContextMenuRequested);
@@ -97,6 +99,13 @@ MainWindow::~MainWindow()
   killTimer(timerId);
   stopAnimation();
   clearBoundingBoxHighlighters();
+  if (selectionRectItem) {
+      if (selectionRectItem->scene()) {
+          selectionRectItem->scene()->removeItem(selectionRectItem);
+        }
+      delete selectionRectItem;
+    }
+
   delete ui;
 }
 

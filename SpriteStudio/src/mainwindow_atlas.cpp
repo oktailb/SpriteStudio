@@ -223,7 +223,7 @@ void MainWindow::clearBoundingBoxHighlighters()
   boundingBoxHighlighters.clear();
 }
 
-void MainWindow::fitSelectedFramesInView()
+void MainWindow::fitSelectedFramesInView(int padding)
 {
   if (boundingBoxHighlighters.isEmpty() || !extractor) return;
 
@@ -236,7 +236,107 @@ void MainWindow::fitSelectedFramesInView()
         }
     }
 
-  unitedRect.adjust(-100, -100, 100, 100); // enought large to facilitate next selction
+  unitedRect.adjust(-padding, -padding, padding, padding); // enought large to facilitate next selction
 
   ui->graphicsViewLayers->fitInView(unitedRect, Qt::KeepAspectRatio);
+}
+
+void MainWindow::startSelection(const QPointF &scenePos)
+{
+  if (!extractor || extractor->m_atlas_index.isEmpty()) return;
+
+  selectionModifiers = QApplication::keyboardModifiers();
+
+  if (!(selectionModifiers & (Qt::ControlModifier | Qt::ShiftModifier))) {
+      ui->framesList->selectionModel()->clearSelection();
+      clearBoundingBoxHighlighters();
+    }
+
+  selectionStartPoint = scenePos;
+  isSelecting = true;
+  ui->graphicsViewLayers->setCursor(Qt::CrossCursor);
+
+  selectionRectItem = new QGraphicsRectItem();
+  selectionRectItem->setPen(QPen(Qt::blue, 2, Qt::DashLine));
+  selectionRectItem->setBrush(QBrush(QColor(0, 0, 255, 30)));
+  ui->graphicsViewLayers->scene()->addItem(selectionRectItem);
+}
+
+void MainWindow::updateSelection(const QPointF &scenePos)
+{
+  if (!isSelecting || !selectionRectItem) return;
+
+  QRectF rect(selectionStartPoint, scenePos);
+  selectionRectItem->setRect(rect.normalized());
+}
+
+void MainWindow::endSelection()
+{
+  if (!isSelecting || !selectionRectItem) return;
+
+  QRectF selectionRect = selectionRectItem->rect();
+  QList<int> selectedFrameIndices = findFramesInSelectionRect(selectionRect);
+
+  if (!selectedFrameIndices.isEmpty()) {
+      selectFramesInList(selectedFrameIndices);
+    }
+
+  ui->graphicsViewLayers->scene()->removeItem(selectionRectItem);
+  delete selectionRectItem;
+  selectionRectItem = nullptr;
+  isSelecting = false;
+  ui->graphicsViewLayers->setCursor(Qt::ArrowCursor);
+}
+
+QList<int> MainWindow::findFramesInSelectionRect(const QRectF &rect)
+{
+  QList<int> result;
+  if (!extractor) return result;
+
+  for (int i = 0; i < extractor->m_atlas_index.size(); ++i) {
+      const Extractor::Box &box = extractor->m_atlas_index.at(i);
+      QRectF frameRect(box.x, box.y, box.w, box.h);
+
+      if (rect.intersects(frameRect)) {
+          result.append(i);
+        }
+    }
+  return result;
+}
+
+void MainWindow::selectFramesInList(const QList<int> &frameIndices)
+{
+  if (!frameModel || frameIndices.isEmpty()) return;
+
+  QItemSelectionModel *selectionModel = ui->framesList->selectionModel();
+  if (!selectionModel) return;
+
+  bool addToSelection = (selectionModifiers & (Qt::ControlModifier | Qt::ShiftModifier));
+
+  if (!addToSelection) {
+      selectionModel->clearSelection();
+    }
+
+  QItemSelection selection;
+  for (int row : frameIndices) {
+      QModelIndex index = frameModel->index(row, 0);
+      if (index.isValid()) {
+          selection.select(index, index);
+        }
+    }
+
+  if (selectionModifiers & Qt::ControlModifier) {
+      for (int row : frameIndices) {
+          QModelIndex index = frameModel->index(row, 0);
+          if (selectionModel->isSelected(index)) {
+              selectionModel->select(index, QItemSelectionModel::Deselect);
+            } else {
+              selectionModel->select(index, QItemSelectionModel::Select);
+            }
+        }
+    } else {
+      selectionModel->select(selection, QItemSelectionModel::Select);
+    }
+
+  on_framesList_clicked(QModelIndex());
 }

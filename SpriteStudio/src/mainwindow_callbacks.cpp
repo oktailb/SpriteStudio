@@ -246,7 +246,7 @@ void MainWindow::on_framesList_clicked(const QModelIndex &index)
     }
 
   if (!selectedIndexes.isEmpty()) {
-      fitSelectedFramesInView();
+      fitSelectedFramesInView(100);
     }
 }
 
