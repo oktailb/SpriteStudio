@@ -267,8 +267,8 @@
         <translation>Quitter</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.cpp" line="45"/>
-        <location filename="../src/mainwindow_callbacks.cpp" line="275"/>
+        <location filename="../src/mainwindow.cpp" line="43"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="263"/>
         <source>_timing</source>
         <translation>Intervale</translation>
     </message>
@@ -278,12 +278,12 @@
         <translation>Supprimer le fond</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="119"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="107"/>
         <source>_confirm</source>
         <translation>Confirmation</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/mainwindow_callbacks.cpp" line="120"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="108"/>
         <source>_confirm_delete</source>
         <translation>
             <numerusform>Voulez-vous vraiment supprimer l&apos;animation) ?</numerusform>
@@ -291,90 +291,95 @@
         </translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="135"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="123"/>
         <source>_delete_animation</source>
         <translation>Supprimer l&apos;animation</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="152"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="140"/>
         <source>_create_animation</source>
         <translation>Créer une animation depuis la sélection</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="159"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="147"/>
         <source>_delete_selected_frames</source>
         <translation>Supprimer les frames sélectionnés</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="159"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="147"/>
         <source>_delete_frame</source>
         <translation>Supprimer la frame</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="167"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="155"/>
         <source>_invert_selection</source>
         <translation>Inverser la sélection</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="171"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="159"/>
         <source>_reverse_order</source>
         <translation>Renverser l&apos;ordre de la sélection</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="260"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="248"/>
         <source>_open_file</source>
         <translation>Ouvrir</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="261"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="249"/>
         <source>_images</source>
         <translation>Images </translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_atlas.cpp" line="124"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="126"/>
         <source>_file_error</source>
         <translation>Erreur de fichier</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_atlas.cpp" line="124"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="126"/>
         <source>_gif_error</source>
         <translation>Fichier GIF invalide</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="337"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="325"/>
         <source>_export_error</source>
         <translation>Export impossible</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="337"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="325"/>
         <source>_please_load_frames</source>
         <translation>Veuillez sélectionner ou charger des frames avant d&apos;exporter</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="341"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="329"/>
         <source>_export_formats_json</source>
         <translation>Sprite Atlas </translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="341"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="329"/>
         <source>_export_formats_png</source>
         <translation>Image PNG </translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="345"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="333"/>
         <source>_export_atlas</source>
         <translation>Exporter l&apos;altas de sprites</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_animation.cpp" line="32"/>
-        <location filename="../src/mainwindow_animation.cpp" line="34"/>
+        <location filename="../src/mainwindow_animation.cpp" line="28"/>
+        <location filename="../src/mainwindow_animation.cpp" line="30"/>
         <source>_new_animation</source>
         <translation>Nouvelle animation</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_animation.cpp" line="33"/>
+        <location filename="../src/mainwindow_animation.cpp" line="29"/>
         <source>_animation_name</source>
         <translation>Nom de l&apos;animation :</translation>
+    </message>
+    <message>
+        <location filename="../src/mainwindow_animation.cpp" line="115"/>
+        <source>_error</source>
+        <translation type="unfinished">Erreur</translation>
     </message>
 </context>
 </TS>

@@ -22,8 +22,6 @@ MainWindow::MainWindow(QWidget *parent)
       , extractor(nullptr)
       , animationTimer(new QTimer(this))
       , currentAnimationFrameIndex(0)
-      , m_ignoreNextClick(false)
-      , m_wasPreviouslySelected(false)
 {
   ui->setupUi(this);
   // Enable drag and drop events for the main window (to handle file drops).
@@ -104,8 +102,6 @@ MainWindow::MainWindow(QWidget *parent)
   connect(deleteShortcut, &QShortcut::activated, this, &MainWindow::removeSelectedAnimation);
   connect(backspaceShortcut, &QShortcut::activated, this, &MainWindow::removeSelectedAnimation);
 
-  connect(ui->animationList, &QTreeWidget::itemPressed,
-          this, &MainWindow::on_animationList_itemPressed);
   connect(ui->animationList, &QTreeWidget::itemClicked,
           this, &MainWindow::on_animationList_itemClicked);
   connect(ui->animationList, &QTreeWidget::itemSelectionChanged,
@@ -118,6 +114,7 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
   killTimer(timerId);
+    qDebug() << QString(__func__) << "called stopAnimation()";
   stopAnimation();
   clearBoundingBoxHighlighters();
   if (selectionRectItem) {

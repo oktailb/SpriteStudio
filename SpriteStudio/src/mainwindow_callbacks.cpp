@@ -20,7 +20,7 @@
 
 void MainWindow::onAtlasContextMenuRequested(const QPoint &pos)
 {
-  // Cjeck if a frame is loaded
+  // Check if a frame is loaded
   if (!extractor || extractor->m_atlas.isNull())
     return;
 
@@ -31,32 +31,6 @@ void MainWindow::onAtlasContextMenuRequested(const QPoint &pos)
   connect(removeBgAction, &QAction::triggered, this, &MainWindow::removeAtlasBackground);
 
   menu.exec(ui->graphicsViewLayers->mapToGlobal(pos));
-}
-
-void MainWindow::on_animationList_itemPressed(QTreeWidgetItem *item, int column)
-{
-    Q_UNUSED(column);
-
-    m_wasPreviouslySelected = ui->animationList->selectedItems().contains(item);
-
-    QModelIndexList selectedIndexes = ui->framesList->selectionModel()->selectedIndexes();
-
-    clearBoundingBoxHighlighters();
-    setBoundingBoxHighllithers(selectedIndexes);
-}
-
-void MainWindow::on_animationList_itemClicked(QTreeWidgetItem *item, int column)
-{
-    Q_UNUSED(column);
-
-    if (m_wasPreviouslySelected) {
-        ui->animationList->clearSelection();
-        //stopAnimation();
-    }
-    QModelIndexList selectedIndexes = ui->framesList->selectionModel()->selectedIndexes();
-
-    clearBoundingBoxHighlighters();
-    setBoundingBoxHighllithers(selectedIndexes);
 }
 
 void MainWindow::on_animationList_itemSelectionChanged()
@@ -97,15 +71,25 @@ void MainWindow::on_animationList_itemSelectionChanged()
     if (!newSelection.isEmpty()) {
         selectionModel->select(newSelection, QItemSelectionModel::ClearAndSelect);
         ui->framesList->scrollTo(newSelection.indexes().first());
+
+        QModelIndexList selectedIndexes = ui->framesList->selectionModel()->selectedIndexes();
+        clearBoundingBoxHighlighters();
+        setBoundingBoxHighllithers(selectedIndexes);
+
+        QTimer::singleShot(0, this, [this]() {
+            startAnimation();
+        });
+    } else {
+        stopAnimation();
     }
+}
 
-    QModelIndexList selectedIndexes = ui->framesList->selectionModel()->selectedIndexes();
+void MainWindow::on_animationList_itemClicked(QTreeWidgetItem *item, int column)
+{
+    Q_UNUSED(column);
 
-    clearBoundingBoxHighlighters();
-    setBoundingBoxHighllithers(selectedIndexes);
-
-    if (!m_wasPreviouslySelected) {
-        startAnimation();
+    if (ui->animationList->selectedItems().contains(item) && animationTimer->isActive()) {
+        ui->animationList->clearSelection();
     }
 }
 

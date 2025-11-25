@@ -98,6 +98,8 @@ void MainWindow::removeAtlasBackground()
       populateFrameList(extractor->m_frames, extractor->m_atlas_index);
 
       // 5. Relaunch animation in consequence
+      qDebug() << QString(__func__) << "called stopAnimation()";
+
       stopAnimation();
       startAnimation();
     }
@@ -150,6 +152,7 @@ void MainWindow::processFile(const QString &fileName)
              this->populateFrameList(extractor->m_frames, extractor->m_atlas_index);
              // Ensure animation is started after the loading
              this->setupGraphicsView(extractor->m_atlas);
+             qDebug() << QString(__func__) << "called stopAnimation()";
              this->stopAnimation();
              this->startAnimation();
              ui->verticalTolerance->setValue(extractor->m_maxFrameHeight / 3);
@@ -260,6 +263,7 @@ void MainWindow::setBoundingBoxHighllithers(QModelIndexList &selectedIndexes) {
 
     if (!selectedIndexes.isEmpty()) {
         fitSelectedFramesInView(100);
+        ui->framesList->scrollTo(selectedIndexes.first());
     }
 }
 

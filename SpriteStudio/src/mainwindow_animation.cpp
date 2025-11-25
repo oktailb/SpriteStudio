@@ -82,6 +82,7 @@ void MainWindow::startAnimation()
     }
 
   if (selectedFrameRows.isEmpty()) {
+        qDebug() << QString(__func__) << "called stopAnimation()";
       stopAnimation();
       return;
     }
@@ -103,6 +104,7 @@ void MainWindow::stopAnimation()
 void MainWindow::updateAnimation()
 {
   if (selectedFrameRows.isEmpty() || extractor->m_frames.isEmpty()) {
+        qDebug() << QString(__func__) << "called stopAnimation()";
       stopAnimation();
       return;
     }
@@ -111,6 +113,7 @@ void MainWindow::updateAnimation()
 
   if (frameListIndex < 0 || frameListIndex >= extractor->m_frames.size()) {
       qWarning() << tr("_error") << "Frame index invalid.";
+      qDebug() << QString(__func__) << "called stopAnimation()";
       stopAnimation();
       return;
     }
