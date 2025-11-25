@@ -37,7 +37,6 @@ void MainWindow::on_animationList_itemPressed(QTreeWidgetItem *item, int column)
 {
     Q_UNUSED(column);
 
-    // Sauvegarder l'état de sélection AVANT le changement
     m_wasPreviouslySelected = ui->animationList->selectedItems().contains(item);
 
     QModelIndexList selectedIndexes = ui->framesList->selectionModel()->selectedIndexes();
@@ -50,13 +49,10 @@ void MainWindow::on_animationList_itemClicked(QTreeWidgetItem *item, int column)
 {
     Q_UNUSED(column);
 
-    // Vérifier si c'était déjà sélectionné avant le clic
     if (m_wasPreviouslySelected) {
-        // Toggle : désélectionner et arrêter
         ui->animationList->clearSelection();
-        stopAnimation();
+        //stopAnimation();
     }
-    // Sinon, la sélection normale a déjà été gérée par itemSelectionChanged
     QModelIndexList selectedIndexes = ui->framesList->selectionModel()->selectedIndexes();
 
     clearBoundingBoxHighlighters();
@@ -73,7 +69,6 @@ void MainWindow::on_animationList_itemSelectionChanged()
         return;
     }
 
-    // --- Code existant pour configurer l'animation ---
     QTreeWidgetItem *item = selectedItems.first();
 
     bool fpsOk;
@@ -109,7 +104,6 @@ void MainWindow::on_animationList_itemSelectionChanged()
     clearBoundingBoxHighlighters();
     setBoundingBoxHighllithers(selectedIndexes);
 
-    // Lancer l'animation seulement si ce n'est pas un toggle
     if (!m_wasPreviouslySelected) {
         startAnimation();
     }
@@ -117,21 +111,16 @@ void MainWindow::on_animationList_itemSelectionChanged()
 
 void MainWindow::removeSelectedAnimation()
 {
-    // On récupère la liste des items sélectionnés
-    // QTreeWidget gère très bien la sélection multiple par défaut
     QList<QTreeWidgetItem*> selectedItems = ui->animationList->selectedItems();
 
     if (selectedItems.isEmpty()) return;
 
-    // Demander confirmation (Optionnel mais recommandé)
     QMessageBox::StandardButton reply;
-    reply = QMessageBox::question(this, tr("Confirmation"),
-                                  tr("Voulez-vous vraiment supprimer %n animation(s) ?", "", selectedItems.size()),
+    reply = QMessageBox::question(this, tr("_confirm"),
+                                  tr("_confirm_delete", "", selectedItems.size()),
                                   QMessageBox::Yes | QMessageBox::No);
 
     if (reply == QMessageBox::Yes) {
-        // La méthode la plus propre et rapide pour tout supprimer
-        // qDeleteAll appelle le destructeur de chaque item, ce qui les retire de l'arbre
         qDeleteAll(selectedItems);
     }
 }
@@ -140,23 +129,17 @@ void MainWindow::on_animationList_customContextMenuRequested(const QPoint &pos)
 {
     QTreeWidgetItem *item = ui->animationList->itemAt(pos);
 
-    // On affiche le menu seulement si on a cliqué sur un item valide
     if (item) {
         QMenu menu(this);
 
-        QAction *deleteAction = menu.addAction(tr("Supprimer l'animation"));
-        // On peut ajouter une icône si vous en avez une
-        // deleteAction->setIcon(QIcon(":/drawer/minus.png"));
+        QAction *deleteAction = menu.addAction(tr("_delete_animation"));
 
         connect(deleteAction, &QAction::triggered,
                 this, &MainWindow::removeSelectedAnimation);
 
-        // Affiche le menu à la position globale de la souris
         menu.exec(ui->animationList->viewport()->mapToGlobal(pos));
     }
 }
-
-
 
 void MainWindow::on_framesList_customContextMenuRequested(const QPoint &pos)
 {
@@ -166,7 +149,7 @@ void MainWindow::on_framesList_customContextMenuRequested(const QPoint &pos)
       QMenu menu(this);
 
       if (selected.size() > 1) {
-          QAction *createAnimAction = menu.addAction(tr("Créer une animation depuis la sélection"));
+          QAction *createAnimAction = menu.addAction(tr("_create_animation"));
           connect(createAnimAction, &QAction::triggered,
                   this, &MainWindow::createAnimationFromSelection);
 
