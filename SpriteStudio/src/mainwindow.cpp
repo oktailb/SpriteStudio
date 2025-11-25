@@ -22,6 +22,8 @@ MainWindow::MainWindow(QWidget *parent)
       , extractor(nullptr)
       , animationTimer(new QTimer(this))
       , currentAnimationFrameIndex(0)
+      , m_ignoreNextClick(false)
+      , m_wasPreviouslySelected(false)
 {
   ui->setupUi(this);
   // Enable drag and drop events for the main window (to handle file drops).
@@ -90,6 +92,25 @@ MainWindow::MainWindow(QWidget *parent)
 
   // Start the animation immediately (it will likely run with a single frame until a file is loaded).
   startAnimation();
+
+  ui->animationList->setContextMenuPolicy(Qt::CustomContextMenu);
+
+  connect(ui->animationList, &QTreeWidget::customContextMenuRequested,
+          this, &MainWindow::on_animationList_customContextMenuRequested);
+
+  QShortcut *deleteShortcut = new QShortcut(QKeySequence::Delete, ui->animationList);
+  QShortcut *backspaceShortcut = new QShortcut(QKeySequence(Qt::Key_Backspace), ui->animationList);
+
+  connect(deleteShortcut, &QShortcut::activated, this, &MainWindow::removeSelectedAnimation);
+  connect(backspaceShortcut, &QShortcut::activated, this, &MainWindow::removeSelectedAnimation);
+
+  connect(ui->animationList, &QTreeWidget::itemPressed,
+          this, &MainWindow::on_animationList_itemPressed);
+  connect(ui->animationList, &QTreeWidget::itemClicked,
+          this, &MainWindow::on_animationList_itemClicked);
+  connect(ui->animationList, &QTreeWidget::itemSelectionChanged,
+          this, &MainWindow::on_animationList_itemSelectionChanged);
+
   // Set the ready flag to true now that basic initialization is complete.
   ready = true;
 }

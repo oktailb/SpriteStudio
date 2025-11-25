@@ -33,12 +33,146 @@ void MainWindow::onAtlasContextMenuRequested(const QPoint &pos)
   menu.exec(ui->graphicsViewLayers->mapToGlobal(pos));
 }
 
+void MainWindow::on_animationList_itemPressed(QTreeWidgetItem *item, int column)
+{
+    Q_UNUSED(column);
+
+    // Sauvegarder l'état de sélection AVANT le changement
+    m_wasPreviouslySelected = ui->animationList->selectedItems().contains(item);
+
+    QModelIndexList selectedIndexes = ui->framesList->selectionModel()->selectedIndexes();
+
+    clearBoundingBoxHighlighters();
+    setBoundingBoxHighllithers(selectedIndexes);
+}
+
+void MainWindow::on_animationList_itemClicked(QTreeWidgetItem *item, int column)
+{
+    Q_UNUSED(column);
+
+    // Vérifier si c'était déjà sélectionné avant le clic
+    if (m_wasPreviouslySelected) {
+        // Toggle : désélectionner et arrêter
+        ui->animationList->clearSelection();
+        stopAnimation();
+    }
+    // Sinon, la sélection normale a déjà été gérée par itemSelectionChanged
+    QModelIndexList selectedIndexes = ui->framesList->selectionModel()->selectedIndexes();
+
+    clearBoundingBoxHighlighters();
+    setBoundingBoxHighllithers(selectedIndexes);
+}
+
+void MainWindow::on_animationList_itemSelectionChanged()
+{
+    QList<QTreeWidgetItem*> selectedItems = ui->animationList->selectedItems();
+
+    if (selectedItems.isEmpty()) {
+        stopAnimation();
+        ui->framesList->selectionModel()->clear();
+        return;
+    }
+
+    // --- Code existant pour configurer l'animation ---
+    QTreeWidgetItem *item = selectedItems.first();
+
+    bool fpsOk;
+    int savedFps = item->text(1).toInt(&fpsOk);
+    if (fpsOk && savedFps > 0) {
+        ui->fps->blockSignals(true);
+        ui->fps->setValue(savedFps);
+        ui->fps->blockSignals(false);
+    }
+
+    QString framesString = item->text(2);
+    QStringList framesStrList = framesString.split(",", Qt::SkipEmptyParts);
+
+    QItemSelectionModel *selectionModel = ui->framesList->selectionModel();
+    QItemSelection newSelection;
+
+    for (const QString &s : framesStrList) {
+        bool ok;
+        int row = s.trimmed().toInt(&ok);
+        if (ok && row >= 0 && row < frameModel->rowCount()) {
+            QModelIndex idx = frameModel->index(row, 0);
+            newSelection.select(idx, idx);
+        }
+    }
+
+    if (!newSelection.isEmpty()) {
+        selectionModel->select(newSelection, QItemSelectionModel::ClearAndSelect);
+        ui->framesList->scrollTo(newSelection.indexes().first());
+    }
+
+    QModelIndexList selectedIndexes = ui->framesList->selectionModel()->selectedIndexes();
+
+    clearBoundingBoxHighlighters();
+    setBoundingBoxHighllithers(selectedIndexes);
+
+    // Lancer l'animation seulement si ce n'est pas un toggle
+    if (!m_wasPreviouslySelected) {
+        startAnimation();
+    }
+}
+
+void MainWindow::removeSelectedAnimation()
+{
+    // On récupère la liste des items sélectionnés
+    // QTreeWidget gère très bien la sélection multiple par défaut
+    QList<QTreeWidgetItem*> selectedItems = ui->animationList->selectedItems();
+
+    if (selectedItems.isEmpty()) return;
+
+    // Demander confirmation (Optionnel mais recommandé)
+    QMessageBox::StandardButton reply;
+    reply = QMessageBox::question(this, tr("Confirmation"),
+                                  tr("Voulez-vous vraiment supprimer %n animation(s) ?", "", selectedItems.size()),
+                                  QMessageBox::Yes | QMessageBox::No);
+
+    if (reply == QMessageBox::Yes) {
+        // La méthode la plus propre et rapide pour tout supprimer
+        // qDeleteAll appelle le destructeur de chaque item, ce qui les retire de l'arbre
+        qDeleteAll(selectedItems);
+    }
+}
+
+void MainWindow::on_animationList_customContextMenuRequested(const QPoint &pos)
+{
+    QTreeWidgetItem *item = ui->animationList->itemAt(pos);
+
+    // On affiche le menu seulement si on a cliqué sur un item valide
+    if (item) {
+        QMenu menu(this);
+
+        QAction *deleteAction = menu.addAction(tr("Supprimer l'animation"));
+        // On peut ajouter une icône si vous en avez une
+        // deleteAction->setIcon(QIcon(":/drawer/minus.png"));
+
+        connect(deleteAction, &QAction::triggered,
+                this, &MainWindow::removeSelectedAnimation);
+
+        // Affiche le menu à la position globale de la souris
+        menu.exec(ui->animationList->viewport()->mapToGlobal(pos));
+    }
+}
+
+
+
 void MainWindow::on_framesList_customContextMenuRequested(const QPoint &pos)
 {
   QModelIndexList selected = ui->framesList->selectionModel()->selectedIndexes();
 
   if (!selected.isEmpty()) {
       QMenu menu(this);
+
+      if (selected.size() > 1) {
+          QAction *createAnimAction = menu.addAction(tr("Créer une animation depuis la sélection"));
+          connect(createAnimAction, &QAction::triggered,
+                  this, &MainWindow::createAnimationFromSelection);
+
+          menu.addSeparator();
+      }
+
       QString actionText = (selected.size() > 1) ? tr("_delete_selected_frames") : tr("_delete_frame");
       QAction *deleteAction = menu.addAction(actionText);
 
@@ -180,7 +314,7 @@ void MainWindow::on_verticalTolerance_valueChanged(int verticalTolerance)
     }
 }
 
-QColor getHighlightColor(int index, int total)
+QColor MainWindow::getHighlightColor(int index, int total)
 {
   if (total == 1) return Qt::magenta; // Single selection => magenta
 
@@ -210,44 +344,7 @@ void MainWindow::on_framesList_clicked(const QModelIndex &index)
   QModelIndexList selectedIndexes = ui->framesList->selectionModel()->selectedIndexes();
 
   clearBoundingBoxHighlighters();
-
-  QGraphicsScene *scene = ui->graphicsViewLayers->scene();
-
-  for (int i = 0; i < selectedIndexes.size(); ++i) {
-      const QModelIndex &currentIndex = selectedIndexes.at(i);
-      int row = currentIndex.row();
-
-      if (row >= 0 && row < extractor->m_atlas_index.size()) {
-          const Extractor::Box &box = extractor->m_atlas_index.at(row);
-          QRectF rect(box.x, box.y, box.w, box.h);
-
-          QColor color = getHighlightColor(i, selectedIndexes.size());
-          color.setAlpha(50);
-          QPen pen(Qt::red);
-          pen.setWidth(2);
-          pen.setStyle(Qt::DashLine);
-
-          QGraphicsRectItem *highlighter = new QGraphicsRectItem(rect);
-          highlighter->setPen(pen);
-          highlighter->setBrush(QBrush(color));
-          highlighter->setToolTip(QString("Frame %1\nPosition: (%2, %3)\nSize: %4x%5")
-                                       .arg(row + 1)
-                                       .arg(box.x).arg(box.y)
-                                       .arg(box.w).arg(box.h));
-
-          QGraphicsSimpleTextItem *label = new QGraphicsSimpleTextItem(QString::number(row + 1), highlighter);
-          label->setPos(rect.topLeft());
-          label->setBrush(Qt::black);
-          label->setFont(QFont("Arial", 10, QFont::Bold));
-
-          scene->addItem(highlighter);
-          boundingBoxHighlighters.append(highlighter);
-        }
-    }
-
-  if (!selectedIndexes.isEmpty()) {
-      fitSelectedFramesInView(100);
-    }
+  setBoundingBoxHighllithers(selectedIndexes);
 }
 
 void MainWindow::on_actionExport_triggered()

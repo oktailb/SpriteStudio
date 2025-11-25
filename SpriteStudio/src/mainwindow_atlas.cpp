@@ -223,6 +223,46 @@ void MainWindow::clearBoundingBoxHighlighters()
   boundingBoxHighlighters.clear();
 }
 
+void MainWindow::setBoundingBoxHighllithers(QModelIndexList &selectedIndexes) {
+    QGraphicsScene *scene = ui->graphicsViewLayers->scene();
+
+    for (int i = 0; i < selectedIndexes.size(); ++i) {
+        const QModelIndex &currentIndex = selectedIndexes.at(i);
+        int row = currentIndex.row();
+
+        if (row >= 0 && row < extractor->m_atlas_index.size()) {
+            const Extractor::Box &box = extractor->m_atlas_index.at(row);
+            QRectF rect(box.x, box.y, box.w, box.h);
+
+            QColor color = getHighlightColor(i, selectedIndexes.size());
+            color.setAlpha(50);
+            QPen pen(Qt::red);
+            pen.setWidth(2);
+            pen.setStyle(Qt::DashLine);
+
+            QGraphicsRectItem *highlighter = new QGraphicsRectItem(rect);
+            highlighter->setPen(pen);
+            highlighter->setBrush(QBrush(color));
+            highlighter->setToolTip(QString("Frame %1\nPosition: (%2, %3)\nSize: %4x%5")
+                                        .arg(row + 1)
+                                        .arg(box.x).arg(box.y)
+                                        .arg(box.w).arg(box.h));
+
+            QGraphicsSimpleTextItem *label = new QGraphicsSimpleTextItem(QString::number(row + 1), highlighter);
+            label->setPos(rect.topLeft());
+            label->setBrush(Qt::black);
+            label->setFont(QFont("Arial", 10, QFont::Bold));
+
+            scene->addItem(highlighter);
+            boundingBoxHighlighters.append(highlighter);
+        }
+    }
+
+    if (!selectedIndexes.isEmpty()) {
+        fitSelectedFramesInView(100);
+    }
+}
+
 void MainWindow::fitSelectedFramesInView(int padding)
 {
   if (boundingBoxHighlighters.isEmpty() || !extractor) return;

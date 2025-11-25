@@ -14,6 +14,52 @@
 #include <QMovie>
 #include <QGraphicsRectItem>
 
+void MainWindow::createAnimationFromSelection()
+{
+    // 1. Récupérer la sélection
+    QModelIndexList selectedIndexes = ui->framesList->selectionModel()->selectedIndexes();
+    if (selectedIndexes.isEmpty()) return;
+
+    // 2. Trier les index par ordre croissant (Row)
+    // C'est important car l'utilisateur peut avoir sélectionné dans le désordre
+    std::sort(selectedIndexes.begin(), selectedIndexes.end(),
+              [](const QModelIndex& a, const QModelIndex& b) {
+                  return a.row() < b.row();
+              });
+
+    // 3. Demander le nom via une QDialogBox standard (QInputDialog)
+    bool ok;
+    QString text = QInputDialog::getText(this, tr("Nouvelle Animation"),
+                                         tr("Nom de l'animation :"), QLineEdit::Normal,
+                                         "New Animation", &ok);
+
+    if (!ok || text.isEmpty()) return;
+
+    // 4. Récupérer les données
+    int currentFps = ui->fps->value();
+
+    // Construire la liste des frames sous forme de string "1, 2, 3..."
+    QStringList framesStrList;
+    for (const QModelIndex &idx : selectedIndexes) {
+        // On ajoute 1 pour un affichage "humain" (commence à 1),
+        // ou retirez le "+1" pour garder l'index technique (0-based)
+        framesStrList << QString::number(idx.row());
+    }
+    QString framesString = framesStrList.join(", ");
+
+    // 5. Ajouter la ligne dans animationList (QTreeWidget)
+    // Assurez-vous que ui->animationList existe dans votre .ui ou a été créé manuellement
+    if (ui->animationList) {
+        QTreeWidgetItem *item = new QTreeWidgetItem(ui->animationList);
+        item->setText(0, text);              // Colonne Name
+        item->setText(1, QString::number(currentFps)); // Colonne FPS
+        item->setText(2, framesString);      // Colonne FramesList
+
+        // Optionnel : Sélectionner la nouvelle ligne créée
+        ui->animationList->setCurrentItem(item);
+    }
+}
+
 void MainWindow::startAnimation()
 {
   if (animationTimer->isActive()) {
