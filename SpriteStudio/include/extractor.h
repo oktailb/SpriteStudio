@@ -99,6 +99,8 @@ public:
         int y;
         int w;
         int h;
+        bool selected;
+        int index;
     };
 
     QList<QPixmap>  m_frames;         /**< List of individual frames (used by the Frame List and Animation). */

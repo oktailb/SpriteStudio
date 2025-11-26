@@ -268,22 +268,22 @@
     </message>
     <message>
         <location filename="../src/mainwindow.cpp" line="43"/>
-        <location filename="../src/mainwindow_callbacks.cpp" line="263"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="256"/>
         <source>_timing</source>
         <translation>Timing</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="28"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="56"/>
         <source>_delete_background</source>
         <translation>Delete background automagically</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="107"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="130"/>
         <source>_confirm</source>
         <translation>Confirmation</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/mainwindow_callbacks.cpp" line="108"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="131"/>
         <source>_confirm_delete</source>
         <translation>
             <numerusform>Are You sure to delete this animations?</numerusform>
@@ -291,42 +291,42 @@
         </translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="123"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="146"/>
         <source>_delete_animation</source>
         <translation>Delete animation</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="140"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="32"/>
         <source>_create_animation</source>
         <translation>Create an animation from selection</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="147"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="39"/>
         <source>_delete_selected_frames</source>
         <translation>Delete selected frames</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="147"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="39"/>
         <source>_delete_frame</source>
         <translation>Delete frame</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="155"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="47"/>
         <source>_invert_selection</source>
         <translation>Invert Selection</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="159"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="51"/>
         <source>_reverse_order</source>
         <translation>Reverse selected frames order</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="248"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="241"/>
         <source>_open_file</source>
         <translation>Open File</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="249"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="242"/>
         <source>_images</source>
         <translation>Images </translation>
     </message>
@@ -341,27 +341,27 @@
         <translation>Invalid GIF file.</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="325"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="318"/>
         <source>_export_error</source>
         <translation>Impossible to export</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="325"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="318"/>
         <source>_please_load_frames</source>
         <translation>Please select or load frames before request for export</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="329"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="322"/>
         <source>_export_formats_json</source>
         <translation>Sprite Atlas </translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="329"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="322"/>
         <source>_export_formats_png</source>
         <translation>PNG Image </translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="333"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="326"/>
         <source>_export_atlas</source>
         <translation>Export Sprite Atlas</translation>
     </message>

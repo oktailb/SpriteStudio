@@ -130,7 +130,7 @@ QList<QPixmap> SpriteExtractor::extractFromPixmap(int alphaThreshold, int vertic
       for (int i = 0; i < rects.size(); ++i) {
           if (isMaster[i]) {
               QRect rect = rects[i];
-              m_atlas_index.push_back({rect.x(), rect.y(), rect.width(), rect.height()});
+              m_atlas_index.push_back({rect.x(), rect.y(), rect.width(), rect.height(), false, i});
             }
         }
     }

@@ -25,11 +25,38 @@ void MainWindow::onAtlasContextMenuRequested(const QPoint &pos)
     return;
 
   QMenu menu(this);
-  QAction *removeBgAction = menu.addAction(tr("_delete_background"));
+  QModelIndexList selected = ui->framesList->selectionModel()->selectedIndexes();
 
-  // Connect the action to the treatment method
-  connect(removeBgAction, &QAction::triggered, this, &MainWindow::removeAtlasBackground);
+  if (!selected.isEmpty()) {
+      if (selected.size() > 1) {
+          QAction *createAnimAction = menu.addAction(tr("_create_animation"));
+          connect(createAnimAction, &QAction::triggered,
+                   this, &MainWindow::createAnimationFromSelection);
 
+          menu.addSeparator();
+        }
+
+      QString actionText = (selected.size() > 1) ? tr("_delete_selected_frames") : tr("_delete_frame");
+      QAction *deleteAction = menu.addAction(actionText);
+
+      QObject::connect(deleteAction, &QAction::triggered,
+                        this, &MainWindow::deleteSelectedFrame);
+
+      menu.addSeparator();
+
+      QAction *invertAction = menu.addAction(tr("_invert_selection"));
+      QObject::connect(invertAction, &QAction::triggered,
+                        this, &MainWindow::invertSelection);
+
+      QAction *reverseOrderAction = menu.addAction(tr("_reverse_order"));
+      QObject::connect(reverseOrderAction, &QAction::triggered,
+                        this, &MainWindow::reverseSelectedFramesOrder);
+    }
+  else {
+      QAction *removeBgAction = menu.addAction(tr("_delete_background"));
+      // Connect the action to the treatment method
+      connect(removeBgAction, &QAction::triggered, this, &MainWindow::removeAtlasBackground);
+    }
   menu.exec(ui->graphicsViewLayers->mapToGlobal(pos));
 }
 
@@ -127,37 +154,7 @@ void MainWindow::on_animationList_customContextMenuRequested(const QPoint &pos)
 
 void MainWindow::on_framesList_customContextMenuRequested(const QPoint &pos)
 {
-  QModelIndexList selected = ui->framesList->selectionModel()->selectedIndexes();
 
-  if (!selected.isEmpty()) {
-      QMenu menu(this);
-
-      if (selected.size() > 1) {
-          QAction *createAnimAction = menu.addAction(tr("_create_animation"));
-          connect(createAnimAction, &QAction::triggered,
-                  this, &MainWindow::createAnimationFromSelection);
-
-          menu.addSeparator();
-      }
-
-      QString actionText = (selected.size() > 1) ? tr("_delete_selected_frames") : tr("_delete_frame");
-      QAction *deleteAction = menu.addAction(actionText);
-
-      QObject::connect(deleteAction, &QAction::triggered,
-                        this, &MainWindow::deleteSelectedFrame);
-
-      menu.addSeparator();
-
-      QAction *invertAction = menu.addAction(tr("_invert_selection"));
-      QObject::connect(invertAction, &QAction::triggered,
-                        this, &MainWindow::invertSelection);
-
-      QAction *reverseOrderAction = menu.addAction(tr("_reverse_order"));
-      QObject::connect(reverseOrderAction, &QAction::triggered,
-                        this, &MainWindow::reverseSelectedFramesOrder);
-
-      menu.exec(ui->framesList->viewport()->mapToGlobal(pos));
-    }
 }
 
 void MainWindow::onMergeFrames(int sourceRow, int targetRow)
