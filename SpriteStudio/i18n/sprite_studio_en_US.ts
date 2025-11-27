@@ -379,7 +379,7 @@
     <message>
         <location filename="../src/mainwindow_animation.cpp" line="115"/>
         <source>_error</source>
-        <translation type="unfinished">Error</translation>
+        <translation>Error</translation>
     </message>
 </context>
 </TS>
