@@ -332,6 +332,22 @@ private slots:
    */
   void updateAnimationsList();
 
+  /**
+     * @brief Crée ou met à jour l'animation "current" basée sur la sélection actuelle
+     */
+  void updateCurrentAnimation();
+
+  /**
+     * @brief Supprime l'animation "current" si elle existe
+     */
+  void removeCurrentAnimation();
+
+  /**
+     * @brief Vérifie si l'animation "current" existe
+     * @return true si l'animation "current" existe
+     */
+  bool hasCurrentAnimation() const;
+
   // Méthodes refactorisées
   void reverseFramesOrder(const QList<int> &selectedIndices);
   void invertFrameSelection();

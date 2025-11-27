@@ -125,10 +125,16 @@ void MainWindow::removeSelectedAnimation()
 
     QStringList animationNames;
     for (QTreeWidgetItem* item : selectedItems) {
-        animationNames.append(item->text(0));
+        QString name = item->text(0);
+        // Empêcher la suppression manuelle de "current"
+        if (name != "current") {
+            animationNames.append(name);
+        }
     }
 
-    removeAnimations(animationNames);
+    if (!animationNames.isEmpty()) {
+        removeAnimations(animationNames);
+    }
 }
 
 void MainWindow::removeAnimations(const QStringList &animationNames)
@@ -396,6 +402,9 @@ void MainWindow::on_framesList_clicked(const QModelIndex &index)
 
     clearBoundingBoxHighlighters();
     setBoundingBoxHighllithers(selectedIndices);
+
+    // NE PAS mettre à jour l'animation "current" ici car c'est déjà fait
+    // dans setSelectedFrameIndices() via la connexion de sélection
 }
 
 void MainWindow::on_actionExport_triggered()

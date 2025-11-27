@@ -125,6 +125,9 @@ void MainWindow::deleteFrames(const QList<int> &frameIndices)
     // Nettoyer
     clearBoundingBoxHighlighters();
 
+    // Mettre à jour l'animation "current" (elle sera recalculée automatiquement)
+    updateCurrentAnimation();
+
     // Arrêter l'animation si nécessaire
     stopAnimation();
 }
@@ -248,6 +251,9 @@ void MainWindow::setSelectedFrameIndices(const QList<int> &selectedIndices)
 
     // Mettre à jour l'affichage
     updateFrameListSelectionFromModel();
+
+    // METTRE À JOUR l'animation "current" (gère aussi le cas vide)
+    updateCurrentAnimation();
 }
 
 void MainWindow::clearFrameSelections()
@@ -259,6 +265,9 @@ void MainWindow::clearFrameSelections()
     }
 
     updateFrameListSelectionFromModel();
+
+    // METTRE À JOUR l'animation "current" (va la supprimer car sélection vide)
+    updateCurrentAnimation();
 }
 
 void MainWindow::updateFrameListSelectionFromModel()

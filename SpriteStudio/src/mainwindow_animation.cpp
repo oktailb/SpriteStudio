@@ -32,12 +32,25 @@ void MainWindow::createAnimationFromSelection()
     createAnimation(text, selectedIndices, currentFps);
 }
 
-void MainWindow::createAnimation(QString name, QList<int> selectedIndices, int fps){
+void MainWindow::createAnimation(QString name, QList<int> selectedIndices, int fps)
+{
+    // Pour l'animation "current", s'assurer qu'elle est toujours à jour
+    if (name == "current") {
+        extractor->setAnimation(name, selectedIndices, fps);
 
+        // Ne pas sélectionner automatiquement l'animation "current"
+        // et ne pas lancer l'animation automatiquement
+        updateAnimationsList();
 
-    // Utiliser directement selectedIndices depuis le modèle Extractor
+        // Redimensionner les colonnes
+        for (int c = 0; c < ui->animationList->columnCount(); c++) {
+            ui->animationList->resizeColumnToContents(c);
+        }
+        return;
+    }
+
+    // Comportement normal pour les autres animations
     extractor->setAnimation(name, selectedIndices, fps);
-
     updateAnimationsList();
 
     // Sélectionner la nouvelle animation
@@ -46,8 +59,10 @@ void MainWindow::createAnimation(QString name, QList<int> selectedIndices, int f
         ui->animationList->setCurrentItem(items.first());
         startAnimation();
     }
-    for (int c = 0 ; c < ui->animationList->columnCount() ; c++)
+
+    for (int c = 0; c < ui->animationList->columnCount(); c++) {
         ui->animationList->resizeColumnToContents(c);
+    }
 }
 
 void MainWindow::updateAnimationsList()
@@ -312,4 +327,37 @@ void MainWindow::updateAnimation()
     if (currentAnimationFrameIndex >= selectedFrameRows.size()) {
         currentAnimationFrameIndex = 0;
     }
+}
+
+void MainWindow::updateCurrentAnimation()
+{
+    QList<int> selectedIndices = getSelectedFrameIndices();
+
+    if (selectedIndices.isEmpty()) {
+        // Pas de sélection, supprimer l'animation "current"
+        removeCurrentAnimation();
+    } else {
+        // Créer ou mettre à jour l'animation "current"
+        createAnimation("current", selectedIndices, ui->fps->value());
+    }
+}
+
+void MainWindow::removeCurrentAnimation()
+{
+    if (hasCurrentAnimation()) {
+        extractor->removeAnimation("current");
+        syncAnimationListWidget();
+
+        // Si l'animation "current" était sélectionnée, arrêter l'animation
+        QList<QTreeWidgetItem*> selectedItems = ui->animationList->selectedItems();
+        if (!selectedItems.isEmpty() && selectedItems.first()->text(0) == "current") {
+            stopAnimation();
+        }
+    }
+}
+
+bool MainWindow::hasCurrentAnimation() const
+{
+    if (!extractor) return false;
+    return extractor->getAnimationNames().contains("current");
 }

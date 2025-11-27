@@ -417,4 +417,7 @@ void MainWindow::selectFramesInList(const QList<int> &frameIndices)
     // Mettre à jour les surbrillances
     clearBoundingBoxHighlighters();
     setBoundingBoxHighllithers(frameIndices);
+
+    // METTRE À JOUR l'animation "current"
+    updateCurrentAnimation();
 }
