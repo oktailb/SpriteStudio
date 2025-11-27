@@ -217,54 +217,113 @@ void MainWindow::setupGraphicsView(const QPixmap &pixmap)
 
 void MainWindow::clearBoundingBoxHighlighters()
 {
-  for (QGraphicsRectItem *highlighter : boundingBoxHighlighters) {
-      if (highlighter && highlighter->scene()) {
-          highlighter->scene()->removeItem(highlighter);
-          delete highlighter;
+    for (QGraphicsRectItem *highlighter : boundingBoxHighlighters) {
+        if (highlighter && highlighter->scene()) {
+            highlighter->scene()->removeItem(highlighter);
+            delete highlighter;
         }
     }
-  boundingBoxHighlighters.clear();
+    boundingBoxHighlighters.clear();
+
+    // Optionnel : réinitialiser les sélections si nécessaire
+    // for (Extractor::Box &box : extractor->m_atlas_index) {
+    //     box.selected = false;
+    // }
+    // refreshFrameListDisplay();
 }
 
-void MainWindow::setBoundingBoxHighllithers(QModelIndexList &selectedIndexes) {
+void MainWindow::setBoundingBoxHighllithers(const QList<int> &selectedIndices)
+{
     QGraphicsScene *scene = ui->graphicsViewLayers->scene();
+    if (!scene || !extractor) return;
 
-    for (int i = 0; i < selectedIndexes.size(); ++i) {
-        const QModelIndex &currentIndex = selectedIndexes.at(i);
-        int row = currentIndex.row();
+    // Les sélections sont déjà dans le modèle Extractor, on les utilise directement
 
-        if (row >= 0 && row < extractor->m_atlas_index.size()) {
-            const Extractor::Box &box = extractor->m_atlas_index.at(row);
-            QRectF rect(box.x, box.y, box.w, box.h);
+    for (int i = 0; i < selectedIndices.size(); ++i) {
+        int row = selectedIndices.at(i);
 
-            QColor color = getHighlightColor(i, selectedIndexes.size());
-            color.setAlpha(50);
-            QPen pen(Qt::red);
-            pen.setWidth(2);
-            pen.setStyle(Qt::DashLine);
-
-            QGraphicsRectItem *highlighter = new QGraphicsRectItem(rect);
-            highlighter->setPen(pen);
-            highlighter->setBrush(QBrush(color));
-            highlighter->setToolTip(QString("Frame %1\nPosition: (%2, %3)\nSize: %4x%5")
-                                        .arg(row + 1)
-                                        .arg(box.x).arg(box.y)
-                                        .arg(box.w).arg(box.h));
-
-            QGraphicsSimpleTextItem *label = new QGraphicsSimpleTextItem(QString::number(row + 1), highlighter);
-            label->setPos(rect.topLeft());
-            label->setBrush(Qt::black);
-            label->setFont(QFont("Arial", 10, QFont::Bold));
-
-            scene->addItem(highlighter);
-            boundingBoxHighlighters.append(highlighter);
+        // Validation de l'index
+        if (row < 0 || row >= extractor->m_atlas_index.size()) {
+            qWarning() << "Index de frame invalide dans setBoundingBoxHighllithers:" << row;
+            continue;
         }
+
+        const Extractor::Box &box = extractor->m_atlas_index[row];
+        QRectF rect(box.x, box.y, box.w, box.h);
+        QColor color = getHighlightColor(i, selectedIndices.size());
+        color.setAlpha(50);
+        QPen pen(Qt::red);
+        pen.setWidth(2);
+        pen.setStyle(Qt::DashLine);
+
+        QGraphicsRectItem *highlighter = new QGraphicsRectItem(rect);
+        highlighter->setPen(pen);
+        highlighter->setBrush(QBrush(color));
+        highlighter->setToolTip(QString("Frame %1 on %2").arg(row + 1).arg(selectedIndices.size()));
+
+        QGraphicsSimpleTextItem *label = new QGraphicsSimpleTextItem(QString::number(row + 1), highlighter);
+        label->setPos(rect.topLeft());
+        label->setBrush(Qt::black);
+        label->setFont(QFont("Arial", 10, QFont::Bold));
+
+        scene->addItem(highlighter);
+        boundingBoxHighlighters.append(highlighter);
     }
 
-    if (!selectedIndexes.isEmpty()) {
-        fitSelectedFramesInView(100);
-        ui->framesList->scrollTo(selectedIndexes.first());
+    // if (!selectedIndices.isEmpty()) {
+    //     fitSelectedFramesInView(100);
+    //     // Scroller vers la première frame sélectionnée
+    //     if (selectedIndices.first() < frameModel->rowCount()) {
+    //         QModelIndex firstIndex = frameModel->index(selectedIndices.first(), 0);
+    //         ui->framesList->scrollTo(firstIndex);
+    //     }
+    // }
+}
+
+void MainWindow::refreshFrameListDisplay()
+{
+    if (!extractor) return;
+
+    // S'assurer que le modèle et l'extracteur sont synchronisés
+    int modelCount = frameModel->rowCount();
+    int atlasCount = extractor->m_atlas_index.size();
+
+    if (modelCount != atlasCount) {
+        qWarning() << "Incohérence détectée: frameModel a" << modelCount
+                   << "items, mais extractor a" << atlasCount << "frames";
+        // Re-synchroniser le modèle
+        populateFrameList(extractor->m_frames, extractor->m_atlas_index);
+        return;
     }
+
+    // Mettre à jour l'affichage de tous les items dans la liste
+    for (int i = 0; i < frameModel->rowCount(); ++i) {
+        QStandardItem *item = frameModel->item(i, 0);
+        if (!item) continue;
+
+        // Validation de l'index
+        if (i >= extractor->m_atlas_index.size()) {
+            qWarning() << "Index" << i << "hors limites dans refreshFrameListDisplay()";
+            break;
+        }
+
+        const Extractor::Box &box = extractor->m_atlas_index.at(i);
+
+        // Mettre à jour le texte avec l'indicateur de sélection
+//        QString displayText = QString("Frame %1\n[%2,%3](%4x%5)").arg(i + 1).arg(box.x).arg(box.y).arg(box.w).arg(box.h);
+        QString displayText = QString("Frame ") + QString::number(i) + " on " + QString::number(frameModel->rowCount());
+        if (box.selected) {
+            displayText += " ✓";
+            item->setBackground(QBrush(QColor(200, 230, 255))); // Fond bleu pour sélection
+        } else {
+            item->setBackground(QBrush()); // Pas de fond spécial
+        }
+
+        item->setData(displayText, Qt::DisplayRole);
+    }
+
+    // Forcer la mise à jour de la vue
+    ui->framesList->viewport()->update();
 }
 
 void MainWindow::fitSelectedFramesInView(int padding)
@@ -350,37 +409,12 @@ QList<int> MainWindow::findFramesInSelectionRect(const QRectF &rect)
 
 void MainWindow::selectFramesInList(const QList<int> &frameIndices)
 {
-  if (!frameModel || frameIndices.isEmpty()) return;
+    if (!frameModel || frameIndices.isEmpty()) return;
 
-  QItemSelectionModel *selectionModel = ui->framesList->selectionModel();
-  if (!selectionModel) return;
+    // Utiliser directement setSelectedFrameIndices qui gère tout
+    setSelectedFrameIndices(frameIndices);
 
-  bool addToSelection = (selectionModifiers & (Qt::ControlModifier | Qt::ShiftModifier));
-
-  if (!addToSelection) {
-      selectionModel->clearSelection();
-    }
-
-  QItemSelection selection;
-  for (int row : frameIndices) {
-      QModelIndex index = frameModel->index(row, 0);
-      if (index.isValid()) {
-          selection.select(index, index);
-        }
-    }
-
-  if (selectionModifiers & Qt::ControlModifier) {
-      for (int row : frameIndices) {
-          QModelIndex index = frameModel->index(row, 0);
-          if (selectionModel->isSelected(index)) {
-              selectionModel->select(index, QItemSelectionModel::Deselect);
-            } else {
-              selectionModel->select(index, QItemSelectionModel::Select);
-            }
-        }
-    } else {
-      selectionModel->select(selection, QItemSelectionModel::Select);
-    }
-
-  on_framesList_clicked(QModelIndex());
+    // Mettre à jour les surbrillances
+    clearBoundingBoxHighlighters();
+    setBoundingBoxHighllithers(frameIndices);
 }

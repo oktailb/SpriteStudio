@@ -30,6 +30,7 @@ set (${PROJECT_NAME}_SRC
     src/mainwindow_animation.cpp
     src/mainwindow_frames.cpp
     src/mainwindow_atlas.cpp
+    src/extractor.cpp
     src/gifextractor.cpp
     src/spriteextractor.cpp
     src/jsonextractor.cpp

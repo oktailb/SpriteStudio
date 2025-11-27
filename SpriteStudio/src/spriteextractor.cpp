@@ -90,7 +90,7 @@ QList<QPixmap> SpriteExtractor::extractFromPixmap(int alphaThreshold, int vertic
                   int spriteW = maxX - minX + 1;
                   int spriteH = maxY - minY + 1;
 
-                  Extractor::Box box = {minX, minY, spriteW, spriteH};
+                  Extractor::Box box = {minX, minY, spriteW, spriteH, false, 0};
                   detectedBoxes.push_back(box);
                 }
             }

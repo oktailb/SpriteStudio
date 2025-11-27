@@ -38,8 +38,18 @@ MainWindow::MainWindow(QWidget *parent)
 
   // Connect the selection change signal to automatically start/restart the animation
   // when the user selects or deselects frames.
+  // Dans MainWindow::MainWindow() - Remplacer
   QObject::connect(ui->framesList->selectionModel(), &QItemSelectionModel::selectionChanged,
-                    this, &MainWindow::startAnimation);
+                   this, [this]() {
+                       // Synchroniser la sélection UI -> Modèle Extractor
+                       QList<int> selectedIndices;
+                       QModelIndexList uiSelection = ui->framesList->selectionModel()->selectedIndexes();
+                       for (const QModelIndex &index : uiSelection) {
+                           selectedIndices.append(index.row());
+                       }
+                       setSelectedFrameIndices(selectedIndices);
+                   });
+
   ui->timingLabel->setText(" -> " + tr("_timing") + ": " + QString::number(1000.0  / (double)ui->fps->value(), 'g', 4) + "ms");
 
   // Connect the click signal to the slot that handles highlighting the frame in the atlas view.
@@ -107,6 +117,17 @@ MainWindow::MainWindow(QWidget *parent)
   connect(ui->animationList, &QTreeWidget::itemSelectionChanged,
           this, &MainWindow::on_animationList_itemSelectionChanged);
 
+  connect(ui->fps, QOverload<int>::of(&QSpinBox::valueChanged),
+          this, [this](int fps) {
+              // Mettre à jour le label immédiatement
+              ui->timingLabel->setText(" -> " + tr("_timing") + ": " +
+                                       QString::number(1000.0 / (double)fps, 'g', 4) + "ms");
+
+              // Mettre à jour les animations seulement si nécessaire
+              if (extractor && !ui->animationList->selectedItems().isEmpty()) {
+                  updateAnimationsList();
+              }
+          });
   // Set the ready flag to true now that basic initialization is complete.
   ready = true;
 }

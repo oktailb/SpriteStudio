@@ -77,13 +77,13 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
 
               if (relativeX < margin) {
                   // --- CASE : LEFT SIDE INSERTION ---
-                  listDelegate->setHighlight(index.row(), FrameDelegate::InsertLeft);
-                  clearMergeHighlight(); // not visible on atlas
+                  // listDelegate->setHighlight(index.row(), FrameDelegate::InsertLeft);
+                  // clearMergeHighlight(); // not visible on atlas
                 }
               else if (relativeX > (width - margin)) {
                   // --- CASE : RIGHT SIDE INSERTION ---
-                  listDelegate->setHighlight(index.row(), FrameDelegate::InsertRight);
-                  clearMergeHighlight(); // not visible on atlas
+                  // listDelegate->setHighlight(index.row(), FrameDelegate::InsertRight);
+                  // clearMergeHighlight(); // not visible on atlas
                 }
               else {
                   // --- CASE : FUSION (CENTER) ---

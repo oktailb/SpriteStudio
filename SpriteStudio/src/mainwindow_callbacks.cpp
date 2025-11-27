@@ -25,7 +25,7 @@ void MainWindow::onAtlasContextMenuRequested(const QPoint &pos)
     return;
 
   QMenu menu(this);
-  QModelIndexList selected = ui->framesList->selectionModel()->selectedIndexes();
+  QList<int> selected = getSelectedFrameIndices();
 
   if (!selected.isEmpty()) {
       if (selected.size() > 1) {
@@ -66,49 +66,50 @@ void MainWindow::on_animationList_itemSelectionChanged()
 
     if (selectedItems.isEmpty()) {
         stopAnimation();
-        ui->framesList->selectionModel()->clear();
+        // NE PAS effacer la sélection de framesList - garder la sélection atlas
         return;
     }
 
     QTreeWidgetItem *item = selectedItems.first();
+    QString animationName = item->text(0);
 
-    bool fpsOk;
-    int savedFps = item->text(1).toInt(&fpsOk);
-    if (fpsOk && savedFps > 0) {
+    // Récupérer les données depuis l'extracteur
+    QList<int> frameIndices = extractor->getAnimationFrames(animationName);
+    int savedFps = extractor->getAnimationFps(animationName);
+
+    // Mettre à jour le FPS
+    if (savedFps > 0) {
         ui->fps->blockSignals(true);
         ui->fps->setValue(savedFps);
         ui->fps->blockSignals(false);
     }
 
-    QString framesString = item->text(2);
-    QStringList framesStrList = framesString.split(",", Qt::SkipEmptyParts);
+    // // Mettre à jour la sélection dans framesList (uniquement visuel)
+    // QItemSelectionModel *selectionModel = ui->framesList->selectionModel();
+    // QItemSelection newSelection;
 
-    QItemSelectionModel *selectionModel = ui->framesList->selectionModel();
-    QItemSelection newSelection;
+    // for (int frameIndex : frameIndices) {
+    //     if (frameIndex >= 0 && frameIndex < frameModel->rowCount()) {
+    //         QModelIndex idx = frameModel->index(frameIndex, 0);
+    //         newSelection.select(idx, idx);
+    //     }
+    // }
 
-    for (const QString &s : framesStrList) {
-        bool ok;
-        int row = s.trimmed().toInt(&ok);
-        if (ok && row >= 0 && row < frameModel->rowCount()) {
-            QModelIndex idx = frameModel->index(row, 0);
-            newSelection.select(idx, idx);
-        }
-    }
+    // if (!newSelection.isEmpty()) {
+    //     selectionModel->select(newSelection, QItemSelectionModel::ClearAndSelect);
+    //     ui->framesList->scrollTo(newSelection.indexes().first());
 
-    if (!newSelection.isEmpty()) {
-        selectionModel->select(newSelection, QItemSelectionModel::ClearAndSelect);
-        ui->framesList->scrollTo(newSelection.indexes().first());
+    //     QList<int> selectedIndexes = getSelectedFrameIndices();
+    //     clearBoundingBoxHighlighters();
+    //     setBoundingBoxHighllithers(selectedIndexes);
+    // } else {
+    //     clearBoundingBoxHighlighters();
+    // }
 
-        QModelIndexList selectedIndexes = ui->framesList->selectionModel()->selectedIndexes();
-        clearBoundingBoxHighlighters();
-        setBoundingBoxHighllithers(selectedIndexes);
-
-        QTimer::singleShot(0, this, [this]() {
-            startAnimation();
-        });
-    } else {
-        stopAnimation();
-    }
+    // Démarrer l'animation automatiquement
+    QTimer::singleShot(0, this, [this]() {
+        startAnimation();
+    });
 }
 
 void MainWindow::on_animationList_itemClicked(QTreeWidgetItem *item, int column)
@@ -123,7 +124,6 @@ void MainWindow::on_animationList_itemClicked(QTreeWidgetItem *item, int column)
 void MainWindow::removeSelectedAnimation()
 {
     QList<QTreeWidgetItem*> selectedItems = ui->animationList->selectedItems();
-
     if (selectedItems.isEmpty()) return;
 
     QMessageBox::StandardButton reply;
@@ -132,7 +132,11 @@ void MainWindow::removeSelectedAnimation()
                                   QMessageBox::Yes | QMessageBox::No);
 
     if (reply == QMessageBox::Yes) {
-        qDeleteAll(selectedItems);
+        for (QTreeWidgetItem *item : selectedItems) {
+            QString animationName = item->text(0);
+            extractor->removeAnimation(animationName);
+        }
+        syncAnimationListWidget();
     }
 }
 
@@ -157,50 +161,121 @@ void MainWindow::on_framesList_customContextMenuRequested(const QPoint &pos)
 
 }
 
+void MainWindow::updateAnimationsAfterFrameRemoval(int removedRow, int mergedRow)
+{
+    if (!extractor) return;
+
+    QStringList animationNames = extractor->getAnimationNames();
+    for (const QString &name : animationNames) {
+        QList<int> frameIndices = extractor->getAnimationFrames(name);
+        QList<int> updatedIndices;
+        int fps = extractor->getAnimationFps(name);
+
+        for (int frameIndex : frameIndices) {
+            if (frameIndex == removedRow) {
+                // Remplacer la frame supprimée par la frame fusionnée
+                if (!updatedIndices.contains(mergedRow)) {
+                    updatedIndices.append(mergedRow);
+                }
+            } else if (frameIndex > removedRow) {
+                // Décrémenter les indices supérieurs
+                updatedIndices.append(frameIndex - 1);
+            } else {
+                // Garder les indices inférieurs
+                updatedIndices.append(frameIndex);
+            }
+        }
+
+        // Supprimer les doublons (méthode moderne)
+        QSet<int> uniqueIndices;
+        for (int index : updatedIndices) {
+            uniqueIndices.insert(index);
+        }
+        updatedIndices = uniqueIndices.values();
+
+        // Trier
+        std::sort(updatedIndices.begin(), updatedIndices.end());
+
+        // Mettre à jour l'animation
+        extractor->setAnimation(name, updatedIndices, fps);
+    }
+}
+
 void MainWindow::onMergeFrames(int sourceRow, int targetRow)
 {
-  if (sourceRow < 0 || sourceRow >= extractor->m_atlas_index.size() ||
-      targetRow < 0 || targetRow >= extractor->m_atlas_index.size()) {
-      return;
+    if (sourceRow < 0 || sourceRow >= extractor->m_atlas_index.size() ||
+        targetRow < 0 || targetRow >= extractor->m_atlas_index.size()) {
+        return;
     }
 
-  // 1. Compute and merge
-  Extractor::Box srcBox = extractor->m_atlas_index[sourceRow];
-  Extractor::Box tgtBox = extractor->m_atlas_index[targetRow];
-
-  QRect srcRect(srcBox.x, srcBox.y, srcBox.w, srcBox.h);
-  QRect tgtRect(tgtBox.x, tgtBox.y, tgtBox.w, tgtBox.h);
-  QRect unitedRect = srcRect.united(tgtRect);
-
-  QPixmap mergedPixmap = this->extractor->m_atlas.copy(unitedRect);
-
-  // 2. Update target internal data
-  Extractor::Box newBox;
-  newBox.x = unitedRect.x();
-  newBox.y = unitedRect.y();
-  newBox.w = unitedRect.width();
-  newBox.h = unitedRect.height();
-
-  extractor->m_atlas_index[targetRow] = newBox;
-  extractor->m_frames[targetRow] = mergedPixmap;
-
-  // 3. Update target visual
-  QStandardItem *targetItem = frameModel->item(targetRow);
-  if (targetItem) {
-      QPixmap thumbnail = mergedPixmap.scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-      targetItem->setData(thumbnail, Qt::DecorationRole);
-      // Make the merge operation visible on the list
-      targetItem->setData(QString("%1 + %2 merge\n[%3,%4](%5x%6)")
-                               .arg(sourceRow).arg(targetRow).arg(newBox.x).arg(newBox.y).arg(newBox.w).arg(newBox.h),
-                           Qt::DisplayRole);
+    // Sauvegarder l'état de l'animation en cours
+    QString currentAnimationName;
+    QList<QTreeWidgetItem*> selectedAnimations = ui->animationList->selectedItems();
+    if (!selectedAnimations.isEmpty()) {
+        currentAnimationName = selectedAnimations.first()->text(0);
     }
 
-  // 4. SOURCE DELETION
-  extractor->m_atlas_index.removeAt(sourceRow);
-  extractor->m_frames.removeAt(sourceRow);
+    // 1. Compute and merge
+    Extractor::Box srcBox = extractor->m_atlas_index[sourceRow];
+    Extractor::Box tgtBox = extractor->m_atlas_index[targetRow];
 
-  // Graphical cleanup
-  clearBoundingBoxHighlighters();
+    QRect srcRect(srcBox.x, srcBox.y, srcBox.w, srcBox.h);
+    QRect tgtRect(tgtBox.x, tgtBox.y, tgtBox.w, tgtBox.h);
+    QRect unitedRect = srcRect.united(tgtRect);
+
+    QPixmap mergedPixmap = this->extractor->m_atlas.copy(unitedRect);
+
+    // 2. Update target internal data
+    Extractor::Box newBox;
+    newBox.x = unitedRect.x();
+    newBox.y = unitedRect.y();
+    newBox.w = unitedRect.width();
+    newBox.h = unitedRect.height();
+    newBox.selected = srcBox.selected || tgtBox.selected; // Conserver la sélection
+    newBox.index = tgtBox.index; // Conserver l'index original
+
+    extractor->m_atlas_index[targetRow] = newBox;
+    extractor->m_frames[targetRow] = mergedPixmap;
+
+    // 3. Mettre à jour l'item cible dans le modèle
+    if (targetRow < frameModel->rowCount()) {
+        QStandardItem *targetItem = frameModel->item(targetRow, 0);
+        if (targetItem) {
+            QPixmap thumbnail = mergedPixmap.scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+            targetItem->setData(thumbnail, Qt::DecorationRole);
+            targetItem->setData(QString("%1 + %2 merge\n[%3,%4](%5x%6)")
+                                    .arg(sourceRow).arg(targetRow).arg(newBox.x).arg(newBox.y).arg(newBox.w).arg(newBox.h),
+                                Qt::DisplayRole);
+        }
+    }
+
+    // 4. SUPPRIMER la source - utiliser removeFrame() de l'extracteur pour la cohérence
+    extractor->removeFrame(sourceRow);
+
+    // 5. Synchroniser le modèle d'affichage avec les données actuelles
+    // Au lieu de supprimer manuellement, on reconstruit le modèle
+    populateFrameList(extractor->m_frames, extractor->m_atlas_index);
+
+    // 6. Mettre à jour l'affichage
+    syncAnimationListWidget();
+
+    // 7. Restaurer la sélection d'animation si elle existait
+    if (!currentAnimationName.isEmpty()) {
+        QList<QTreeWidgetItem*> items = ui->animationList->findItems(currentAnimationName, Qt::MatchExactly, 0);
+        if (!items.isEmpty()) {
+            ui->animationList->setCurrentItem(items.first());
+        } else {
+            stopAnimation();
+        }
+    } else {
+        stopAnimation();
+    }
+
+    // Graphical cleanup
+    clearBoundingBoxHighlighters();
+
+    qDebug() << "Fusion terminée: source" << sourceRow << "-> target" << targetRow
+             << ". Frames restantes:" << extractor->m_frames.size();
 }
 
 QString readTextFile(const QString &filePath)
@@ -253,7 +328,10 @@ void MainWindow::on_actionExit_triggered()
 
 void MainWindow::on_fps_valueChanged(int fps)
 {
-  ui->timingLabel->setText(" -> " + tr("_timing") + ": " + QString::number(1000.0  / (double)fps, 'g', 4) + "ms");
+    ui->timingLabel->setText(" -> " + tr("_timing") + ": " + QString::number(1000.0  / (double)fps, 'g', 4) + "ms");
+
+    // Mettre à jour les animations avec le nouveau FPS
+    updateAnimationsList();
 }
 
 void MainWindow::on_alphaThreshold_valueChanged(int threshold)
@@ -299,16 +377,16 @@ QColor MainWindow::getHighlightColor(int index, int total)
 
 void MainWindow::on_framesList_clicked(const QModelIndex &index)
 {
-  Q_UNUSED(index); // Selection is internaly managed, current index have not real purpose
+    Q_UNUSED(index);
 
-  if (!ui->graphicsViewLayers->scene() || !extractor) {
-      return;
+    if (!ui->graphicsViewLayers->scene() || !extractor) {
+        return;
     }
 
-  QModelIndexList selectedIndexes = ui->framesList->selectionModel()->selectedIndexes();
+    QList<int> selectedIndices = getSelectedFrameIndices();
 
-  clearBoundingBoxHighlighters();
-  setBoundingBoxHighllithers(selectedIndexes);
+    clearBoundingBoxHighlighters();
+    setBoundingBoxHighllithers(selectedIndices);
 }
 
 void MainWindow::on_actionExport_triggered()
@@ -352,30 +430,22 @@ void MainWindow::on_actionExport_triggered()
 
 void MainWindow::on_Play_clicked()
 {
-  if (selectedFrameRows.isEmpty()) {
-      startAnimation();
-      return;
+    // Vérifier qu'une animation est sélectionnée
+    QList<QTreeWidgetItem*> selectedAnimations = ui->animationList->selectedItems();
+    if (selectedAnimations.isEmpty()) {
+        // Si aucune animation sélectionnée, ne rien faire
+        return;
     }
 
-  int fpsValue = ui->fps->value();
-  int intervalMs = (fpsValue > 0) ? (1000 / fpsValue) : 100;
-  animationTimer->setInterval(intervalMs);
-
-  if (!animationTimer->isActive()) {
-      animationTimer->start();
-    }
-
-  ui->Pause->setVisible(true);
-  ui->Play->setVisible(false);
+    // Relancer l'animation avec les paramètres actuels
+    startAnimation();
 }
 
 void MainWindow::on_Pause_clicked()
 {
-  if (animationTimer->isActive()) {
-      animationTimer->stop();
+    if (animationTimer->isActive()) {
+        animationTimer->stop();
     }
-  ui->Play->setVisible(true);
-  ui->Pause->setVisible(false);
-
+    ui->Play->setVisible(true);
+    ui->Pause->setVisible(false);
 }
-

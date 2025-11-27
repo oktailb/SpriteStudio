@@ -9,6 +9,7 @@
 #include <QObject>
 #include <QPixmap>
 #include <QList>
+#include <QMap>
 #include <QString>
 #include <qpainter.h>
 
@@ -35,6 +36,52 @@ public:
       m_maxFrameWidth = 0;
       m_maxFrameHeight = 0;
     }
+
+    /**
+     * @brief Ajoute ou met à jour une animation
+     * @param name Nom de l'animation
+     * @param frameIndices Liste des indices de frames
+     * @param fps Images par seconde
+     */
+    void setAnimation(const QString &name, const QList<int> &frameIndices, int fps = 60);
+
+    /**
+     * @brief Supprime une animation
+     * @param name Nom de l'animation à supprimer
+     */
+    void removeAnimation(const QString &name);
+
+    /**
+     * @brief Récupère les indices de frames d'une animation
+     * @param name Nom de l'animation
+     * @return Liste des indices de frames
+     */
+    QList<int> getAnimationFrames(const QString &name) const;
+
+    /**
+     * @brief Récupère le FPS d'une animation
+     * @param name Nom de l'animation
+     * @return FPS de l'animation
+     */
+    int getAnimationFps(const QString &name) const;
+
+    /**
+     * @brief Récupère tous les noms d'animations
+     * @return Liste des noms d'animations
+     */
+    QStringList getAnimationNames() const;
+
+    /**
+     * @brief Met à jour l'ordre des frames
+     * @param newOrder Nouvel ordre des indices de frames
+     */
+    void reorderFrames(const QList<int> &newOrder);
+
+    /**
+     * @brief Supprime une frame par son index
+     * @param index Index de la frame à supprimer
+     */
+    void removeFrame(int index);
 
     /**
      * @brief Extracts frames from the source file.
@@ -103,12 +150,18 @@ public:
         int index;
     };
 
-    QList<QPixmap>  m_frames;         /**< List of individual frames (used by the Frame List and Animation). */
-    QPixmap         m_atlas;          /**< The complete source image (possibly composite, used by the 'Layers' view). */
-    QList<Box>      m_atlas_index;    /**< List of Box coordinates for each frame within m_atlas. */
-    QString         m_filePath;       /**< The original data file from a supported format. */
-    int             m_maxFrameWidth;  /**< Maximum width among all extracted frames (used for animation bounding box). */
-    int             m_maxFrameHeight; /**< Maximum height among all extracted frames (used for animation bounding box). */
+    struct AnimationData {
+        QList<int> frameIndices;
+        int fps;
+    };
+
+    QList<QPixmap>              m_frames;         /**< List of individual frames (used by the Frame List and Animation). */
+    QPixmap                     m_atlas;          /**< The complete source image (possibly composite, used by the 'Layers' view). */
+    QList<Box>                  m_atlas_index;    /**< List of Box coordinates for each frame within m_atlas. */
+    QMap<QString, AnimationData> m_animationsData; // Remplacer l'ancien QMapstruct AnimationData {
+    QString                     m_filePath;       /**< The original data file from a supported format. */
+    int                         m_maxFrameWidth;  /**< Maximum width among all extracted frames (used for animation bounding box). */
+    int                         m_maxFrameHeight; /**< Maximum height among all extracted frames (used for animation bounding box). */
 
 signals:
     /**
