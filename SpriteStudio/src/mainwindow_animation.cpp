@@ -39,6 +39,8 @@ void MainWindow::createAnimationFromSelection()
     if (!items.isEmpty()) {
         ui->animationList->setCurrentItem(items.first());
     }
+    for (int c = 0 ; c < ui->animationList->columnCount() ; c++)
+        ui->animationList->resizeColumnToContents(c);
 }
 
 void MainWindow::updateAnimationsList()

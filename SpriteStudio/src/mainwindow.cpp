@@ -128,6 +128,8 @@ MainWindow::MainWindow(QWidget *parent)
                   updateAnimationsList();
               }
           });
+  for (int c = 0 ; c < ui->animationList->columnCount() ; c++)
+      ui->animationList->resizeColumnToContents(c);
   // Set the ready flag to true now that basic initialization is complete.
   ready = true;
 }
