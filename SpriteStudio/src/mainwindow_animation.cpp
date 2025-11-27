@@ -335,10 +335,14 @@ void MainWindow::updateCurrentAnimation()
 
     if (selectedIndices.isEmpty()) {
         // Pas de sélection, supprimer l'animation "current"
+        stopAnimation();
         removeCurrentAnimation();
     } else {
         // Créer ou mettre à jour l'animation "current"
         createAnimation("current", selectedIndices, ui->fps->value());
+
+        ui->animationList->setCurrentItem(ui->animationList->findItems("current", Qt::MatchExactly).constFirst());
+        startAnimation();
     }
 }
 
