@@ -318,12 +318,12 @@ void MainWindow::refreshFrameListDisplay()
         } else {
             item->setBackground(QBrush()); // Pas de fond spécial
         }
-
+        item->setTextAlignment(Qt::AlignBaseline);
         item->setData(displayText, Qt::DisplayRole);
     }
 
     // Forcer la mise à jour de la vue
-    ui->framesList->viewport()->update();
+    //ui->framesList->viewport()->update();
 }
 
 void MainWindow::fitSelectedFramesInView(int padding)

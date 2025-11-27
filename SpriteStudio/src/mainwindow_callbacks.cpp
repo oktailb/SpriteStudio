@@ -20,44 +20,41 @@
 
 void MainWindow::onAtlasContextMenuRequested(const QPoint &pos)
 {
-  // Check if a frame is loaded
-  if (!extractor || extractor->m_atlas.isNull())
-    return;
+    if (!extractor || extractor->m_atlas.isNull())
+        return;
 
-  QMenu menu(this);
-  QList<int> selected = getSelectedFrameIndices();
+    QMenu menu(this);
+    QList<int> selectedIndices = getSelectedFrameIndices();
 
-  if (!selected.isEmpty()) {
-      if (selected.size() > 1) {
-          QAction *createAnimAction = menu.addAction(tr("_create_animation"));
-          connect(createAnimAction, &QAction::triggered,
-                   this, &MainWindow::createAnimationFromSelection);
+    if (!selectedIndices.isEmpty()) {
+        if (selectedIndices.size() > 1) {
+            QAction *createAnimAction = menu.addAction(tr("_create_animation"));
+            connect(createAnimAction, &QAction::triggered,
+                    this, &MainWindow::createAnimationFromSelection);
 
-          menu.addSeparator();
+            menu.addSeparator();
         }
 
-      QString actionText = (selected.size() > 1) ? tr("_delete_selected_frames") : tr("_delete_frame");
-      QAction *deleteAction = menu.addAction(actionText);
+        QString actionText = (selectedIndices.size() > 1) ? tr("_delete_selected_frames") : tr("_delete_frame");
+        QAction *deleteAction = menu.addAction(actionText);
+        connect(deleteAction, &QAction::triggered,
+                this, &MainWindow::deleteSelectedFrame);
 
-      QObject::connect(deleteAction, &QAction::triggered,
-                        this, &MainWindow::deleteSelectedFrame);
+        menu.addSeparator();
 
-      menu.addSeparator();
+        QAction *invertAction = menu.addAction(tr("_invert_selection"));
+        connect(invertAction, &QAction::triggered,
+                this, &MainWindow::invertSelection);
 
-      QAction *invertAction = menu.addAction(tr("_invert_selection"));
-      QObject::connect(invertAction, &QAction::triggered,
-                        this, &MainWindow::invertSelection);
-
-      QAction *reverseOrderAction = menu.addAction(tr("_reverse_order"));
-      QObject::connect(reverseOrderAction, &QAction::triggered,
-                        this, &MainWindow::reverseSelectedFramesOrder);
+        QAction *reverseOrderAction = menu.addAction(tr("_reverse_order"));
+        connect(reverseOrderAction, &QAction::triggered,
+                this, &MainWindow::reverseSelectedFramesOrder);
     }
-  else {
-      QAction *removeBgAction = menu.addAction(tr("_delete_background"));
-      // Connect the action to the treatment method
-      connect(removeBgAction, &QAction::triggered, this, &MainWindow::removeAtlasBackground);
+    else {
+        QAction *removeBgAction = menu.addAction(tr("_delete_background"));
+        connect(removeBgAction, &QAction::triggered, this, &MainWindow::removeAtlasBackground);
     }
-  menu.exec(ui->graphicsViewLayers->mapToGlobal(pos));
+    menu.exec(ui->graphicsViewLayers->mapToGlobal(pos));
 }
 
 void MainWindow::on_animationList_itemSelectionChanged()
@@ -126,17 +123,29 @@ void MainWindow::removeSelectedAnimation()
     QList<QTreeWidgetItem*> selectedItems = ui->animationList->selectedItems();
     if (selectedItems.isEmpty()) return;
 
+    QStringList animationNames;
+    for (QTreeWidgetItem* item : selectedItems) {
+        animationNames.append(item->text(0));
+    }
+
+    removeAnimations(animationNames);
+}
+
+void MainWindow::removeAnimations(const QStringList &animationNames)
+{
+    if (animationNames.isEmpty()) return;
+
     QMessageBox::StandardButton reply;
     reply = QMessageBox::question(this, tr("_confirm"),
-                                  tr("_confirm_delete", "", selectedItems.size()),
+                                  tr("_confirm_delete", "", animationNames.size()),
                                   QMessageBox::Yes | QMessageBox::No);
 
     if (reply == QMessageBox::Yes) {
-        for (QTreeWidgetItem *item : selectedItems) {
-            QString animationName = item->text(0);
+        for (const QString &animationName : animationNames) {
             extractor->removeAnimation(animationName);
         }
         syncAnimationListWidget();
+        stopAnimation();
     }
 }
 

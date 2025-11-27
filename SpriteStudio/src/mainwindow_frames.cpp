@@ -20,14 +20,22 @@ void MainWindow::reverseSelectedFramesOrder()
 
     if (selectedIndices.isEmpty()) return;
 
-    std::sort(selectedIndices.begin(), selectedIndices.end());
+    reverseFramesOrder(selectedIndices);
+}
 
-    int firstRow = selectedIndices.first();
-    int lastRow = selectedIndices.last();
+void MainWindow::reverseFramesOrder(const QList<int> &selectedIndices)
+{
+    if (selectedIndices.isEmpty()) return;
+
+    QList<int> sortedIndices = selectedIndices;
+    std::sort(sortedIndices.begin(), sortedIndices.end());
+
+    int firstRow = sortedIndices.first();
+    int lastRow = sortedIndices.last();
 
     if (firstRow == lastRow) return;
 
-    // Créer le nouvel ordre (le reste de la méthode reste identique)
+    // Créer le nouvel ordre
     QList<int> newOrder;
     for (int i = 0; i < extractor->m_frames.size(); ++i) {
         if (i < firstRow || i > lastRow) {
@@ -48,6 +56,13 @@ void MainWindow::reverseSelectedFramesOrder()
 }
 
 void MainWindow::invertSelection()
+{
+    if (!extractor) return;
+
+    invertFrameSelection();
+}
+
+void MainWindow::invertFrameSelection()
 {
     if (!extractor) return;
 
@@ -88,11 +103,19 @@ void MainWindow::deleteSelectedFrame()
 
     if (selectedIndices.isEmpty()) return;
 
-    // Trier par ordre décroissant pour suppression sécurisée
-    std::sort(selectedIndices.begin(), selectedIndices.end(), std::greater<int>());
+    deleteFrames(selectedIndices);
+}
 
-    // Supprimer de l'extracteur (ce qui met à jour automatiquement les sélections)
-    for (int rowToDelete : selectedIndices) {
+void MainWindow::deleteFrames(const QList<int> &frameIndices)
+{
+    if (frameIndices.isEmpty() || !extractor) return;
+
+    // Trier par ordre décroissant pour suppression sécurisée
+    QList<int> sortedIndices = frameIndices;
+    std::sort(sortedIndices.begin(), sortedIndices.end(), std::greater<int>());
+
+    // Supprimer de l'extracteur
+    for (int rowToDelete : sortedIndices) {
         extractor->removeFrame(rowToDelete);
     }
 
@@ -101,6 +124,9 @@ void MainWindow::deleteSelectedFrame()
 
     // Nettoyer
     clearBoundingBoxHighlighters();
+
+    // Arrêter l'animation si nécessaire
+    stopAnimation();
 }
 
 void MainWindow::setMergeHighlight(const QModelIndex &index, bool show)

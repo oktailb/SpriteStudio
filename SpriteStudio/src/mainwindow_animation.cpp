@@ -29,15 +29,22 @@ void MainWindow::createAnimationFromSelection()
 
     int currentFps = ui->fps->value();
 
+    createAnimation(text, selectedIndices, currentFps);
+}
+
+void MainWindow::createAnimation(QString name, QList<int> selectedIndices, int fps){
+
+
     // Utiliser directement selectedIndices depuis le modèle Extractor
-    extractor->setAnimation(text, selectedIndices, currentFps);
+    extractor->setAnimation(name, selectedIndices, fps);
 
     updateAnimationsList();
 
     // Sélectionner la nouvelle animation
-    QList<QTreeWidgetItem*> items = ui->animationList->findItems(text, Qt::MatchExactly, 0);
+    QList<QTreeWidgetItem*> items = ui->animationList->findItems(name, Qt::MatchExactly, 0);
     if (!items.isEmpty()) {
         ui->animationList->setCurrentItem(items.first());
+        startAnimation();
     }
     for (int c = 0 ; c < ui->animationList->columnCount() ; c++)
         ui->animationList->resizeColumnToContents(c);
@@ -136,52 +143,46 @@ void MainWindow::syncAnimationListWidget()
 
 void MainWindow::startAnimation()
 {
-    if (animationTimer->isActive()) {
-        animationTimer->stop();
+    stopAnimationTimer();
+
+    if (!canStartAnimation()) {
+        return;
     }
 
-    // Vider l'ancienne sélection
-    selectedFrameRows.clear();
+    setupAnimationParameters();
+    startAnimationTimer();
 
-    // Récupérer la sélection depuis la liste d'animations
+    updateAnimationUI(true); // playing state
+}
+
+bool MainWindow::canStartAnimation() const
+{
     QList<QTreeWidgetItem*> selectedAnimations = ui->animationList->selectedItems();
     if (selectedAnimations.isEmpty()) {
-        qDebug() << "No animation selected - stopping animation";
-        stopAnimation();
-        return;
+        return false;
     }
 
-    // Prendre la première animation sélectionnée
-    QTreeWidgetItem* selectedAnimation = selectedAnimations.first();
-    QString animationName = selectedAnimation->text(0);
+    QString animationName = selectedAnimations.first()->text(0);
+    return extractor->getAnimationNames().contains(animationName);
+}
 
-    // Validation : vérifier que l'animation existe dans l'extracteur
-    if (!extractor->getAnimationNames().contains(animationName)) {
-        qDebug() << "Animation" << animationName << "not found in extractor - stopping";
-        stopAnimation();
-        return;
-    }
+void MainWindow::setupAnimationParameters()
+{
+    QList<QTreeWidgetItem*> selectedAnimations = ui->animationList->selectedItems();
+    QString animationName = selectedAnimations.first()->text(0);
 
-    // Récupérer les frames depuis l'extracteur
     selectedFrameRows = extractor->getAnimationFrames(animationName);
 
-    // Validation : vérifier que l'animation a des frames valides
+    // Filtrer les frames valides
     QList<int> validFrameRows;
     for (int frameIndex : selectedFrameRows) {
         if (frameIndex >= 0 && frameIndex < extractor->m_frames.size()) {
             validFrameRows.append(frameIndex);
         }
     }
-
-    if (validFrameRows.isEmpty()) {
-        qDebug() << "No valid frames in animation" << animationName << "- stopping";
-        stopAnimation();
-        return;
-    }
-
     selectedFrameRows = validFrameRows;
 
-    // Récupérer le FPS depuis l'extracteur
+    // Mettre à jour le FPS
     int animationFps = extractor->getAnimationFps(animationName);
     if (animationFps > 0) {
         ui->fps->blockSignals(true);
@@ -189,6 +190,12 @@ void MainWindow::startAnimation()
         ui->fps->blockSignals(false);
     }
 
+    // Configurer l'UI
+    setupAnimationUI();
+}
+
+void MainWindow::setupAnimationUI()
+{
     int frameCount = selectedFrameRows.size();
     int fps = ui->fps->value();
     if (fps <= 0) fps = 1;
@@ -202,24 +209,31 @@ void MainWindow::startAnimation()
     ui->timeTo->setDisplayFormat("mm:ss:zzz");
     ui->timeTo->setTime(durationTime);
 
-    if (frameCount > 0) {
-        ui->sliderFrom->setMaximum(frameCount - 1);
-    } else {
-        ui->sliderFrom->setMaximum(0);
-    }
+    ui->sliderFrom->setMaximum(qMax(0, frameCount - 1));
+}
 
+void MainWindow::startAnimationTimer()
+{
     int fpsValue = ui->fps->value();
     int intervalMs = (fpsValue > 0) ? (1000 / fpsValue) : 100;
 
     currentAnimationFrameIndex = 0;
     animationTimer->start(intervalMs);
-
-    // Mettre à jour l'interface
-    ui->Play->setVisible(false);
-    ui->Pause->setVisible(true);
-
-    qDebug() << "Animation started:" << animationName << "with" << selectedFrameRows.size() << "frames";
 }
+
+void MainWindow::stopAnimationTimer()
+{
+    if (animationTimer->isActive()) {
+        animationTimer->stop();
+    }
+}
+
+void MainWindow::updateAnimationUI(bool playing)
+{
+    ui->Play->setVisible(!playing);
+    ui->Pause->setVisible(playing);
+}
+
 
 void MainWindow::stopAnimation()
 {
