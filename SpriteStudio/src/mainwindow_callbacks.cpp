@@ -81,28 +81,6 @@ void MainWindow::on_animationList_itemSelectionChanged()
         ui->fps->blockSignals(false);
     }
 
-    // // Mettre à jour la sélection dans framesList (uniquement visuel)
-    // QItemSelectionModel *selectionModel = ui->framesList->selectionModel();
-    // QItemSelection newSelection;
-
-    // for (int frameIndex : frameIndices) {
-    //     if (frameIndex >= 0 && frameIndex < frameModel->rowCount()) {
-    //         QModelIndex idx = frameModel->index(frameIndex, 0);
-    //         newSelection.select(idx, idx);
-    //     }
-    // }
-
-    // if (!newSelection.isEmpty()) {
-    //     selectionModel->select(newSelection, QItemSelectionModel::ClearAndSelect);
-    //     ui->framesList->scrollTo(newSelection.indexes().first());
-
-    //     QList<int> selectedIndexes = getSelectedFrameIndices();
-    //     clearBoundingBoxHighlighters();
-    //     setBoundingBoxHighllithers(selectedIndexes);
-    // } else {
-    //     clearBoundingBoxHighlighters();
-    // }
-
     // Démarrer l'animation automatiquement
     QTimer::singleShot(0, this, [this]() {
         startAnimation();
@@ -116,6 +94,7 @@ void MainWindow::on_animationList_itemClicked(QTreeWidgetItem *item, int column)
     if (ui->animationList->selectedItems().contains(item) && animationTimer->isActive()) {
         ui->animationList->clearSelection();
     }
+    ui->animationList->setCurrentItem(item);
 }
 
 void MainWindow::removeSelectedAnimation()

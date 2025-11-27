@@ -331,32 +331,35 @@ void MainWindow::updateAnimation()
 
 void MainWindow::updateCurrentAnimation()
 {
-    QList<int> selectedIndices = getSelectedFrameIndices();
+  QList<int> selectedIndices = getSelectedFrameIndices();
 
-    if (selectedIndices.isEmpty()) {
-        // Pas de sélection, supprimer l'animation "current"
-        stopAnimation();
-        removeCurrentAnimation();
+  qDebug() << "updateCurrentAnimation() - Selected indices:" << selectedIndices;
+
+  if (selectedIndices.isEmpty()) {
+      qDebug() << "No selection, removing 'current' animation";
+      removeCurrentAnimation();
     } else {
-        // Créer ou mettre à jour l'animation "current"
-        createAnimation("current", selectedIndices, ui->fps->value());
-
-        ui->animationList->setCurrentItem(ui->animationList->findItems("current", Qt::MatchExactly).constFirst());
-        startAnimation();
+      qDebug() << "Creating/updating 'current' animation with" << selectedIndices.size() << "frames";
+      createAnimation("current", selectedIndices, ui->fps->value());
+      ui->animationList->setCurrentItem(ui->animationList->findItems("current", Qt::MatchExactly).constFirst());
     }
 }
 
 void MainWindow::removeCurrentAnimation()
 {
-    if (hasCurrentAnimation()) {
-        extractor->removeAnimation("current");
-        syncAnimationListWidget();
+  qDebug() << "entering removeCurrentAnimation";
+  if (hasCurrentAnimation()) {
+      qDebug() << "Removing 'current' animation";
+      extractor->removeAnimation("current");
+      syncAnimationListWidget();
 
-        // Si l'animation "current" était sélectionnée, arrêter l'animation
-        QList<QTreeWidgetItem*> selectedItems = ui->animationList->selectedItems();
-        if (!selectedItems.isEmpty() && selectedItems.first()->text(0) == "current") {
-            stopAnimation();
+      // Si l'animation "current" était sélectionnée, arrêter l'animation
+      QList<QTreeWidgetItem*> selectedItems = ui->animationList->selectedItems();
+      if (!selectedItems.isEmpty() && selectedItems.first()->text(0) == "current") {
+          stopAnimation();
         }
+    } else {
+      qDebug() << "'current' animation not found, nothing to remove";
     }
 }
 
