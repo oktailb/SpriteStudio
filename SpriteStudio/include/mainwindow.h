@@ -328,6 +328,11 @@ private slots:
   void on_animationList_itemClicked(QTreeWidgetItem *item, int column);
 
   /**
+   * @brief deleteSelectedFramesFromAtlas
+   */
+  void deleteSelectedFramesFromAtlas();
+
+  /**
    * @brief updateAnimationsList
    */
   void updateAnimationsList();

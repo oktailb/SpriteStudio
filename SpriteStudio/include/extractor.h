@@ -90,6 +90,18 @@ public:
     void removeFrame(int index);
 
     /**
+     * @brief removeFrames
+     * @param indices
+     */
+    void removeFrames(const QList<int> &indices);
+
+    /**
+     * @brief clearAtlasAreas
+     * @param indices
+     */
+    void clearAtlasAreas(const QList<int> &indices);
+
+    /**
      * @brief Extracts frames from the source file.
      *
      * This is the primary function for loading and slicing. It is implemented

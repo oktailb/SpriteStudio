@@ -117,3 +117,87 @@ void Extractor::removeFrame(int index)
         std::sort(frameIndices.begin(), frameIndices.end());
     }
 }
+
+void Extractor::removeFrames(const QList<int> &indices)
+{
+    if (indices.isEmpty()) return;
+
+    // Trier par ordre décroissant pour suppression sécurisée
+    QList<int> sortedIndices = indices;
+    std::sort(sortedIndices.begin(), sortedIndices.end(), std::greater<int>());
+
+    // Supprimer les frames et boxes
+    for (int index : sortedIndices) {
+        if (index >= 0 && index < m_frames.size()) {
+            m_frames.removeAt(index);
+            m_atlas_index.removeAt(index);
+        }
+    }
+
+    // Mettre à jour les animations
+    for (auto it = m_animationsData.begin(); it != m_animationsData.end(); ++it) {
+        QList<int> &frameIndices = it.value().frameIndices;
+        QList<int> updatedIndices;
+
+        for (int frameIndex : frameIndices) {
+            int newIndex = frameIndex;
+
+            // Ajuster les indices après suppression
+            for (int removedIndex : sortedIndices) {
+                if (frameIndex == removedIndex) {
+                    // Frame supprimée, on l'ignore
+                    newIndex = -1;
+                    break;
+                } else if (frameIndex > removedIndex) {
+                    // Décrémenter l'index
+                    newIndex--;
+                }
+            }
+
+            if (newIndex >= 0) {
+                updatedIndices.append(newIndex);
+            }
+        }
+
+        // Supprimer les doublons et trier
+        QSet<int> uniqueIndices;
+        for (int index : updatedIndices) {
+            uniqueIndices.insert(index);
+        }
+        frameIndices = uniqueIndices.values();
+        std::sort(frameIndices.begin(), frameIndices.end());
+    }
+
+    qDebug() << "Removed" << indices.size() << "frames. Remaining:" << m_frames.size();
+}
+
+void Extractor::clearAtlasAreas(const QList<int> &indices)
+{
+    if (m_atlas.isNull() || indices.isEmpty()) return;
+
+    QImage atlasImage = m_atlas.toImage();
+    if (atlasImage.format() != QImage::Format_ARGB32) {
+        atlasImage = atlasImage.convertToFormat(QImage::Format_ARGB32);
+    }
+
+    // Effacer chaque zone correspondant aux frames supprimées
+    for (int index : indices) {
+        if (index >= 0 && index < m_atlas_index.size()) {
+            const Box &box = m_atlas_index.at(index);
+
+            // Remplir la zone avec de la transparence
+            for (int y = box.y; y < box.y + box.h; ++y) {
+                for (int x = box.x; x < box.x + box.w; ++x) {
+                    if (x < atlasImage.width() && y < atlasImage.height()) {
+                        atlasImage.setPixel(x, y, qRgba(0, 0, 0, 0)); // Transparent
+                    }
+                }
+            }
+        }
+    }
+
+    // Mettre à jour l'atlas
+    m_atlas = QPixmap::fromImage(atlasImage);
+
+    qDebug() << "Cleared" << indices.size() << "areas from atlas";
+}

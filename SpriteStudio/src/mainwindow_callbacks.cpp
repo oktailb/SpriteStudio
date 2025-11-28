@@ -35,10 +35,12 @@ void MainWindow::onAtlasContextMenuRequested(const QPoint &pos)
             menu.addSeparator();
         }
 
-        QString actionText = (selectedIndices.size() > 1) ? tr("_delete_selected_frames") : tr("_delete_frame");
-        QAction *deleteAction = menu.addAction(actionText);
+        // Option pour supprimer les frames
+        QString deleteText = (selectedIndices.size() > 1) ?
+                                 tr("_delete_selected_frames") : tr("_delete_frame");
+        QAction *deleteAction = menu.addAction(deleteText);
         connect(deleteAction, &QAction::triggered,
-                this, &MainWindow::deleteSelectedFrame);
+                this, &MainWindow::deleteSelectedFramesFromAtlas);
 
         menu.addSeparator();
 
