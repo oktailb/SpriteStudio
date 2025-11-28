@@ -29,26 +29,10 @@ MainWindow::MainWindow(QWidget *parent)
   // Start a low-frequency system timer (100ms interval) for general background checks/updates.
   timerId = startTimer(100);
 
-  // --- Frame List (QListView) Setup ---
-
   // Assign the custom model to the frames list view.
   ui->framesList->setModel(frameModel);
   ui->framesList->setViewMode(QListView::IconMode);
   ui->framesList->setSelectionMode(QAbstractItemView::ExtendedSelection);
-
-  // Connect the selection change signal to automatically start/restart the animation
-  // when the user selects or deselects frames.
-  // Dans MainWindow::MainWindow() - Remplacer
-  QObject::connect(ui->framesList->selectionModel(), &QItemSelectionModel::selectionChanged,
-                   this, [this]() {
-                       // Synchroniser la sélection UI -> Modèle Extractor
-                       QList<int> selectedIndices;
-                       QModelIndexList uiSelection = ui->framesList->selectionModel()->selectedIndexes();
-                       for (const QModelIndex &index : uiSelection) {
-                           selectedIndices.append(index.row());
-                       }
-                       setSelectedFrameIndices(selectedIndices);
-                   });
 
   ui->timingLabel->setText(" -> " + tr("_timing") + ": " + QString::number(1000.0  / (double)ui->fps->value(), 'g', 4) + "ms");
 

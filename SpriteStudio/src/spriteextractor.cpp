@@ -1,11 +1,6 @@
 #include "spriteextractor.h"
 #include <QDebug>
-#include <QImage>
 #include <QStack>
-#include <QPoint>
-#include <QRect>
-#include <algorithm>
-#include <cmath>
 
 SpriteExtractor::SpriteExtractor(QObject *parent) : Extractor(parent)
 {

@@ -383,17 +383,25 @@ void MainWindow::on_actionExport_triggered()
   QString baseName = fileInfo.completeBaseName();
   QString extension = fileInfo.suffix().toLower();
 
-  if (extension == "json") {
-      extractorOut = new JsonExtractor();
-    } else if (extension == "png") {
-      extractorOut = new SpriteExtractor();
-    } else if (extension == "gif") {
-      extractorOut = new GifExtractor();
-    } else {
-      extractorOut = new JsonExtractor();
-    }
+  try {
+      if (extension == "json") {
+          extractorOut = new JsonExtractor();
+        } else if (extension == "png") {
+          extractorOut = new SpriteExtractor();
+        } else if (extension == "gif") {
+          extractorOut = new GifExtractor();
+        } else {
+          extractorOut = new JsonExtractor();
+        }
 
-  extractorOut->exportFrames(filePath, baseName, extractor);
+      bool success = extractorOut->exportFrames(filePath, baseName, extractor);
+      if (!success) {
+          QMessageBox::warning(this, tr("Export Error"), tr("Export failed"));
+        }
+    } catch (...) {
+      QMessageBox::critical(this, tr("Export Error"), tr("Export crashed"));
+    }
+  delete extractorOut;
 }
 
 void MainWindow::on_Play_clicked()

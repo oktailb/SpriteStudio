@@ -1,18 +1,5 @@
 #include "include/mainwindow.h"
-#include "./ui_mainwindow.h"
-#include "qfiledialog.h"
 #include "ui_mainwindow.h"
-#include <stdfloat>
-#include <netinet/in.h>
-#include <QtGui>
-#include <QDialog>
-#include <QTextEdit>
-#include <QMessageBox>
-#include <QGraphicsPixmapItem>
-#include <QGraphicsScene>
-#include <QPen>
-#include <QMovie>
-#include <QGraphicsRectItem>
 
 void MainWindow::reverseFramesOrder(QList<int> &selectedIndices)
 {
@@ -210,4 +197,15 @@ void MainWindow::clearFrameSelections()
 
 void MainWindow::updateFrameListSelectionFromModel()
 {
+  if (!extractor) return;
+
+  QItemSelection selection;
+  for (int i = 0; i < extractor->m_atlas_index.size(); ++i) {
+      if (extractor->m_atlas_index.at(i).selected) {
+          QModelIndex index = frameModel->index(i, 0);
+          selection.select(index, index);
+        }
+    }
+  ui->framesList->selectionModel()->select(selection,
+                                             QItemSelectionModel::ClearAndSelect);
 }

@@ -11,7 +11,7 @@
 #include <QList>
 #include <QMap>
 #include <QString>
-#include <qpainter.h>
+#include <QPainter>
 
 /**
  * @brief Abstract base class (interface) for all sprite extractors.
@@ -176,7 +176,7 @@ public:
     QList<QPixmap>              m_frames;         /**< List of individual frames (used by the Frame List and Animation). */
     QPixmap                     m_atlas;          /**< The complete source image (possibly composite, used by the 'Layers' view). */
     QList<Box>                  m_atlas_index;    /**< List of Box coordinates for each frame within m_atlas. */
-    QMap<QString, AnimationData> m_animationsData; // Remplacer l'ancien QMapstruct AnimationData {
+    QMap<QString, AnimationData> m_animationsData; /**< List of individual animations */
     QString                     m_filePath;       /**< The original data file from a supported format. */
     int                         m_maxFrameWidth;  /**< Maximum width among all extracted frames (used for animation bounding box). */
     int                         m_maxFrameHeight; /**< Maximum height among all extracted frames (used for animation bounding box). */
