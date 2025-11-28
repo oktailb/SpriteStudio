@@ -14,43 +14,12 @@
 #include <QMovie>
 #include <QGraphicsRectItem>
 
-void MainWindow::reverseSelectedFramesOrder()
-{
-    QList<int> selectedIndices = getSelectedFrameIndices();
-
-    if (selectedIndices.isEmpty()) return;
-
-    reverseFramesOrder(selectedIndices);
-}
-
-void MainWindow::reverseFramesOrder(const QList<int> &selectedIndices)
+void MainWindow::reverseFramesOrder(QList<int> &selectedIndices)
 {
     if (selectedIndices.isEmpty()) return;
 
-    QList<int> sortedIndices = selectedIndices;
-    std::sort(sortedIndices.begin(), sortedIndices.end());
-
-    int firstRow = sortedIndices.first();
-    int lastRow = sortedIndices.last();
-
-    if (firstRow == lastRow) return;
-
-    // Créer le nouvel ordre
-    QList<int> newOrder;
-    for (int i = 0; i < extractor->m_frames.size(); ++i) {
-        if (i < firstRow || i > lastRow) {
-            newOrder.append(i);
-        }
-    }
-
-    // Ajouter la sélection inversée
-    for (int i = lastRow; i >= firstRow; --i) {
-        newOrder.insert(firstRow, i);
-    }
-
-    extractor->reorderFrames(newOrder);
-
-    populateFrameList(extractor->m_frames, extractor->m_atlas_index);
+    std::reverse(selectedIndices.begin(), selectedIndices.end());
+    //extractor->setAnimation();
     syncAnimationListWidget();
     startAnimation();
 }

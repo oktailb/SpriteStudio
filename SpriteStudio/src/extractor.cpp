@@ -69,6 +69,22 @@ void Extractor::reorderFrames(const QList<int> &newOrder)
     }
 }
 
+void Extractor::reverseAnimationFrames(const QString &animationName)
+{
+    if (!m_animationsData.contains(animationName)) {
+        qWarning() << "Animation" << animationName << "not found for reversal";
+        return;
+    }
+
+    AnimationData &animData = m_animationsData[animationName];
+    QList<int> &frameIndices = animData.frameIndices;
+
+    // Inverser simplement l'ordre des indices
+    std::reverse(frameIndices.begin(), frameIndices.end());
+
+    qDebug() << "Animation" << animationName << "frames reversed. New order:" << frameIndices;
+}
+
 void Extractor::removeFrame(int index)
 {
     if (index < 0 || index >= m_frames.size()) return;

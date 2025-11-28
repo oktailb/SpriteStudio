@@ -100,6 +100,33 @@ void MainWindow::updateAnimationsList()
     ui->fps->blockSignals(false);
 }
 
+void MainWindow::reverseAnimationOrder()
+{
+    // Vérifier qu'une animation est sélectionnée
+    QList<QTreeWidgetItem*> selectedAnimations = ui->animationList->selectedItems();
+    if (selectedAnimations.isEmpty()) {
+        QMessageBox::information(this, tr("_info"), tr("_select_animation_first"));
+        return;
+    }
+
+    // Prendre la première animation sélectionnée
+    QTreeWidgetItem* selectedAnimation = selectedAnimations.first();
+    QString animationName = selectedAnimation->text(0);
+
+    // Inverser l'ordre dans le modèle Extractor
+    extractor->reverseAnimationFrames(animationName);
+
+    // Mettre à jour l'affichage
+    syncAnimationListWidget();
+
+    // Redémarrer l'animation si elle était en cours
+    if (animationTimer->isActive()) {
+        startAnimation();
+    }
+
+    qDebug() << "Animation order reversed for:" << animationName;
+}
+
 void MainWindow::syncAnimationListWidget()
 {
     if (!extractor) return;

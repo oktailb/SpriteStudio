@@ -258,9 +258,9 @@ private slots:
   void updateAnimation();
 
   /**
-   * @brief Reverses the order of the currently selected frames.
+   * @brief Reverses the order of the currently selected animation.
    */
-  void reverseSelectedFramesOrder();
+  void reverseAnimationOrder();
 
   /**
    * @brief Slot triggered by the 'Export' action.
@@ -349,7 +349,7 @@ private slots:
   bool hasCurrentAnimation() const;
 
   // Méthodes refactorisées
-  void reverseFramesOrder(const QList<int> &selectedIndices);
+  void reverseFramesOrder(QList<int> &selectedIndices);
   void invertFrameSelection();
   void deleteFrames(const QList<int> &frameIndices);
   void removeAnimations(const QStringList &animationNames);

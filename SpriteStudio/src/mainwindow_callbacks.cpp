@@ -45,10 +45,6 @@ void MainWindow::onAtlasContextMenuRequested(const QPoint &pos)
         QAction *invertAction = menu.addAction(tr("_invert_selection"));
         connect(invertAction, &QAction::triggered,
                 this, &MainWindow::invertSelection);
-
-        QAction *reverseOrderAction = menu.addAction(tr("_reverse_order"));
-        connect(reverseOrderAction, &QAction::triggered,
-                this, &MainWindow::reverseSelectedFramesOrder);
     }
     else {
         QAction *removeBgAction = menu.addAction(tr("_delete_background"));
@@ -142,9 +138,12 @@ void MainWindow::on_animationList_customContextMenuRequested(const QPoint &pos)
         QMenu menu(this);
 
         QAction *deleteAction = menu.addAction(tr("_delete_animation"));
-
         connect(deleteAction, &QAction::triggered,
                 this, &MainWindow::removeSelectedAnimation);
+
+        QAction *reverseOrderAction = menu.addAction(tr("_reverse_order"));
+        connect(reverseOrderAction, &QAction::triggered,
+                this, &MainWindow::reverseAnimationOrder);
 
         menu.exec(ui->animationList->viewport()->mapToGlobal(pos));
     }

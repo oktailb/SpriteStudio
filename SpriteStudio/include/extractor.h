@@ -78,6 +78,12 @@ public:
     void reorderFrames(const QList<int> &newOrder);
 
     /**
+     * @brief Inverse l'ordre des frames d'une animation
+     * @param animationName Nom de l'animation à inverser
+     */
+    void reverseAnimationFrames(const QString &animationName);
+
+    /**
      * @brief Supprime une frame par son index
      * @param index Index de la frame à supprimer
      */
