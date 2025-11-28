@@ -1,6 +1,5 @@
 #include "include/mainwindow.h"
 #include "./ui_mainwindow.h"
-#include "qfiledialog.h"
 #include "ui_mainwindow.h"
 #include <stdfloat>
 #include <netinet/in.h>
@@ -34,26 +33,20 @@ void MainWindow::createAnimationFromSelection()
 
 void MainWindow::createAnimation(QString name, QList<int> selectedIndices, int fps)
 {
-    // Pour l'animation "current", s'assurer qu'elle est toujours à jour
     if (name == "current") {
         extractor->setAnimation(name, selectedIndices, fps);
 
-        // Ne pas sélectionner automatiquement l'animation "current"
-        // et ne pas lancer l'animation automatiquement
         updateAnimationsList();
 
-        // Redimensionner les colonnes
         for (int c = 0; c < ui->animationList->columnCount(); c++) {
             ui->animationList->resizeColumnToContents(c);
         }
         return;
     }
 
-    // Comportement normal pour les autres animations
     extractor->setAnimation(name, selectedIndices, fps);
     updateAnimationsList();
 
-    // Sélectionner la nouvelle animation
     QList<QTreeWidgetItem*> items = ui->animationList->findItems(name, Qt::MatchExactly, 0);
     if (!items.isEmpty()) {
         ui->animationList->setCurrentItem(items.first());
@@ -69,11 +62,9 @@ void MainWindow::updateAnimationsList()
 {
     if (!extractor) return;
 
-    // Bloquer les signaux pour éviter les appels récursifs
     ui->animationList->blockSignals(true);
     ui->fps->blockSignals(true);
 
-    // Sauvegarder l'état actuel
     QStringList previouslySelectedNames;
     QList<QTreeWidgetItem*> currentSelectedItems = ui->animationList->selectedItems();
     for (QTreeWidgetItem* item : currentSelectedItems) {
@@ -83,7 +74,6 @@ void MainWindow::updateAnimationsList()
     int currentFps = ui->fps->value();
 
     try {
-        // Mettre à jour le modèle Extractor pour les animations sélectionnées
         for (const QString &animName : previouslySelectedNames) {
             if (extractor->getAnimationNames().contains(animName)) {
                 QList<int> frameIndices = extractor->getAnimationFrames(animName);
@@ -91,10 +81,8 @@ void MainWindow::updateAnimationsList()
             }
         }
 
-        // Synchroniser l'affichage
         syncAnimationListWidget();
 
-        // Restaurer la sélection
         for (const QString &animName : previouslySelectedNames) {
             QList<QTreeWidgetItem*> items = ui->animationList->findItems(animName, Qt::MatchExactly, 0);
             if (!items.isEmpty()) {
@@ -108,7 +96,6 @@ void MainWindow::updateAnimationsList()
         qWarning() << "Erreur inconnue lors de la mise à jour des animations";
     }
 
-    // Restaurer les signaux
     ui->animationList->blockSignals(false);
     ui->fps->blockSignals(false);
 }
@@ -117,17 +104,14 @@ void MainWindow::syncAnimationListWidget()
 {
     if (!extractor) return;
 
-    // Bloquer les signaux pendant la mise à jour
     ui->animationList->blockSignals(true);
 
-    // Sauvegarder la sélection par NOMS (pas par pointeurs)
     QStringList selectedAnimationNames;
     QList<QTreeWidgetItem*> currentSelected = ui->animationList->selectedItems();
     for (QTreeWidgetItem* item : currentSelected) {
         selectedAnimationNames.append(item->text(0));
     }
 
-    // Effacer et reconstruire la liste
     ui->animationList->clear();
 
     QStringList animationNames = extractor->getAnimationNames();
@@ -139,20 +123,17 @@ void MainWindow::syncAnimationListWidget()
         item->setText(0, name);
         item->setText(1, QString::number(fps));
 
-        // Convertir les indices en string
         QStringList framesStrList;
         for (int frameIndex : frameIndices) {
             framesStrList << QString::number(frameIndex);
         }
         item->setText(2, framesStrList.join(", "));
 
-        // Restaurer la sélection
         if (selectedAnimationNames.contains(name)) {
             item->setSelected(true);
         }
     }
 
-    // Restaurer les signaux
     ui->animationList->blockSignals(false);
 }
 
@@ -188,7 +169,6 @@ void MainWindow::setupAnimationParameters()
 
     selectedFrameRows = extractor->getAnimationFrames(animationName);
 
-    // Filtrer les frames valides
     QList<int> validFrameRows;
     for (int frameIndex : selectedFrameRows) {
         if (frameIndex >= 0 && frameIndex < extractor->m_frames.size()) {
@@ -197,7 +177,6 @@ void MainWindow::setupAnimationParameters()
     }
     selectedFrameRows = validFrameRows;
 
-    // Mettre à jour le FPS
     int animationFps = extractor->getAnimationFps(animationName);
     if (animationFps > 0) {
         ui->fps->blockSignals(true);
@@ -205,7 +184,6 @@ void MainWindow::setupAnimationParameters()
         ui->fps->blockSignals(false);
     }
 
-    // Configurer l'UI
     setupAnimationUI();
 }
 
@@ -255,7 +233,6 @@ void MainWindow::stopAnimation()
     animationTimer->stop();
     currentAnimationFrameIndex = 0;
 
-    // Réinitialiser l'interface
     ui->sliderFrom->blockSignals(true);
     ui->sliderFrom->setValue(0);
     ui->sliderFrom->blockSignals(false);
@@ -269,7 +246,6 @@ void MainWindow::stopAnimation()
 
 void MainWindow::updateAnimation()
 {
-    // Vérifications de sécurité renforcées
     if (!extractor || extractor->m_frames.isEmpty()) {
         stopAnimation();
         return;
@@ -286,14 +262,12 @@ void MainWindow::updateAnimation()
 
     int frameListIndex = selectedFrameRows.at(currentAnimationFrameIndex);
 
-    // Validation renforcée de l'index
     if (frameListIndex < 0 || frameListIndex >= extractor->m_frames.size()) {
         qWarning() << "Invalid frame index in animation:" << frameListIndex;
         stopAnimation();
         return;
     }
 
-    // Le reste du code reste identique...
     ui->sliderFrom->blockSignals(true);
     ui->sliderFrom->setValue(currentAnimationFrameIndex);
     ui->sliderFrom->blockSignals(false);
@@ -353,11 +327,14 @@ void MainWindow::removeCurrentAnimation()
       extractor->removeAnimation("current");
       syncAnimationListWidget();
 
-      // Si l'animation "current" était sélectionnée, arrêter l'animation
+      // If current was selected, cleanup and stop animation
       QList<QTreeWidgetItem*> selectedItems = ui->animationList->selectedItems();
       if (!selectedItems.isEmpty() && selectedItems.first()->text(0) == "current") {
-          stopAnimation();
+          selectedItems.removeFirst();
         }
+      clearFrameSelections();
+      stopAnimation();
+      on_Pause_clicked();
     } else {
       qDebug() << "'current' animation not found, nothing to remove";
     }

@@ -383,6 +383,9 @@ void MainWindow::endSelection()
   if (!selectedFrameIndices.isEmpty()) {
       selectFramesInList(selectedFrameIndices);
     }
+  else {
+      removeCurrentAnimation();
+    }
 
   ui->graphicsViewLayers->scene()->removeItem(selectionRectItem);
   delete selectionRectItem;
