@@ -66,7 +66,6 @@ QList<QPixmap> GifExtractor::extractFromPixmap(int alphaThreshold, int verticalT
                       // Store the QPixmap in the Extractor's internal list (m_frames)
                       // for the frames list view in the main window.
                       this->addFrame(QPixmap::fromImage(currentImage));
-                      qDebug() << tr("_extracted_frames") << ": " << frameNumber;
                     });
 
   // Start playback and jump to the first frame to initiate frame extraction via the signal.
@@ -158,6 +157,5 @@ bool GifExtractor::exportFrames(const QString &basePath, const QString &projectN
   Q_UNUSED(projectName);
   Q_UNUSED(in);
 
-  qDebug() << "TODO: exportFrames GIF";
   return false;
 }

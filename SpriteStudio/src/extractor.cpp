@@ -27,7 +27,7 @@ int Extractor::getAnimationFps(const QString &name) const
     if (m_animationsData.contains(name)) {
         return m_animationsData[name].fps;
     }
-    return 60; // Valeur par défaut
+    return 60; // Modern value on industry
 }
 
 QStringList Extractor::getAnimationNames() const
@@ -42,7 +42,6 @@ void Extractor::reorderFrames(const QList<int> &newOrder)
         return;
     }
 
-    // Réorganiser les frames et les boxes
     QList<QPixmap> newFrames;
     QList<Box> newBoxes;
 
@@ -79,10 +78,7 @@ void Extractor::reverseAnimationFrames(const QString &animationName)
     AnimationData &animData = m_animationsData[animationName];
     QList<int> &frameIndices = animData.frameIndices;
 
-    // Inverser simplement l'ordre des indices
     std::reverse(frameIndices.begin(), frameIndices.end());
-
-    qDebug() << "Animation" << animationName << "frames reversed. New order:" << frameIndices;
 }
 
 void Extractor::removeFrame(int index)
@@ -92,28 +88,23 @@ void Extractor::removeFrame(int index)
     m_frames.removeAt(index);
     m_atlas_index.removeAt(index);
 
-    // Mettre à jour les animations
     for (auto it = m_animationsData.begin(); it != m_animationsData.end(); ++it) {
         QList<int> &frameIndices = it.value().frameIndices;
 
-        // Supprimer l'index de la frame
         frameIndices.removeAll(index);
 
-        // Décrémenter les indices supérieurs
         for (int &frameIndex : frameIndices) {
             if (frameIndex > index) {
                 frameIndex--;
             }
         }
 
-        // Supprimer les doublons (méthode moderne)
         QSet<int> uniqueIndices;
         for (int frameIndex : frameIndices) {
             uniqueIndices.insert(frameIndex);
         }
         frameIndices = uniqueIndices.values();
 
-        // Trier
         std::sort(frameIndices.begin(), frameIndices.end());
     }
 }
@@ -122,11 +113,9 @@ void Extractor::removeFrames(const QList<int> &indices)
 {
     if (indices.isEmpty()) return;
 
-    // Trier par ordre décroissant pour suppression sécurisée
     QList<int> sortedIndices = indices;
     std::sort(sortedIndices.begin(), sortedIndices.end(), std::greater<int>());
 
-    // Supprimer les frames et boxes
     for (int index : sortedIndices) {
         if (index >= 0 && index < m_frames.size()) {
             m_frames.removeAt(index);
@@ -134,7 +123,6 @@ void Extractor::removeFrames(const QList<int> &indices)
         }
     }
 
-    // Mettre à jour les animations
     for (auto it = m_animationsData.begin(); it != m_animationsData.end(); ++it) {
         QList<int> &frameIndices = it.value().frameIndices;
         QList<int> updatedIndices;
@@ -142,14 +130,11 @@ void Extractor::removeFrames(const QList<int> &indices)
         for (int frameIndex : frameIndices) {
             int newIndex = frameIndex;
 
-            // Ajuster les indices après suppression
             for (int removedIndex : sortedIndices) {
                 if (frameIndex == removedIndex) {
-                    // Frame supprimée, on l'ignore
                     newIndex = -1;
                     break;
                 } else if (frameIndex > removedIndex) {
-                    // Décrémenter l'index
                     newIndex--;
                 }
             }
@@ -159,7 +144,6 @@ void Extractor::removeFrames(const QList<int> &indices)
             }
         }
 
-        // Supprimer les doublons et trier
         QSet<int> uniqueIndices;
         for (int index : updatedIndices) {
             uniqueIndices.insert(index);
@@ -167,8 +151,6 @@ void Extractor::removeFrames(const QList<int> &indices)
         frameIndices = uniqueIndices.values();
         std::sort(frameIndices.begin(), frameIndices.end());
     }
-
-    qDebug() << "Removed" << indices.size() << "frames. Remaining:" << m_frames.size();
 }
 
 void Extractor::clearAtlasAreas(const QList<int> &indices)
@@ -180,12 +162,10 @@ void Extractor::clearAtlasAreas(const QList<int> &indices)
         atlasImage = atlasImage.convertToFormat(QImage::Format_ARGB32);
     }
 
-    // Effacer chaque zone correspondant aux frames supprimées
     for (int index : indices) {
         if (index >= 0 && index < m_atlas_index.size()) {
             const Box &box = m_atlas_index.at(index);
 
-            // Remplir la zone avec de la transparence
             for (int y = box.y; y < box.y + box.h; ++y) {
                 for (int x = box.x; x < box.x + box.w; ++x) {
                     if (x < atlasImage.width() && y < atlasImage.height()) {
@@ -195,9 +175,5 @@ void Extractor::clearAtlasAreas(const QList<int> &indices)
             }
         }
     }
-
-    // Mettre à jour l'atlas
     m_atlas = QPixmap::fromImage(atlasImage);
-
-    qDebug() << "Cleared" << indices.size() << "areas from atlas";
 }

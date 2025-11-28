@@ -19,7 +19,6 @@ void MainWindow::reverseFramesOrder(QList<int> &selectedIndices)
     if (selectedIndices.isEmpty()) return;
 
     std::reverse(selectedIndices.begin(), selectedIndices.end());
-    //extractor->setAnimation();
     syncAnimationListWidget();
     startAnimation();
 }
@@ -44,7 +43,6 @@ void MainWindow::invertFrameSelection()
 
     setSelectedFrameIndices(newSelection);
 
-    // Mettre à jour les surbrillances
     clearBoundingBoxHighlighters();
     setBoundingBoxHighllithers(newSelection);
 }
@@ -53,16 +51,9 @@ void MainWindow::deleteFrame(int row)
 {
     if (row < 0 || row >= extractor->m_atlas_index.size()) return;
 
-    // Utiliser la nouvelle méthode Extractor
     extractor->removeFrame(row);
-
-    // Mettre à jour le modèle d'affichage
     frameModel->removeRow(row);
-
-    // Synchroniser les animations
     syncAnimationListWidget();
-
-    // Nettoyer l'affichage
     clearBoundingBoxHighlighters();
 }
 
@@ -79,31 +70,20 @@ void MainWindow::deleteFrames(const QList<int> &frameIndices)
 {
     if (frameIndices.isEmpty() || !extractor) return;
 
-    // Trier par ordre décroissant pour suppression sécurisée
     QList<int> sortedIndices = frameIndices;
     std::sort(sortedIndices.begin(), sortedIndices.end(), std::greater<int>());
-
-    // Supprimer de l'extracteur
     for (int rowToDelete : sortedIndices) {
         extractor->removeFrame(rowToDelete);
     }
-
-    // Reconstruire l'affichage
     populateFrameList(extractor->m_frames, extractor->m_atlas_index);
-
-    // Nettoyer
     clearBoundingBoxHighlighters();
-
-    // Mettre à jour l'animation "current" (elle sera recalculée automatiquement)
     updateCurrentAnimation();
-
-    // Arrêter l'animation si nécessaire
     stopAnimation();
 }
 
 void MainWindow::setMergeHighlight(const QModelIndex &index, bool show)
 {
-  // PReventative cleanup
+  // Preventative cleanup
   if (!show || !index.isValid()) {
       clearMergeHighlight();
       return;
@@ -156,7 +136,6 @@ void MainWindow::populateFrameList(const QList<QPixmap> &frameList, const QList<
 
     frameModel->setColumnCount(1);
 
-    // S'assurer que les deux listes ont la même taille
     if (frameList.size() != boxList.size()) {
         qWarning() << "Incohérence dans populateFrameList: frames =" << frameList.size()
         << ", boxes =" << boxList.size();
@@ -173,7 +152,6 @@ void MainWindow::populateFrameList(const QList<QPixmap> &frameList, const QList<
         QPixmap thumbnail = pixmap.scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation);
         item->setData(thumbnail, Qt::DecorationRole);
 
-        // Ajouter un indicateur visuel pour les frames sélectionnées
         QString displayText = QString("Frame %1 on %2").arg(i + 1).arg(itemCount);
         if (box.selected) {
             displayText += " ✓";
@@ -187,8 +165,6 @@ void MainWindow::populateFrameList(const QList<QPixmap> &frameList, const QList<
     }
 
     syncAnimationListWidget();
-
-    qDebug() << "Frame list populated with" << itemCount << "items";
 }
 
 QList<int> MainWindow::getSelectedFrameIndices() const
@@ -208,20 +184,15 @@ void MainWindow::setSelectedFrameIndices(const QList<int> &selectedIndices)
 {
     if (!extractor) return;
 
-    // Réinitialiser toutes les sélections
     clearFrameSelections();
 
-    // Marquer les nouvelles sélections
     for (int index : selectedIndices) {
         if (index >= 0 && index < extractor->m_atlas_index.size()) {
             extractor->m_atlas_index[index].selected = true;
         }
     }
 
-    // Mettre à jour l'affichage
     updateFrameListSelectionFromModel();
-
-    // METTRE À JOUR l'animation "current" (gère aussi le cas vide)
     updateCurrentAnimation();
 }
 
@@ -234,34 +205,9 @@ void MainWindow::clearFrameSelections()
     }
 
     updateFrameListSelectionFromModel();
-
-    // METTRE À JOUR l'animation "current" (va la supprimer car sélection vide)
     updateCurrentAnimation();
 }
 
 void MainWindow::updateFrameListSelectionFromModel()
 {
-    // if (!extractor || !ui->framesList->selectionModel()) return;
-
-    // // Bloquer les signaux pour éviter les boucles
-    // ui->framesList->blockSignals(true);
-
-    // QItemSelectionModel *selectionModel = ui->framesList->selectionModel();
-    // selectionModel->clearSelection();
-
-    // QItemSelection selection;
-    // for (int i = 0; i < extractor->m_atlas_index.size(); ++i) {
-    //     if (extractor->m_atlas_index.at(i).selected) {
-    //         QModelIndex index = frameModel->index(i, 0);
-    //         if (index.isValid()) {
-    //             selection.select(index, index);
-    //         }
-    //     }
-    // }
-
-    // selectionModel->select(selection, QItemSelectionModel::Select);
-    // ui->framesList->blockSignals(false);
-
-    // // Rafraîchir l'affichage
-    // refreshFrameListDisplay();
 }

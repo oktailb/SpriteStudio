@@ -35,7 +35,6 @@ void MainWindow::onAtlasContextMenuRequested(const QPoint &pos)
             menu.addSeparator();
         }
 
-        // Option pour supprimer les frames
         QString deleteText = (selectedIndices.size() > 1) ?
                                  tr("_delete_selected_frames") : tr("_delete_frame");
         QAction *deleteAction = menu.addAction(deleteText);
@@ -61,25 +60,21 @@ void MainWindow::on_animationList_itemSelectionChanged()
 
     if (selectedItems.isEmpty()) {
         stopAnimation();
-        // NE PAS effacer la sélection de framesList - garder la sélection atlas
         return;
     }
 
     QTreeWidgetItem *item = selectedItems.first();
     QString animationName = item->text(0);
 
-    // Récupérer les données depuis l'extracteur
     QList<int> frameIndices = extractor->getAnimationFrames(animationName);
     int savedFps = extractor->getAnimationFps(animationName);
 
-    // Mettre à jour le FPS
     if (savedFps > 0) {
         ui->fps->blockSignals(true);
         ui->fps->setValue(savedFps);
         ui->fps->blockSignals(false);
     }
 
-    // Démarrer l'animation automatiquement
     QTimer::singleShot(0, this, [this]() {
         startAnimation();
     });
@@ -103,7 +98,6 @@ void MainWindow::removeSelectedAnimation()
     QStringList animationNames;
     for (QTreeWidgetItem* item : selectedItems) {
         QString name = item->text(0);
-        // Empêcher la suppression manuelle de "current"
         if (name != "current") {
             animationNames.append(name);
         }
@@ -168,30 +162,23 @@ void MainWindow::updateAnimationsAfterFrameRemoval(int removedRow, int mergedRow
 
         for (int frameIndex : frameIndices) {
             if (frameIndex == removedRow) {
-                // Remplacer la frame supprimée par la frame fusionnée
                 if (!updatedIndices.contains(mergedRow)) {
                     updatedIndices.append(mergedRow);
                 }
             } else if (frameIndex > removedRow) {
-                // Décrémenter les indices supérieurs
                 updatedIndices.append(frameIndex - 1);
             } else {
-                // Garder les indices inférieurs
                 updatedIndices.append(frameIndex);
             }
         }
 
-        // Supprimer les doublons (méthode moderne)
         QSet<int> uniqueIndices;
         for (int index : updatedIndices) {
             uniqueIndices.insert(index);
         }
         updatedIndices = uniqueIndices.values();
 
-        // Trier
         std::sort(updatedIndices.begin(), updatedIndices.end());
-
-        // Mettre à jour l'animation
         extractor->setAnimation(name, updatedIndices, fps);
     }
 }
@@ -203,7 +190,6 @@ void MainWindow::onMergeFrames(int sourceRow, int targetRow)
         return;
     }
 
-    // Sauvegarder l'état de l'animation en cours
     QString currentAnimationName;
     QList<QTreeWidgetItem*> selectedAnimations = ui->animationList->selectedItems();
     if (!selectedAnimations.isEmpty()) {
@@ -232,7 +218,7 @@ void MainWindow::onMergeFrames(int sourceRow, int targetRow)
     extractor->m_atlas_index[targetRow] = newBox;
     extractor->m_frames[targetRow] = mergedPixmap;
 
-    // 3. Mettre à jour l'item cible dans le modèle
+    // 3. update the item in the extractor data model
     if (targetRow < frameModel->rowCount()) {
         QStandardItem *targetItem = frameModel->item(targetRow, 0);
         if (targetItem) {
@@ -243,18 +229,9 @@ void MainWindow::onMergeFrames(int sourceRow, int targetRow)
                                 Qt::DisplayRole);
         }
     }
-
-    // 4. SUPPRIMER la source - utiliser removeFrame() de l'extracteur pour la cohérence
     extractor->removeFrame(sourceRow);
-
-    // 5. Synchroniser le modèle d'affichage avec les données actuelles
-    // Au lieu de supprimer manuellement, on reconstruit le modèle
     populateFrameList(extractor->m_frames, extractor->m_atlas_index);
-
-    // 6. Mettre à jour l'affichage
     syncAnimationListWidget();
-
-    // 7. Restaurer la sélection d'animation si elle existait
     if (!currentAnimationName.isEmpty()) {
         QList<QTreeWidgetItem*> items = ui->animationList->findItems(currentAnimationName, Qt::MatchExactly, 0);
         if (!items.isEmpty()) {
@@ -268,9 +245,6 @@ void MainWindow::onMergeFrames(int sourceRow, int targetRow)
 
     // Graphical cleanup
     clearBoundingBoxHighlighters();
-
-    qDebug() << "Fusion terminée: source" << sourceRow << "-> target" << targetRow
-             << ". Frames restantes:" << extractor->m_frames.size();
 }
 
 QString readTextFile(const QString &filePath)
@@ -325,7 +299,6 @@ void MainWindow::on_fps_valueChanged(int fps)
 {
     ui->timingLabel->setText(" -> " + tr("_timing") + ": " + QString::number(1000.0  / (double)fps, 'g', 4) + "ms");
 
-    // Mettre à jour les animations avec le nouveau FPS
     updateAnimationsList();
 }
 
@@ -382,9 +355,6 @@ void MainWindow::on_framesList_clicked(const QModelIndex &index)
 
     clearBoundingBoxHighlighters();
     setBoundingBoxHighllithers(selectedIndices);
-
-    // NE PAS mettre à jour l'animation "current" ici car c'est déjà fait
-    // dans setSelectedFrameIndices() via la connexion de sélection
 }
 
 void MainWindow::on_actionExport_triggered()
@@ -428,14 +398,11 @@ void MainWindow::on_actionExport_triggered()
 
 void MainWindow::on_Play_clicked()
 {
-    // Vérifier qu'une animation est sélectionnée
     QList<QTreeWidgetItem*> selectedAnimations = ui->animationList->selectedItems();
     if (selectedAnimations.isEmpty()) {
-        // Si aucune animation sélectionnée, ne rien faire
         return;
     }
 
-    // Relancer l'animation avec les paramètres actuels
     startAnimation();
 }
 

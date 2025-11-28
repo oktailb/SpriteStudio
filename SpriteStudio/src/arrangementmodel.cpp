@@ -58,7 +58,6 @@ bool ArrangementModel::dropMimeData(const QMimeData *data, Qt::DropAction action
 
       // Prevent dropping an item onto itself
       if (sourceRow != targetRow) {
-          qDebug() << "Merge requested: Source" << sourceRow << "to Target" << targetRow;
           // Emit a signal to MainWindow to execute the heavy-lifting merge logic
           emit mergeRequested(sourceRow, targetRow);
           return true; // Drop successfully accepted and handled (no standard reordering needed)

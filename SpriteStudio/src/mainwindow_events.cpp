@@ -97,10 +97,8 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
             }
 
           ui->framesList->viewport()->update();
-          // Important : Let the drag continue
         }
       else if (event->type() == QEvent::DragLeave || event->type() == QEvent::Drop) {
-          // Nettoyage
           listDelegate->setHighlight(-1, FrameDelegate::None);
           clearMergeHighlight();
           ui->framesList->viewport()->update();

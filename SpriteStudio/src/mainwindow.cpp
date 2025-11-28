@@ -137,7 +137,6 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
   killTimer(timerId);
-    qDebug() << QString(__func__) << "called stopAnimation()";
   stopAnimation();
   clearBoundingBoxHighlighters();
   if (selectionRectItem) {

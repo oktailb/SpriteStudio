@@ -146,7 +146,6 @@ QList<QPixmap> SpriteExtractor::extractFromPixmap(int alphaThreshold, int vertic
         }
     }
 
-  qDebug() << "Extraction mémoire terminée. Frames:" << m_frames.size();
   emit extractionFinished(m_frames.size());
   return m_frames;
 }
