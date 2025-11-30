@@ -3,7 +3,6 @@
 #include "qfiledialog.h"
 #include "ui_mainwindow.h"
 #include <stdfloat>
-#include <netinet/in.h>
 #include <QtGui>
 #include <QDialog>
 #include <QTextEdit>
