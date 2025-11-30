@@ -8,6 +8,11 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O5 -W -Wall -pedantic")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O5 -W -Wall -pedantic")
 set(QT_FORCE_CMP0156_TO_VALUE NEW)
 
+if (WIN32)
+    message(AUTHOR_WARNING "PLEASE CONFIGURE IT REGARDING YOUR CONFIG")
+    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH};C:\\Qt6\\6.10.1\\mingw_64\\lib\\cmake\\Qt6)
+endif()
+
 string(TIMESTAMP CMAKE_BUILD_DATE "%Y-%m-%d %H:%M:%S")
 
 function(get_git_info)
