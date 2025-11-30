@@ -321,9 +321,10 @@ void MainWindow::startSelection(const QPointF &scenePos)
 
   selectionModifiers = QApplication::keyboardModifiers();
 
+         // Initialize currentSelection based on modifiers
   if (!(selectionModifiers & (Qt::ControlModifier | Qt::ShiftModifier))) {
-      ui->framesList->selectionModel()->clearSelection();
-      clearBoundingBoxHighlighters();
+      // No modifier: start with empty selection
+      currentSelection.clear();
     }
 
   selectionStartPoint = scenePos;
@@ -334,6 +335,9 @@ void MainWindow::startSelection(const QPointF &scenePos)
   selectionRectItem->setPen(QPen(Qt::blue, 2, Qt::DashLine));
   selectionRectItem->setBrush(QBrush(QColor(0, 0, 255, 30)));
   ui->graphicsViewLayers->scene()->addItem(selectionRectItem);
+
+  // Update immediately to show initial selection
+  updateSelection(scenePos);
 }
 
 void MainWindow::updateSelection(const QPointF &scenePos)
@@ -342,27 +346,100 @@ void MainWindow::updateSelection(const QPointF &scenePos)
 
   QRectF rect(selectionStartPoint, scenePos);
   selectionRectItem->setRect(rect.normalized());
+
+  QList<int> selectedFrameIndices = findFramesInSelectionRect(rect);
+
+  QList<int> newSelection;
+
+  if (selectionModifiers & Qt::ControlModifier) {
+      // CTRL: Add frames to existing selection
+      newSelection = currentSelection; // Start with current selection
+
+      // Add only new frames that aren't already selected
+      for (int index : selectedFrameIndices) {
+          if (!newSelection.contains(index)) {
+              newSelection.append(index);
+            }
+        }
+    } else if (selectionModifiers & Qt::ShiftModifier) {
+      // SHIFT: Remove frames from existing selection
+      newSelection = currentSelection; // Start with current selection
+
+      // Remove frames that are in the current selection rectangle
+      for (int index : selectedFrameIndices) {
+          newSelection.removeAll(index);
+        }
+    } else {
+      // No modifier: Replace selection - PRESERVE ORDER from findFramesInSelectionRect
+      // Add only new frames that aren't already selected
+      for (int index : selectedFrameIndices) {
+          if (!currentSelection.contains(index)) {
+              currentSelection.append(index);
+            }
+        }
+      newSelection = currentSelection;
+    }
+
+         // Update current selection
+  currentSelection = newSelection;
+
+         // Update visual feedback
+  clearBoundingBoxHighlighters();
+  setBoundingBoxHighllithers(currentSelection);
+  updateCurrentAnimation();
+
 }
 
 void MainWindow::endSelection()
 {
   if (!isSelecting || !selectionRectItem) return;
 
-  QRectF selectionRect = selectionRectItem->rect();
-  QList<int> selectedFrameIndices = findFramesInSelectionRect(selectionRect);
+  if (!currentSelection.isEmpty()) {
+      // 1. Clear existing selections in extractor
+      clearFrameSelections();
 
-  if (!selectedFrameIndices.isEmpty()) {
-      selectFramesInList(selectedFrameIndices);
-    }
-  else {
+      // 2. Set new selections in extractor
+      for (int index : currentSelection) {
+          if (index >= 0 && index < extractor->m_atlas_index.size()) {
+              extractor->m_atlas_index[index].selected = true;
+            }
+        }
+
+      // 3. Update all UI components
+      clearBoundingBoxHighlighters();
+      setBoundingBoxHighllithers(currentSelection);
+
+      // 4. Animation is already updated by updateCurrentAnimation() in updateSelection()
+      // Just ensure the animation list is synced
+      syncAnimationListWidget();
+
+      // 5. Update list view selection
+      QItemSelection selection;
+      for (int row : currentSelection) {
+          QModelIndex index = frameModel->index(row, 0);
+          if (index.isValid()) {
+              selection.select(index, index);
+            }
+        }
+
+      ui->framesList->blockSignals(true);
+      ui->framesList->selectionModel()->select(selection, QItemSelectionModel::ClearAndSelect);
+      ui->framesList->blockSignals(false);
+
+      // 6. Refresh the frame list display
+      refreshFrameListDisplay();
+
+    } else {
       removeCurrentAnimation();
     }
 
+         // Cleanup
   ui->graphicsViewLayers->scene()->removeItem(selectionRectItem);
   delete selectionRectItem;
   selectionRectItem = nullptr;
   isSelecting = false;
   ui->graphicsViewLayers->setCursor(Qt::ArrowCursor);
+  startAnimation();
 }
 
 QList<int> MainWindow::findFramesInSelectionRect(const QRectF &rect)
@@ -370,6 +447,8 @@ QList<int> MainWindow::findFramesInSelectionRect(const QRectF &rect)
   QList<int> result;
   if (!extractor) return result;
 
+         // Return frames in the order they are found (no sorting)
+         // This preserves the natural selection order
   for (int i = 0; i < extractor->m_atlas_index.size(); ++i) {
       const Extractor::Box &box = extractor->m_atlas_index.at(i);
       QRectF frameRect(box.x, box.y, box.w, box.h);
@@ -378,6 +457,8 @@ QList<int> MainWindow::findFramesInSelectionRect(const QRectF &rect)
           result.append(i);
         }
     }
+
+  // No sorting - preserve the natural order of discovery
   return result;
 }
 

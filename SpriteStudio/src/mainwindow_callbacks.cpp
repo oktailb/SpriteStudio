@@ -185,9 +185,9 @@ void MainWindow::updateAnimationsAfterFrameRemoval(int removedRow, int mergedRow
 
 void MainWindow::onMergeFrames(int sourceRow, int targetRow)
 {
-    if (sourceRow < 0 || sourceRow >= extractor->m_atlas_index.size() ||
-        targetRow < 0 || targetRow >= extractor->m_atlas_index.size()) {
-        return;
+  if (sourceRow < 0 || sourceRow >= extractor->m_atlas_index.size() ||
+      targetRow < 0 || targetRow >= extractor->m_atlas_index.size()) {
+      return;
     }
 
     QString currentAnimationName;
@@ -224,11 +224,12 @@ void MainWindow::onMergeFrames(int sourceRow, int targetRow)
         if (targetItem) {
             QPixmap thumbnail = mergedPixmap.scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation);
             targetItem->setData(thumbnail, Qt::DecorationRole);
-            targetItem->setData(QString("%1 + %2 merge\n[%3,%4](%5x%6)")
-                                    .arg(sourceRow).arg(targetRow).arg(newBox.x).arg(newBox.y).arg(newBox.w).arg(newBox.h),
-                                Qt::DisplayRole);
-        }
-    }
+            // Utiliser +1 pour l'affichage utilisateur
+            targetItem->setData(QString("Frame %1 + %2 merged")
+                                     .arg(sourceRow + 1).arg(targetRow + 1),
+                                 Qt::DisplayRole);
+          }
+      }
     extractor->removeFrame(sourceRow);
     populateFrameList(extractor->m_frames, extractor->m_atlas_index);
     syncAnimationListWidget();
@@ -292,6 +293,7 @@ void MainWindow::on_actionOpen_triggered()
 
 void MainWindow::on_actionExit_triggered()
 {
+  delete extractor;
   exit(EXIT_SUCCESS);
 }
 

@@ -1,17 +1,8 @@
 #include "include/mainwindow.h"
 #include "./ui_mainwindow.h"
 #include "ui_mainwindow.h"
-#include <stdfloat>
-#include <netinet/in.h>
-#include <QtGui>
-#include <QDialog>
-#include <QTextEdit>
-#include <QMessageBox>
-#include <QGraphicsPixmapItem>
-#include <QGraphicsScene>
-#include <QPen>
-#include <QMovie>
-#include <QGraphicsRectItem>
+#include <QTimer>
+#include <QShortcut>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)

@@ -118,40 +118,41 @@ void MainWindow::clearMergeHighlight()
 
 void MainWindow::populateFrameList(const QList<QPixmap> &frameList, const QList<Extractor::Box> &boxList)
 {
-    frameModel->clear();
-    clearBoundingBoxHighlighters();
+  frameModel->clear();
+  clearBoundingBoxHighlighters();
 
-    frameModel->setColumnCount(1);
+  frameModel->setColumnCount(1);
 
-    if (frameList.size() != boxList.size()) {
-        qWarning() << "Incohérence dans populateFrameList: frames =" << frameList.size()
-        << ", boxes =" << boxList.size();
+  if (frameList.size() != boxList.size()) {
+      qWarning() << "Incohérence dans populateFrameList: frames =" << frameList.size()
+                  << ", boxes =" << boxList.size();
     }
 
-    int itemCount = qMin(frameList.size(), boxList.size());
+  int itemCount = qMin(frameList.size(), boxList.size());
 
-    for (int i = 0; i < itemCount; ++i) {
-        const QPixmap &pixmap = frameList.at(i);
-        const Extractor::Box &box = boxList.at(i);
+  for (int i = 0; i < itemCount; ++i) {
+      const QPixmap &pixmap = frameList.at(i);
+      const Extractor::Box &box = boxList.at(i);
 
-        QStandardItem *item = new QStandardItem();
+      QStandardItem *item = new QStandardItem();
 
-        QPixmap thumbnail = pixmap.scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-        item->setData(thumbnail, Qt::DecorationRole);
+      QPixmap thumbnail = pixmap.scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+      item->setData(thumbnail, Qt::DecorationRole);
 
-        QString displayText = QString("Frame %1 on %2").arg(i + 1).arg(itemCount);
-        if (box.selected) {
-            displayText += " ✓";
-            item->setBackground(QBrush(QColor(200, 230, 255)));
+             // Utiliser i+1 pour l'affichage utilisateur (1-index)
+      QString displayText = QString("Frame %1").arg(i + 1);
+      if (box.selected) {
+          displayText += " ✓";
+          item->setBackground(QBrush(QColor(200, 230, 255)));
         }
 
-        item->setData(displayText, Qt::DisplayRole);
-        item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsDragEnabled);
-        item->setFlags(item->flags() | Qt::ItemIsEditable);
-        frameModel->appendRow(item);
+      item->setData(displayText, Qt::DisplayRole);
+      item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsDragEnabled);
+      item->setFlags(item->flags() | Qt::ItemIsEditable);
+      frameModel->appendRow(item);
     }
 
-    syncAnimationListWidget();
+  syncAnimationListWidget();
 }
 
 QList<int> MainWindow::getSelectedFrameIndices() const
@@ -169,18 +170,18 @@ QList<int> MainWindow::getSelectedFrameIndices() const
 
 void MainWindow::setSelectedFrameIndices(const QList<int> &selectedIndices)
 {
-    if (!extractor) return;
+  if (!extractor) return;
 
-    clearFrameSelections();
+  clearFrameSelections();
 
-    for (int index : selectedIndices) {
-        if (index >= 0 && index < extractor->m_atlas_index.size()) {
-            extractor->m_atlas_index[index].selected = true;
+  for (int index : selectedIndices) {
+      if (index >= 0 && index < extractor->m_atlas_index.size()) {
+          extractor->m_atlas_index[index].selected = true;
         }
     }
 
-    updateFrameListSelectionFromModel();
-    updateCurrentAnimation();
+  updateFrameListSelectionFromModel();
+  updateCurrentAnimation();
 }
 
 void MainWindow::clearFrameSelections()

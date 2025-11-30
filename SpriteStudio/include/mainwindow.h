@@ -385,6 +385,7 @@ private:
   QPointF selectionStartPoint;
   bool isSelecting = false;
   Qt::KeyboardModifiers selectionModifiers;
+  QList<int> currentSelection;
 
   /**
    * @brief Populates the frame list model with frames and metadata from the extractor.
