@@ -168,6 +168,13 @@ public:
         QList<int> overlappingBoxes;
     };
 
+    enum CropStrategy {
+        MergeStrategy,      // Fusionne les sprites qui se chevauchent
+        SeparateStrategy,   // Sépare en utilisant la connectivité
+        BoundaryStrategy,   // Utilise les limites naturelles
+        AlphaChannelStrategy // Sépare basé sur le canal alpha
+    };
+
     struct AnimationData {
         QList<int> frameIndices;
         int fps;
@@ -180,6 +187,14 @@ public:
     QString                     m_filePath;       /**< The original data file from a supported format. */
     int                         m_maxFrameWidth;  /**< Maximum width among all extracted frames (used for animation bounding box). */
     int                         m_maxFrameHeight; /**< Maximum height among all extracted frames (used for animation bounding box). */
+
+    bool m_smartCropEnabled = true;
+    double m_overlapThreshold = 0.1; // 10% de chevauchement minimum
+    CropStrategy m_cropStrategy = SeparateStrategy;
+
+    void setSmartCropEnabled(bool newSmartCropEnabled);
+
+    bool smartCropEnabled() const;
 
 signals:
     /**

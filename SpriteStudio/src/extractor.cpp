@@ -177,3 +177,13 @@ void Extractor::clearAtlasAreas(const QList<int> &indices)
     }
     m_atlas = QPixmap::fromImage(atlasImage);
 }
+
+bool Extractor::smartCropEnabled() const
+{
+    return m_smartCropEnabled;
+}
+
+void Extractor::setSmartCropEnabled(bool newSmartCropEnabled)
+{
+    m_smartCropEnabled = newSmartCropEnabled;
+}

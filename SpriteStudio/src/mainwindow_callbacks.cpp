@@ -308,6 +308,15 @@ void MainWindow::on_alphaThreshold_valueChanged(int threshold)
     }
 }
 
+void MainWindow::on_enableSmartCropCheckbox_stateChanged(int state)
+{
+    if (extractor == nullptr) return;
+    if (!currentFilePath.isEmpty()) {
+        extractor->setSmartCropEnabled(state != 0);
+        processFile(currentFilePath);
+    }
+}
+
 void MainWindow::on_verticalTolerance_valueChanged(int verticalTolerance)
 {
   Q_UNUSED(verticalTolerance);

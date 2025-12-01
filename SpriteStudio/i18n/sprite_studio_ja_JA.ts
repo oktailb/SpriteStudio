@@ -239,18 +239,18 @@
         <translation>画像 </translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="397"/>
-        <location filename="../src/mainwindow_callbacks.cpp" line="400"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="406"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="409"/>
         <source>Export Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="397"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="406"/>
         <source>Export failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="400"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="409"/>
         <source>Export crashed</source>
         <translation type="unfinished"></translation>
     </message>
@@ -285,37 +285,37 @@
         <translation>写真を削除しました。</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="362"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="371"/>
         <source>_export_error</source>
         <translation>エクスポートできません</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="362"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="371"/>
         <source>_please_load_frames</source>
         <translation>エクスポートを要求する前にフレームを選択またはロードしてください</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="366"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="375"/>
         <source>_export_formats_json</source>
         <translation>スプライトアトラス </translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="366"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="375"/>
         <source>_export_formats_png</source>
         <translation>PNG画像 </translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="370"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="379"/>
         <source>_export_atlas</source>
         <translation>スプライトアトラスをエクスポート</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="535"/>
+        <location filename="../src/mainwindow.ui" line="538"/>
         <source>Export</source>
         <translation>エクスポート</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="525"/>
+        <location filename="../src/mainwindow.ui" line="528"/>
         <source>Open</source>
         <translation>開く</translation>
     </message>
@@ -325,12 +325,12 @@
         <translation>スプライトスタジオ</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="322"/>
+        <location filename="../src/mainwindow.ui" line="325"/>
         <source>Play</source>
         <translation>再生</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="310"/>
+        <location filename="../src/mainwindow.ui" line="313"/>
         <source>Pause</source>
         <translation>一時停止</translation>
     </message>
@@ -345,23 +345,23 @@
         <translation>垂直トレランス</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="334"/>
-        <location filename="../src/mainwindow.ui" line="457"/>
+        <location filename="../src/mainwindow.ui" line="337"/>
+        <location filename="../src/mainwindow.ui" line="460"/>
         <source>FPS</source>
         <translation>FPS</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="452"/>
+        <location filename="../src/mainwindow.ui" line="455"/>
         <source>Name</source>
         <translation>名</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="462"/>
+        <location filename="../src/mainwindow.ui" line="465"/>
         <source>Frames</source>
         <translation>フレーム</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="357"/>
+        <location filename="../src/mainwindow.ui" line="360"/>
         <source>Timing: </source>
         <translation>フレーム間隔：</translation>
     </message>
@@ -371,78 +371,78 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="222"/>
+        <location filename="../src/mainwindow.ui" line="225"/>
         <source>Overlap Threshold</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="232"/>
+        <location filename="../src/mainwindow.ui" line="235"/>
         <source>Crop Strategy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="240"/>
+        <location filename="../src/mainwindow.ui" line="243"/>
         <source>Merge</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="245"/>
+        <location filename="../src/mainwindow.ui" line="248"/>
         <source>Separate</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="250"/>
+        <location filename="../src/mainwindow.ui" line="253"/>
         <source>Boundary</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="255"/>
+        <location filename="../src/mainwindow.ui" line="258"/>
         <source>Alpha Channel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="397"/>
-        <location filename="../src/mainwindow.ui" line="427"/>
+        <location filename="../src/mainwindow.ui" line="400"/>
+        <location filename="../src/mainwindow.ui" line="430"/>
         <source>hh:mm:ss</source>
         <translation>hh:mm:ss</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="484"/>
+        <location filename="../src/mainwindow.ui" line="487"/>
         <source>File</source>
         <translation>ファイル</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="495"/>
+        <location filename="../src/mainwindow.ui" line="498"/>
         <source>Help</source>
         <translation>ヘルプ</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="515"/>
+        <location filename="../src/mainwindow.ui" line="518"/>
         <source>Start</source>
         <translation>開始</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="520"/>
+        <location filename="../src/mainwindow.ui" line="523"/>
         <source>Stop</source>
         <translation>停止</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="530"/>
+        <location filename="../src/mainwindow.ui" line="533"/>
         <source>Save</source>
         <translation>保存</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="540"/>
+        <location filename="../src/mainwindow.ui" line="543"/>
         <source>Exit</source>
         <translation>終了</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="505"/>
+        <location filename="../src/mainwindow.ui" line="508"/>
         <source>Licence</source>
         <translation>ライセンス</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="510"/>
+        <location filename="../src/mainwindow.ui" line="513"/>
         <source>About</source>
         <translation>情報</translation>
     </message>
