@@ -178,6 +178,16 @@ void Extractor::clearAtlasAreas(const QList<int> &indices)
     m_atlas = QPixmap::fromImage(atlasImage);
 }
 
+double Extractor::overlapThreshold() const
+{
+  return m_overlapThreshold;
+}
+
+void Extractor::setOverlapThreshold(double newOverlapThreshold)
+{
+  m_overlapThreshold = newOverlapThreshold;
+}
+
 bool Extractor::smartCropEnabled() const
 {
     return m_smartCropEnabled;

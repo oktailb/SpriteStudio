@@ -138,6 +138,9 @@ void MainWindow::processFile(const QString &fileName)
     }
   else if ((extension == "png") || (extension == "jpg") || (extension == "jpeg") ||  (extension == "bmp") || (extension == "gif")) {
       extractor = new SpriteExtractor();
+      SpriteExtractor *tmp = static_cast<SpriteExtractor*>(extractor);
+      tmp->setSmartCropEnabled(ui->enableSmartCropCheckbox->isEnabled());
+      tmp->setOverlapThreshold(ui->overlapThresholdSpinbox->value());
     } else if (extension == "json") {
       extractor = new JsonExtractor();
     } else {
@@ -256,6 +259,8 @@ void MainWindow::setBoundingBoxHighllithers(const QList<int> &selectedIndices)
 
         scene->addItem(highlighter);
         boundingBoxHighlighters.append(highlighter);
+        if (!isSelecting)
+          fitSelectedFramesInView(100);
     }
 }
 
@@ -273,7 +278,7 @@ void MainWindow::refreshFrameListDisplay()
         return;
     }
 
-    for (int i = 0; i < frameModel->rowCount(); ++i) {
+    for (int i = 0; i < modelCount; ++i) {
         QStandardItem *item = frameModel->item(i, 0);
         if (!item) continue;
 
@@ -284,7 +289,7 @@ void MainWindow::refreshFrameListDisplay()
 
         const Extractor::Box &box = extractor->m_atlas_index.at(i);
 
-        QString displayText = QString("Frame ") + QString::number(i) + " on " + QString::number(frameModel->rowCount());
+        QString displayText = QString("Frame ") + QString::number(i) + " on " + QString::number(modelCount);
         if (box.selected) {
             displayText += " ✓";
             item->setBackground(QBrush(Qt::magenta));
@@ -293,6 +298,7 @@ void MainWindow::refreshFrameListDisplay()
         }
         item->setTextAlignment(Qt::AlignBaseline);
         item->setData(displayText, Qt::ToolTipRole);
+        item->setData(i, Qt::UserRole);
     }
 }
 

@@ -196,7 +196,10 @@ public:
 
     bool smartCropEnabled() const;
 
-signals:
+    double overlapThreshold() const;
+    void setOverlapThreshold(double newOverlapThreshold);
+
+  signals:
     /**
      * @brief Signal emitted when the frame extraction process is complete.
      * @param frameCount The total number of frames successfully extracted.

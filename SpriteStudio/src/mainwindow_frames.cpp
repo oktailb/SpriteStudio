@@ -147,6 +147,7 @@ void MainWindow::populateFrameList(const QList<QPixmap> &frameList, const QList<
         }
 
       item->setData(displayText, Qt::DisplayRole);
+      item->setData(i, Qt::UserRole);
       item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsDragEnabled);
       item->setFlags(item->flags() | Qt::ItemIsEditable);
       frameModel->appendRow(item);

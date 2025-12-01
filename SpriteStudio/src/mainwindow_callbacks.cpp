@@ -310,10 +310,19 @@ void MainWindow::on_alphaThreshold_valueChanged(int threshold)
 
 void MainWindow::on_enableSmartCropCheckbox_stateChanged(int state)
 {
-    if (extractor == nullptr) return;
-    if (!currentFilePath.isEmpty()) {
-        extractor->setSmartCropEnabled(state != 0);
-        processFile(currentFilePath);
+  if (extractor == nullptr) return;
+  if (!currentFilePath.isEmpty()) {
+      extractor->setSmartCropEnabled(state != 0);
+      processFile(currentFilePath);
+    }
+}
+
+void MainWindow::on_overlapThresholdSpinbox_valueChanged(int threshold)
+{
+  if (extractor == nullptr) return;
+  if (!currentFilePath.isEmpty()) {
+      extractor->setOverlapThreshold(threshold);
+      processFile(currentFilePath);
     }
 }
 
@@ -357,8 +366,10 @@ void MainWindow::on_framesList_clicked(const QModelIndex &index)
     if (!ui->graphicsViewLayers->scene() || !extractor) {
         return;
     }
+    statusLabel->setText("Frame " + QString::number(1 + index.data(Qt::UserRole).toInt()));
 
-    QList<int> selectedIndices = getSelectedFrameIndices();
+    QList<int> selectedIndices;
+    selectedIndices.push_back(index.data(Qt::UserRole).toInt());
 
     clearBoundingBoxHighlighters();
     setBoundingBoxHighllithers(selectedIndices);
