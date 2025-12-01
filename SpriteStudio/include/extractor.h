@@ -160,12 +160,12 @@ public:
      * during the export process.
      */
     struct Box {
-        int x;
-        int y;
-        int w;
-        int h;
+        QRect rect;
+//        QPolygon polygon;
         bool selected;
         int index;
+        int groupId;
+        QList<int> overlappingBoxes;
     };
 
     struct AnimationData {

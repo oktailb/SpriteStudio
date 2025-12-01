@@ -199,18 +199,15 @@ void MainWindow::onMergeFrames(int sourceRow, int targetRow)
     Extractor::Box srcBox = extractor->m_atlas_index[sourceRow];
     Extractor::Box tgtBox = extractor->m_atlas_index[targetRow];
 
-    QRect srcRect(srcBox.x, srcBox.y, srcBox.w, srcBox.h);
-    QRect tgtRect(tgtBox.x, tgtBox.y, tgtBox.w, tgtBox.h);
+    QRect srcRect(srcBox.rect);
+    QRect tgtRect(tgtBox.rect);
     QRect unitedRect = srcRect.united(tgtRect);
 
     QPixmap mergedPixmap = this->extractor->m_atlas.copy(unitedRect);
 
     // 2. Update target internal data
     Extractor::Box newBox;
-    newBox.x = unitedRect.x();
-    newBox.y = unitedRect.y();
-    newBox.w = unitedRect.width();
-    newBox.h = unitedRect.height();
+    newBox.rect = unitedRect;
     newBox.selected = srcBox.selected || tgtBox.selected; // Conserver la sélection
     newBox.index = tgtBox.index; // Conserver l'index original
 

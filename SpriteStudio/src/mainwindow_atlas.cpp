@@ -237,7 +237,7 @@ void MainWindow::setBoundingBoxHighllithers(const QList<int> &selectedIndices)
         }
 
         const Extractor::Box &box = extractor->m_atlas_index[row];
-        QRectF rect(box.x, box.y, box.w, box.h);
+        QRectF rect(box.rect);
         QColor color = getHighlightColor(i, selectedIndices.size());
         color.setAlpha(50);
         QPen pen(Qt::red);
@@ -450,7 +450,7 @@ QList<int> MainWindow::findFramesInSelectionRect(const QRectF &rect)
          // This preserves the natural selection order
   for (int i = 0; i < extractor->m_atlas_index.size(); ++i) {
       const Extractor::Box &box = extractor->m_atlas_index.at(i);
-      QRectF frameRect(box.x, box.y, box.w, box.h);
+      QRectF frameRect(box.rect);
 
       if (rect.intersects(frameRect)) {
           result.append(i);
@@ -498,7 +498,7 @@ void MainWindow::deleteSelectedFramesFromAtlas()
     for (int index : selectedIndices) {
         if (index >= 0 && index < extractor->m_atlas_index.size()) {
             const Extractor::Box &box = extractor->m_atlas_index.at(index);
-            areasToClear.append(QRect(box.x, box.y, box.w, box.h));
+            areasToClear.append(box.rect);
         }
     }
 

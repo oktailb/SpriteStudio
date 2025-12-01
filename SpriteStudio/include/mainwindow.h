@@ -9,11 +9,13 @@
 
 #include <QMainWindow>
 #include <qgraphicsitem.h>
+#include <QLabel>
 #include <qstandarditemmodel.h>
 #include <QStyledItemDelegate>
 #include <QPainter>
 #include <QTreeWidget>
 #include <QInputDialog>
+#include <QProgressBar>
 #include "extractor.h"
 #include "arrangementmodel.h"
 
@@ -386,6 +388,8 @@ private:
   bool isSelecting = false;
   Qt::KeyboardModifiers selectionModifiers;
   QList<int> currentSelection;
+  QProgressBar *progressBar;
+  QLabel * statusLabel;
 
   /**
    * @brief Populates the frame list model with frames and metadata from the extractor.

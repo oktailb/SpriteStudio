@@ -105,6 +105,18 @@ MainWindow::MainWindow(QWidget *parent)
           });
   for (int c = 0 ; c < ui->animationList->columnCount() ; c++)
       ui->animationList->resizeColumnToContents(c);
+
+  statusLabel = new QLabel(this);
+  statusLabel->setText(tr("_ready_to_start"));
+  ui->statusBar->addPermanentWidget(statusLabel);
+
+  progressBar = new QProgressBar(this);
+  progressBar->setRange(0, 100); // Set the minimum and maximum values
+  progressBar->setValue(0);      // Set the initial value
+  progressBar->setTextVisible(true); // Show percentage or custom text
+  progressBar->setFormat(tr("_progress") + " %p%"); // Custom format string
+  ui->statusBar->addPermanentWidget(progressBar);
+
   // Set the ready flag to true now that basic initialization is complete.
   ready = true;
 }

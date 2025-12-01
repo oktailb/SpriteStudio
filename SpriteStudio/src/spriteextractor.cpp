@@ -85,7 +85,10 @@ QList<QPixmap> SpriteExtractor::extractFromPixmap(int alphaThreshold, int vertic
                   int spriteW = maxX - minX + 1;
                   int spriteH = maxY - minY + 1;
 
-                  Extractor::Box box = {minX, minY, spriteW, spriteH, false, 0};
+                  Box box;
+                  box.rect = {minX, minY, spriteW, spriteH};
+                  box.index  = 0;
+                  box.selected = false;
                   detectedBoxes.push_back(box);
                 }
             }
@@ -96,16 +99,16 @@ QList<QPixmap> SpriteExtractor::extractFromPixmap(int alphaThreshold, int vertic
              detectedBoxes.end(),
              [&verticalTolerance](const Extractor::Box& a, const Extractor::Box& b) {
                const int VERTICAL_TOLERANCE = verticalTolerance;
-               if (std::abs(a.y - b.y) <= VERTICAL_TOLERANCE) {
-                   return a.x < b.x;
+               if (std::abs(a.rect.y() - b.rect.y()) <= VERTICAL_TOLERANCE) {
+                   return a.rect.x() < b.rect.x();
                  }
-               return a.y < b.y;
+               return a.rect.y() < b.rect.y();
              });
 
   if (detectedBoxes.size() > 0) {
       QList<QRect> rects;
       for (const auto& box : detectedBoxes) {
-          rects.append(QRect(box.x, box.y, box.w, box.h));
+          rects.append(box.rect);
         }
 
       QList<bool> isMaster(rects.size(), true);
@@ -125,13 +128,17 @@ QList<QPixmap> SpriteExtractor::extractFromPixmap(int alphaThreshold, int vertic
       for (int i = 0; i < rects.size(); ++i) {
           if (isMaster[i]) {
               QRect rect = rects[i];
-              m_atlas_index.push_back({rect.x(), rect.y(), rect.width(), rect.height(), false, i});
+              Box box;
+              box.rect = rect;
+              box.index = i;
+              box.selected = false;
+              m_atlas_index.push_back(box);
             }
         }
     }
 
   for (const auto& box : m_atlas_index) {
-      QPixmap spriteFrame = m_atlas.copy(box.x, box.y, box.w, box.h);
+      QPixmap spriteFrame = m_atlas.copy(box.rect);
       this->addFrame(spriteFrame);
       if (spriteFrame.width() > m_maxFrameWidth) {
           m_maxFrameWidth = spriteFrame.width();

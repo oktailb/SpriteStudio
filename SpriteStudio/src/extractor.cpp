@@ -166,8 +166,8 @@ void Extractor::clearAtlasAreas(const QList<int> &indices)
         if (index >= 0 && index < m_atlas_index.size()) {
             const Box &box = m_atlas_index.at(index);
 
-            for (int y = box.y; y < box.y + box.h; ++y) {
-                for (int x = box.x; x < box.x + box.w; ++x) {
+            for (int y = box.rect.y(); y < box.rect.bottom(); ++y) {
+                for (int x = box.rect.x(); x < box.rect.right(); ++x) {
                     if (x < atlasImage.width() && y < atlasImage.height()) {
                         atlasImage.setPixel(x, y, qRgba(0, 0, 0, 0)); // Transparent
                     }

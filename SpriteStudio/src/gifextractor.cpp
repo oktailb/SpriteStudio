@@ -129,7 +129,11 @@ QList<QPixmap> GifExtractor::extractFromPixmap(int alphaThreshold, int verticalT
       painter.drawImage(x, y, currentImage);
 
       // Record the bounding box coordinates (Box) for the metadata file (m_atlas_index).
-      m_atlas_index.push_back({x, y, w, h, false, i});
+      Box box;
+      box.rect = {x, y, w, h};
+      box.index  = i;
+      box.selected = false;
+      m_atlas_index.push_back(box);
 
       // Update maximum frame dimensions (w and h are the max since all GIF frames are the same size)
       if (w > m_maxFrameWidth) {

@@ -80,7 +80,7 @@ void MainWindow::setMergeHighlight(const QModelIndex &index, bool show)
   if (row >= 0 && row < extractor->m_atlas_index.size()) {
       // Get the matching box
       Extractor::Box box = extractor->m_atlas_index[row];
-      QRectF rect(box.x, box.y, box.w, box.h);
+      QRectF rect(box.rect);
 
       // Rectangle lazy creation
       if (!mergeHighlighter) {

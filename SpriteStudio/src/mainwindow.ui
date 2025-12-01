@@ -72,7 +72,7 @@
        <number>0</number>
       </property>
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout_3" stretch="4,0,1">
+       <layout class="QVBoxLayout" name="verticalLayout_3" stretch="4,0,1,0">
         <item>
          <widget class="QGraphicsView" name="graphicsViewLayers"/>
         </item>
@@ -167,6 +167,111 @@
           </property>
          </widget>
         </item>
+        <item>
+         <layout class="QHBoxLayout" name="AtlasButtons">
+          <property name="leftMargin">
+           <number>6</number>
+          </property>
+          <property name="rightMargin">
+           <number>6</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>Alpha threshold </string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSpinBox" name="alphaThreshold">
+            <property name="maximum">
+             <number>255</number>
+            </property>
+            <property name="value">
+             <number>5</number>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>Vertical tolerance</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSpinBox" name="verticalTolerance">
+            <property name="maximum">
+             <number>999</number>
+            </property>
+            <property name="value">
+             <number>10</number>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="enableSmartCropCheckbox">
+            <property name="text">
+             <string>Smart Crop</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_3">
+            <property name="text">
+             <string>Overlap Threshold</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSpinBox" name="overlapThresholdSpinbox"/>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_4">
+            <property name="text">
+             <string>Crop Strategy</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="cropStrategyCombobox">
+            <item>
+             <property name="text">
+              <string>Merge</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Separate</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Boundary</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Alpha Channel</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item>
+           <spacer name="spacer">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
        </layout>
       </item>
       <item>
@@ -189,11 +294,141 @@
          <widget class="QGraphicsView" name="graphicsViewResult"/>
         </item>
         <item>
+         <layout class="QHBoxLayout" name="MediaButtons">
+          <property name="spacing">
+           <number>6</number>
+          </property>
+          <property name="leftMargin">
+           <number>6</number>
+          </property>
+          <property name="rightMargin">
+           <number>6</number>
+          </property>
+          <item>
+           <widget class="QPushButton" name="Pause">
+            <property name="text">
+             <string>Pause</string>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normalon>:/drawer/pause.png</normalon>
+             </iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="Play">
+            <property name="text">
+             <string>Play</string>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normalon>:/drawer/play.png</normalon>
+             </iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="fpsLabel">
+            <property name="text">
+             <string>FPS</string>
+            </property>
+            <property name="margin">
+             <number>0</number>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSpinBox" name="fps">
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>255</number>
+            </property>
+            <property name="value">
+             <number>60</number>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="timingLabel">
+            <property name="text">
+             <string>Timing: </string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
          <widget class="Line" name="line_3">
           <property name="orientation">
            <enum>Qt::Orientation::Horizontal</enum>
           </property>
          </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="DataTiming">
+          <property name="spacing">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QTimeEdit" name="timeFrom">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+            <property name="displayFormat">
+             <string>hh:mm:ss</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QSlider" name="sliderFrom">
+              <property name="orientation">
+               <enum>Qt::Orientation::Horizontal</enum>
+              </property>
+              <property name="tickPosition">
+               <enum>QSlider::TickPosition::TicksAbove</enum>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QTimeEdit" name="timeTo">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+            <property name="displayFormat">
+             <string>hh:mm:ss</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item>
          <widget class="QTreeWidget" name="animationList">
@@ -233,161 +468,8 @@
       </item>
      </layout>
     </item>
-    <item>
-     <layout class="QHBoxLayout" name="MediaButtons">
-      <item>
-       <widget class="QPushButton" name="Play">
-        <property name="text">
-         <string>Play</string>
-        </property>
-        <property name="icon">
-         <iconset>
-          <normalon>:/drawer/play.png</normalon>
-         </iconset>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="Pause">
-        <property name="text">
-         <string>Pause</string>
-        </property>
-        <property name="icon">
-         <iconset>
-          <normalon>:/drawer/pause.png</normalon>
-         </iconset>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string>Alpha threshold </string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QSpinBox" name="alphaThreshold">
-        <property name="maximum">
-         <number>255</number>
-        </property>
-        <property name="value">
-         <number>5</number>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="label_2">
-        <property name="text">
-         <string>Vertical tolerance</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QSpinBox" name="verticalTolerance">
-        <property name="maximum">
-         <number>999</number>
-        </property>
-        <property name="value">
-         <number>10</number>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="fpsLabel">
-        <property name="text">
-         <string>FPS</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QSpinBox" name="fps">
-        <property name="minimum">
-         <number>1</number>
-        </property>
-        <property name="maximum">
-         <number>255</number>
-        </property>
-        <property name="value">
-         <number>60</number>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="timingLabel">
-        <property name="text">
-         <string>Timing: </string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <spacer name="spacer">
-        <property name="orientation">
-         <enum>Qt::Orientation::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-     </layout>
-    </item>
-    <item>
-     <layout class="QHBoxLayout" name="DataTiming">
-      <property name="spacing">
-       <number>0</number>
-      </property>
-      <item>
-       <widget class="QTimeEdit" name="timeFrom">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="readOnly">
-         <bool>true</bool>
-        </property>
-        <property name="displayFormat">
-         <string>hh:mm:ss</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <layout class="QVBoxLayout" name="verticalLayout">
-        <property name="spacing">
-         <number>0</number>
-        </property>
-        <item>
-         <widget class="QSlider" name="sliderFrom">
-          <property name="orientation">
-           <enum>Qt::Orientation::Horizontal</enum>
-          </property>
-          <property name="tickPosition">
-           <enum>QSlider::TickPosition::TicksAbove</enum>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <widget class="QTimeEdit" name="timeTo">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="readOnly">
-         <bool>true</bool>
-        </property>
-        <property name="displayFormat">
-         <string>hh:mm:ss</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
    </layout>
   </widget>
-  <widget class="QStatusBar" name="statusBar"/>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
@@ -417,6 +499,7 @@
    <addaction name="menuFile"/>
    <addaction name="menuHelp"/>
   </widget>
+  <widget class="QStatusBar" name="statusBar"/>
   <action name="actionLicence">
    <property name="text">
     <string>Licence</string>
