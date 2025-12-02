@@ -17,8 +17,10 @@ void MainWindow::wheelEvent(QWheelEvent *event)
 {
   if (event->modifiers() & Qt::ControlModifier) {
       QGraphicsView *view = ui->graphicsViewLayers;
-      double factor = (event->angleDelta().y() > 0) ? 1.1 : 0.9;
-      view->scale(factor, factor);
+      zoomFactor *= (event->angleDelta().y() > 0) ? 1.1 : 0.9;
+      view->resetTransform();
+      view->scale(zoomFactor, zoomFactor);
+      zoomSlider->setValue(zoomFactor * 100);
       event->accept();
     } else {
       QMainWindow::wheelEvent(event);

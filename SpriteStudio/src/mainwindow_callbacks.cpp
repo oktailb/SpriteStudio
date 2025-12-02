@@ -53,6 +53,14 @@ void MainWindow::onAtlasContextMenuRequested(const QPoint &pos)
     menu.exec(ui->graphicsViewLayers->mapToGlobal(pos));
 }
 
+void MainWindow::on_zoomSlider_valueChanged(int val)
+{
+    zoomLabel->setText(QString::number(val) + "%");
+    zoomFactor = val / 100.0;
+    ui->graphicsViewLayers->resetTransform();
+    ui->graphicsViewLayers->scale(zoomFactor, zoomFactor);
+}
+
 void MainWindow::on_animationList_itemSelectionChanged()
 {
     QList<QTreeWidgetItem*> selectedItems = ui->animationList->selectedItems();

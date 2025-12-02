@@ -108,13 +108,28 @@ MainWindow::MainWindow(QWidget *parent)
 
   statusLabel = new QLabel(this);
   statusLabel->setText(tr("_ready_to_start"));
-  ui->statusBar->addPermanentWidget(statusLabel);
+  ui->statusBar->addPermanentWidget(statusLabel, 1);
+
+  zoomSlider = new QSlider(Qt::Horizontal, this);
+  zoomSlider->setRange(10, 1000);
+  zoomSlider->setValue(100);
+  zoomSlider->setMinimumWidth(200);
+  zoomSlider->setTickInterval(10);
+  ui->statusBar->addPermanentWidget(zoomSlider);
+  connect(zoomSlider, &QSlider::valueChanged,
+          this, &MainWindow::on_zoomSlider_valueChanged);
+
+  zoomLabel = new QLabel(this);
+  zoomLabel->setText(QString::number(zoomSlider->value()) + "%");
+  ui->statusBar->addPermanentWidget(zoomLabel);
 
   progressBar = new QProgressBar(this);
   progressBar->setRange(0, 100); // Set the minimum and maximum values
   progressBar->setValue(0);      // Set the initial value
   progressBar->setTextVisible(true); // Show percentage or custom text
   progressBar->setFormat(tr("_progress") + " %p%"); // Custom format string
+  progressBar->setMinimumWidth(300);
+
   ui->statusBar->addPermanentWidget(progressBar);
 
   // Set the ready flag to true now that basic initialization is complete.

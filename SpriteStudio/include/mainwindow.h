@@ -373,9 +373,8 @@ private slots:
   void startAnimationTimer();
   void stopAnimationTimer();
   void updateAnimationUI(bool playing);
-
+  void on_zoomSlider_valueChanged(int val);
   void on_enableSmartCropCheckbox_stateChanged(int state);
-
   void on_overlapThresholdSpinbox_valueChanged(double threshold);
 
   private:
@@ -399,6 +398,9 @@ private slots:
   QList<int> currentSelection;
   QProgressBar *progressBar;
   QLabel * statusLabel;
+  QLabel * zoomLabel;
+  QSlider* zoomSlider;
+  double zoomFactor = 1.0;
 
   /**
    * @brief Populates the frame list model with frames and metadata from the extractor.

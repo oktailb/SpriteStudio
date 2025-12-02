@@ -166,7 +166,7 @@
     <message>
         <location filename="../src/mainwindow.cpp" line="28"/>
         <location filename="../src/mainwindow.cpp" line="98"/>
-        <location filename="../src/mainwindow_callbacks.cpp" line="298"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="306"/>
         <source>_timing</source>
         <translation>フレーム間隔</translation>
     </message>
@@ -176,7 +176,7 @@
         <translation>まずファイルをインポートしてください。</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.cpp" line="117"/>
+        <location filename="../src/mainwindow.cpp" line="130"/>
         <source>_progress</source>
         <translation>進捗率</translation>
     </message>
@@ -187,12 +187,12 @@
         <translation>背景を自動で削除</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="115"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="123"/>
         <source>_confirm</source>
         <translation>確認</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/mainwindow_callbacks.cpp" line="116"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="124"/>
         <location filename="../src/mainwindow_atlas.cpp" line="513"/>
         <source>_confirm_delete</source>
         <translation>
@@ -200,7 +200,7 @@
         </translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="135"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="143"/>
         <source>_delete_animation</source>
         <translation>アニメーションを削除</translation>
     </message>
@@ -225,33 +225,33 @@
         <translation>選択を反転</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="139"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="147"/>
         <source>_reverse_order</source>
         <translation>順序を逆にする</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="282"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="290"/>
         <source>_open_file</source>
         <translation>ファイルを開く</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="283"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="291"/>
         <source>_images</source>
         <translation>画像 </translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="471"/>
-        <location filename="../src/mainwindow_callbacks.cpp" line="474"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="479"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="482"/>
         <source>Export Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="471"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="479"/>
         <source>Export failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="474"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="482"/>
         <source>Export crashed</source>
         <translation type="unfinished"></translation>
     </message>
@@ -286,27 +286,27 @@
         <translation>写真を削除しました。</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="436"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="444"/>
         <source>_export_error</source>
         <translation>エクスポートできません</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="436"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="444"/>
         <source>_please_load_frames</source>
         <translation>エクスポートを要求する前にフレームを選択またはロードしてください</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="440"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="448"/>
         <source>_export_formats_json</source>
         <translation>スプライトアトラス </translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="440"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="448"/>
         <source>_export_formats_png</source>
         <translation>PNG画像 </translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="444"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="452"/>
         <source>_export_atlas</source>
         <translation>スプライトアトラスをエクスポート</translation>
     </message>
