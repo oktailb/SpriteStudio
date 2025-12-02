@@ -48,7 +48,7 @@ void MainWindow::onAtlasContextMenuRequested(const QPoint &pos)
     }
     else {
         QAction *removeBgAction = menu.addAction(tr("_delete_background"));
-        connect(removeBgAction, &QAction::triggered, this, &MainWindow::removeAtlasBackground);
+        connect(removeBgAction, &QAction::triggered, this, &MainWindow::removeAtlasBackgroundAndRefresh);
     }
     menu.exec(ui->graphicsViewLayers->mapToGlobal(pos));
 }
@@ -203,7 +203,7 @@ void MainWindow::onMergeFrames(int sourceRow, int targetRow)
     QRect tgtRect(tgtBox.rect);
     QRect unitedRect = srcRect.united(tgtRect);
 
-    QPixmap mergedPixmap = this->extractor->m_atlas.copy(unitedRect);
+    QPixmap mergedPixmap = QPixmap::fromImage(this->extractor->m_atlas).copy(unitedRect);
 
     // 2. Update target internal data
     Extractor::Box newBox;
@@ -310,19 +310,73 @@ void MainWindow::on_alphaThreshold_valueChanged(int threshold)
 
 void MainWindow::on_enableSmartCropCheckbox_stateChanged(int state)
 {
-  if (extractor == nullptr) return;
-  if (!currentFilePath.isEmpty()) {
-      extractor->setSmartCropEnabled(state != 0);
-      processFile(currentFilePath);
+    if (extractor == nullptr) return;
+    if (!currentFilePath.isEmpty()) {
+        extractor->setSmartCropEnabled(state != 0);
+        connect(extractor, &Extractor::extractionFinished,
+                this, [this]() {
+
+                    this->populateFrameList(extractor->m_frames, extractor->m_atlas_index);
+                    // Ensure animation is started after the loading
+                    this->setupGraphicsView(extractor->m_atlas);
+                    this->stopAnimation();
+                    this->startAnimation();
+                    ui->verticalTolerance->setValue(extractor->m_maxFrameHeight / 3);
+                });
+
+        if  (ui->backgroundRemoval->isChecked())
+            removeAtlasBackground();;
+        extractor->extractFromPixmap(ui->alphaThreshold->value(), ui->verticalTolerance->value());
+        clearBoundingBoxHighlighters();
+        if (!extractor->m_frames.isEmpty()) {
+            auto view = ui->graphicsViewLayers;
+            auto scene = new QGraphicsScene(view);
+
+            QGraphicsPixmapItem *item = new QGraphicsPixmapItem(QPixmap::fromImage(extractor->m_atlas));
+            scene->addItem(item);
+            item->setPos(0, 0);
+            view->setScene(scene);
+            view->show();
+
+            populateFrameList(extractor->m_frames, extractor->m_atlas_index);
+        }
+
     }
 }
 
-void MainWindow::on_overlapThresholdSpinbox_valueChanged(int threshold)
+void MainWindow::on_overlapThresholdSpinbox_valueChanged(double threshold)
 {
-  if (extractor == nullptr) return;
-  if (!currentFilePath.isEmpty()) {
-      extractor->setOverlapThreshold(threshold);
-      processFile(currentFilePath);
+    if (extractor == nullptr)
+        return;
+    if (!currentFilePath.isEmpty()) {
+        extractor->setOverlapThreshold(threshold);
+        connect(extractor, &Extractor::extractionFinished,
+                this, [this]() {
+
+                    this->populateFrameList(extractor->m_frames, extractor->m_atlas_index);
+                    // Ensure animation is started after the loading
+                    this->setupGraphicsView(extractor->m_atlas);
+                    this->stopAnimation();
+                    this->startAnimation();
+                    ui->verticalTolerance->setValue(extractor->m_maxFrameHeight / 3);
+                });
+
+        if  (ui->backgroundRemoval->isChecked())
+            removeAtlasBackground();;
+        extractor->extractFromPixmap(ui->alphaThreshold->value(), ui->verticalTolerance->value());
+        clearBoundingBoxHighlighters();
+        if (!extractor->m_frames.isEmpty()) {
+            auto view = ui->graphicsViewLayers;
+            auto scene = new QGraphicsScene(view);
+
+            QGraphicsPixmapItem *item = new QGraphicsPixmapItem(QPixmap::fromImage(extractor->m_atlas));
+            scene->addItem(item);
+            item->setPos(0, 0);
+            view->setScene(scene);
+            view->show();
+
+            populateFrameList(extractor->m_frames, extractor->m_atlas_index);
+        }
     }
 }
 

@@ -129,6 +129,8 @@ void MainWindow::populateFrameList(const QList<QPixmap> &frameList, const QList<
     }
 
   int itemCount = qMin(frameList.size(), boxList.size());
+  progressBar->setValue(0);
+  statusLabel->setText(tr("_populating_frame_list"));;
 
   for (int i = 0; i < itemCount; ++i) {
       const QPixmap &pixmap = frameList.at(i);
@@ -151,7 +153,10 @@ void MainWindow::populateFrameList(const QList<QPixmap> &frameList, const QList<
       item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsDragEnabled);
       item->setFlags(item->flags() | Qt::ItemIsEditable);
       frameModel->appendRow(item);
+      progressBar->setValue(100*i/itemCount);
     }
+  progressBar->setValue(0);
+  statusLabel->setText(tr("_ready"));;
 
   syncAnimationListWidget();
 }

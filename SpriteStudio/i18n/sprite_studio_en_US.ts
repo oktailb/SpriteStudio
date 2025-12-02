@@ -169,134 +169,137 @@
         <translation>Sprite Studio</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="325"/>
         <source>Play</source>
-        <translation>Play</translation>
+        <translation type="vanished">Play</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="313"/>
         <source>Pause</source>
-        <translation>Pause</translation>
+        <translation type="vanished">Pause</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="181"/>
+        <location filename="../src/mainwindow.ui" line="195"/>
         <source>Alpha threshold </source>
         <translation>Alpha threshold </translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="198"/>
+        <location filename="../src/mainwindow.ui" line="219"/>
         <source>Vertical tolerance</source>
         <translation>Vertical tolerance</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="337"/>
-        <location filename="../src/mainwindow.ui" line="460"/>
+        <location filename="../src/mainwindow.ui" line="382"/>
+        <location filename="../src/mainwindow.ui" line="505"/>
         <source>FPS</source>
         <translation>FPS</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="455"/>
+        <location filename="../src/mainwindow.ui" line="500"/>
         <source>Name</source>
         <translation>Name</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="465"/>
+        <location filename="../src/mainwindow.ui" line="510"/>
         <source>Frames</source>
         <translation>Frames</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="360"/>
+        <location filename="../src/mainwindow.ui" line="405"/>
         <source>Timing: </source>
         <translation>Timing: </translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="215"/>
+        <location filename="../src/mainwindow.ui" line="243"/>
         <source>Smart Crop</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="225"/>
+        <location filename="../src/mainwindow.ui" line="298"/>
         <source>Overlap Threshold</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="235"/>
+        <location filename="../src/mainwindow.ui" line="260"/>
         <source>Crop Strategy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="243"/>
+        <location filename="../src/mainwindow.ui" line="181"/>
+        <source>Background removal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/mainwindow.ui" line="268"/>
         <source>Merge</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="248"/>
+        <location filename="../src/mainwindow.ui" line="273"/>
         <source>Separate</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="253"/>
+        <location filename="../src/mainwindow.ui" line="278"/>
         <source>Boundary</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="258"/>
+        <location filename="../src/mainwindow.ui" line="283"/>
         <source>Alpha Channel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="400"/>
-        <location filename="../src/mainwindow.ui" line="430"/>
+        <location filename="../src/mainwindow.ui" line="445"/>
+        <location filename="../src/mainwindow.ui" line="475"/>
         <source>hh:mm:ss</source>
         <translation>hh:mm:ss</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="487"/>
+        <location filename="../src/mainwindow.ui" line="532"/>
         <source>File</source>
         <translation>File</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="498"/>
+        <location filename="../src/mainwindow.ui" line="543"/>
         <source>Help</source>
         <translation>Help</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="508"/>
+        <location filename="../src/mainwindow.ui" line="553"/>
         <source>Licence</source>
         <translation>Licence</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="513"/>
+        <location filename="../src/mainwindow.ui" line="558"/>
         <source>About</source>
         <translation>About</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="518"/>
+        <location filename="../src/mainwindow.ui" line="563"/>
         <source>Start</source>
         <translation>Start</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="523"/>
+        <location filename="../src/mainwindow.ui" line="568"/>
         <source>Stop</source>
         <translation>Stop</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="528"/>
+        <location filename="../src/mainwindow.ui" line="573"/>
         <source>Open</source>
         <translation>Open</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="533"/>
+        <location filename="../src/mainwindow.ui" line="578"/>
         <source>Save</source>
         <translation>Save</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="538"/>
+        <location filename="../src/mainwindow.ui" line="583"/>
         <source>Export</source>
         <translation>Export</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="543"/>
+        <location filename="../src/mainwindow.ui" line="588"/>
         <source>Exit</source>
         <translation>Exit</translation>
     </message>
@@ -319,6 +322,7 @@
     </message>
     <message>
         <location filename="../src/mainwindow_callbacks.cpp" line="50"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="69"/>
         <source>_delete_background</source>
         <translation>Delete background automagically</translation>
     </message>
@@ -329,7 +333,7 @@
     </message>
     <message numerus="yes">
         <location filename="../src/mainwindow_callbacks.cpp" line="116"/>
-        <location filename="../src/mainwindow_atlas.cpp" line="488"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="513"/>
         <source>_confirm_delete</source>
         <translation>
             <numerusform>Are You sure to delete this animations?</numerusform>
@@ -377,73 +381,73 @@
         <translation>Images </translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="406"/>
-        <location filename="../src/mainwindow_callbacks.cpp" line="409"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="471"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="474"/>
         <source>Export Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="406"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="471"/>
         <source>Export failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="409"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="474"/>
         <source>Export crashed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_atlas.cpp" line="124"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="142"/>
         <source>_file_error</source>
         <translation>File error</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_atlas.cpp" line="124"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="142"/>
         <source>_gif_error</source>
         <translation>Invalid GIF file.</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_atlas.cpp" line="482"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="507"/>
         <source>_select_frames_first</source>
         <translation>Please select at least one frame</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_atlas.cpp" line="489"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="514"/>
         <source>_confirm_delete_frames</source>
         <translation>Frames will be definitely deleted. Really proceed to deletion ?</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_atlas.cpp" line="513"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="538"/>
         <source>_success</source>
         <translation>Deletion successfully done</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_atlas.cpp" line="514"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="539"/>
         <source>_frames_deleted</source>
         <translation>Frames deleted</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="371"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="436"/>
         <source>_export_error</source>
         <translation>Impossible to export</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="371"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="436"/>
         <source>_please_load_frames</source>
         <translation>Please select or load frames before request for export</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="375"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="440"/>
         <source>_export_formats_json</source>
         <translation>Sprite Atlas </translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="375"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="440"/>
         <source>_export_formats_png</source>
         <translation>PNG Image </translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="379"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="444"/>
         <source>_export_atlas</source>
         <translation>Export Sprite Atlas</translation>
     </message>
@@ -460,7 +464,7 @@
     </message>
     <message>
         <location filename="../src/mainwindow_animation.cpp" line="106"/>
-        <location filename="../src/mainwindow_atlas.cpp" line="482"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="507"/>
         <source>_info</source>
         <translation>Informations</translation>
     </message>
@@ -468,6 +472,17 @@
         <location filename="../src/mainwindow_animation.cpp" line="106"/>
         <source>_select_animation_first</source>
         <translation>Please select an animation first</translation>
+    </message>
+    <message>
+        <location filename="../src/mainwindow_frames.cpp" line="133"/>
+        <source>_populating_frame_list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/mainwindow_frames.cpp" line="159"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="94"/>
+        <source>_ready</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 </TS>

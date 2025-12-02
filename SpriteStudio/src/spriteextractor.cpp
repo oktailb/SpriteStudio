@@ -13,7 +13,7 @@ QList<QPixmap> SpriteExtractor::extractFrames(const QString &filePath, int alpha
       qWarning() << "Erreur: Impossible de charger l'image:" << filePath;
       return m_frames;
     }
-  m_atlas = atlasPixmap;
+  m_atlas = atlasPixmap.toImage();
   m_filePath = filePath;
 
   return extractFromPixmap(alphaThreshold, verticalTolerance);
@@ -27,7 +27,7 @@ QList<QPixmap> SpriteExtractor::extractFromPixmap(int alphaThreshold, int vertic
   m_maxFrameWidth = 0;
   m_maxFrameHeight = 0;
 
-  QImage image = m_atlas.toImage();
+  QImage image = m_atlas;
 
   if (image.format() != QImage::Format_ARGB32 && image.hasAlphaChannel()) {
       image = image.convertToFormat(QImage::Format_ARGB32);
@@ -142,7 +142,7 @@ QList<QPixmap> SpriteExtractor::extractFromPixmap(int alphaThreshold, int vertic
   }
 
   for (const auto& box : m_atlas_index) {
-      QPixmap spriteFrame = m_atlas.copy(box.rect);
+      QPixmap spriteFrame = QPixmap::fromImage(m_atlas).copy(box.rect);
       this->addFrame(spriteFrame);
       if (spriteFrame.width() > m_maxFrameWidth) {
           m_maxFrameWidth = spriteFrame.width();

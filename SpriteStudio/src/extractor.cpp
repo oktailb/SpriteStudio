@@ -157,7 +157,7 @@ void Extractor::clearAtlasAreas(const QList<int> &indices)
 {
     if (m_atlas.isNull() || indices.isEmpty()) return;
 
-    QImage atlasImage = m_atlas.toImage();
+    QImage atlasImage = m_atlas;
     if (atlasImage.format() != QImage::Format_ARGB32) {
         atlasImage = atlasImage.convertToFormat(QImage::Format_ARGB32);
     }
@@ -175,7 +175,7 @@ void Extractor::clearAtlasAreas(const QList<int> &indices)
             }
         }
     }
-    m_atlas = QPixmap::fromImage(atlasImage);
+    m_atlas = atlasImage;
 }
 
 double Extractor::overlapThreshold() const

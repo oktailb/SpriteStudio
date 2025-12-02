@@ -182,6 +182,7 @@
     </message>
     <message>
         <location filename="../src/mainwindow_callbacks.cpp" line="50"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="69"/>
         <source>_delete_background</source>
         <translation>背景を自動で削除</translation>
     </message>
@@ -192,7 +193,7 @@
     </message>
     <message numerus="yes">
         <location filename="../src/mainwindow_callbacks.cpp" line="116"/>
-        <location filename="../src/mainwindow_atlas.cpp" line="488"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="513"/>
         <source>_confirm_delete</source>
         <translation>
             <numerusform>このアニメーションを削除してもよろしいですか?</numerusform>
@@ -239,83 +240,83 @@
         <translation>画像 </translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="406"/>
-        <location filename="../src/mainwindow_callbacks.cpp" line="409"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="471"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="474"/>
         <source>Export Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="406"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="471"/>
         <source>Export failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="409"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="474"/>
         <source>Export crashed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_atlas.cpp" line="124"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="142"/>
         <source>_file_error</source>
         <translation>ファイルエラー</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_atlas.cpp" line="124"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="142"/>
         <source>_gif_error</source>
         <translation>無効なGIFファイルです。</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_atlas.cpp" line="482"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="507"/>
         <source>_select_frames_first</source>
         <translation>少なくとも 1 つの画像を選択してください。</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_atlas.cpp" line="489"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="514"/>
         <source>_confirm_delete_frames</source>
         <translation>選択した写真を削除しますか</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_atlas.cpp" line="513"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="538"/>
         <source>_success</source>
         <translation>成功</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_atlas.cpp" line="514"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="539"/>
         <source>_frames_deleted</source>
         <translation>写真を削除しました。</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="371"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="436"/>
         <source>_export_error</source>
         <translation>エクスポートできません</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="371"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="436"/>
         <source>_please_load_frames</source>
         <translation>エクスポートを要求する前にフレームを選択またはロードしてください</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="375"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="440"/>
         <source>_export_formats_json</source>
         <translation>スプライトアトラス </translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="375"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="440"/>
         <source>_export_formats_png</source>
         <translation>PNG画像 </translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="379"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="444"/>
         <source>_export_atlas</source>
         <translation>スプライトアトラスをエクスポート</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="538"/>
+        <location filename="../src/mainwindow.ui" line="583"/>
         <source>Export</source>
         <translation>エクスポート</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="528"/>
+        <location filename="../src/mainwindow.ui" line="573"/>
         <source>Open</source>
         <translation>開く</translation>
     </message>
@@ -325,124 +326,127 @@
         <translation>スプライトスタジオ</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="325"/>
         <source>Play</source>
-        <translation>再生</translation>
+        <translation type="vanished">再生</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="313"/>
         <source>Pause</source>
-        <translation>一時停止</translation>
+        <translation type="vanished">一時停止</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="181"/>
+        <location filename="../src/mainwindow.ui" line="195"/>
         <source>Alpha threshold </source>
         <translation>アルファしきい値</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="198"/>
+        <location filename="../src/mainwindow.ui" line="219"/>
         <source>Vertical tolerance</source>
         <translation>垂直トレランス</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="337"/>
-        <location filename="../src/mainwindow.ui" line="460"/>
+        <location filename="../src/mainwindow.ui" line="382"/>
+        <location filename="../src/mainwindow.ui" line="505"/>
         <source>FPS</source>
         <translation>FPS</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="455"/>
+        <location filename="../src/mainwindow.ui" line="500"/>
         <source>Name</source>
         <translation>名</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="465"/>
+        <location filename="../src/mainwindow.ui" line="510"/>
         <source>Frames</source>
         <translation>フレーム</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="360"/>
+        <location filename="../src/mainwindow.ui" line="405"/>
         <source>Timing: </source>
         <translation>フレーム間隔：</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="215"/>
+        <location filename="../src/mainwindow.ui" line="243"/>
         <source>Smart Crop</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="225"/>
+        <location filename="../src/mainwindow.ui" line="298"/>
         <source>Overlap Threshold</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="235"/>
+        <location filename="../src/mainwindow.ui" line="260"/>
         <source>Crop Strategy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="243"/>
+        <location filename="../src/mainwindow.ui" line="181"/>
+        <source>Background removal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/mainwindow.ui" line="268"/>
         <source>Merge</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="248"/>
+        <location filename="../src/mainwindow.ui" line="273"/>
         <source>Separate</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="253"/>
+        <location filename="../src/mainwindow.ui" line="278"/>
         <source>Boundary</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="258"/>
+        <location filename="../src/mainwindow.ui" line="283"/>
         <source>Alpha Channel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="400"/>
-        <location filename="../src/mainwindow.ui" line="430"/>
+        <location filename="../src/mainwindow.ui" line="445"/>
+        <location filename="../src/mainwindow.ui" line="475"/>
         <source>hh:mm:ss</source>
         <translation>hh:mm:ss</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="487"/>
+        <location filename="../src/mainwindow.ui" line="532"/>
         <source>File</source>
         <translation>ファイル</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="498"/>
+        <location filename="../src/mainwindow.ui" line="543"/>
         <source>Help</source>
         <translation>ヘルプ</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="518"/>
+        <location filename="../src/mainwindow.ui" line="563"/>
         <source>Start</source>
         <translation>開始</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="523"/>
+        <location filename="../src/mainwindow.ui" line="568"/>
         <source>Stop</source>
         <translation>停止</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="533"/>
+        <location filename="../src/mainwindow.ui" line="578"/>
         <source>Save</source>
         <translation>保存</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="543"/>
+        <location filename="../src/mainwindow.ui" line="588"/>
         <source>Exit</source>
         <translation>終了</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="508"/>
+        <location filename="../src/mainwindow.ui" line="553"/>
         <source>Licence</source>
         <translation>ライセンス</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.ui" line="513"/>
+        <location filename="../src/mainwindow.ui" line="558"/>
         <source>About</source>
         <translation>情報</translation>
     </message>
@@ -459,7 +463,7 @@
     </message>
     <message>
         <location filename="../src/mainwindow_animation.cpp" line="106"/>
-        <location filename="../src/mainwindow_atlas.cpp" line="482"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="507"/>
         <source>_info</source>
         <translation>情報</translation>
     </message>
@@ -467,6 +471,17 @@
         <location filename="../src/mainwindow_animation.cpp" line="106"/>
         <source>_select_animation_first</source>
         <translation>&gt;少なくとも 1 つのアニメーションを選択してください。</translation>
+    </message>
+    <message>
+        <location filename="../src/mainwindow_frames.cpp" line="133"/>
+        <source>_populating_frame_list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/mainwindow_frames.cpp" line="159"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="94"/>
+        <source>_ready</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 </TS>

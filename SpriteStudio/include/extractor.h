@@ -181,7 +181,7 @@ public:
     };
 
     QList<QPixmap>              m_frames;         /**< List of individual frames (used by the Frame List and Animation). */
-    QPixmap                     m_atlas;          /**< The complete source image (possibly composite, used by the 'Layers' view). */
+    QImage                      m_atlas;          /**< The complete source image (possibly composite, used by the 'Layers' view). */
     QList<Box>                  m_atlas_index;    /**< List of Box coordinates for each frame within m_atlas. */
     QMap<QString, AnimationData> m_animationsData; /**< List of individual animations */
     QString                     m_filePath;       /**< The original data file from a supported format. */

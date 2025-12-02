@@ -20,7 +20,7 @@ QList<QPixmap> GifExtractor::extractFrames(const QString &filePath, int alphaThr
   // Clear the internal state containers before starting a new extraction.
   m_frames.clear();
   m_atlas_index.clear();
-  m_atlas = QPixmap();
+  m_atlas = QImage();
 
   // Delegate the actual extraction logic to the helper function.
   // Alpha and Vertical Tolerance are typically ignored for GIFs.
@@ -145,7 +145,7 @@ QList<QPixmap> GifExtractor::extractFromPixmap(int alphaThreshold, int verticalT
     }
 
   // Finalize the atlas Pixmap for display in the main view.
-  m_atlas = QPixmap::fromImage(atlasImage);
+  m_atlas = atlasImage;
 
   // Signal the main window that the extraction is complete (e.g., to populate the frame list).
   emit extractionFinished(m_frames.size());
