@@ -53,7 +53,7 @@ void MainWindow::onAtlasContextMenuRequested(const QPoint &pos)
     menu.exec(ui->graphicsViewLayers->mapToGlobal(pos));
 }
 
-void MainWindow::on_zoomSlider_valueChanged(int val)
+void MainWindow::zoomSliderChanged(int val)
 {
     zoomLabel->setText(QString::number(val) + "%");
     zoomFactor = val / 100.0;
@@ -435,6 +435,7 @@ void MainWindow::on_framesList_clicked(const QModelIndex &index)
 
     clearBoundingBoxHighlighters();
     setBoundingBoxHighllithers(selectedIndices);
+    adjustZoomSliderToWindow();
 }
 
 void MainWindow::on_actionExport_triggered()

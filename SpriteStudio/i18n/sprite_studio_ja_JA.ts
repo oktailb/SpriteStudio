@@ -165,24 +165,24 @@
     <name>MainWindow</name>
     <message>
         <location filename="../src/mainwindow.cpp" line="28"/>
-        <location filename="../src/mainwindow.cpp" line="98"/>
+        <location filename="../src/mainwindow.cpp" line="92"/>
         <location filename="../src/mainwindow_callbacks.cpp" line="306"/>
         <source>_timing</source>
         <translation>フレーム間隔</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.cpp" line="110"/>
+        <location filename="../src/mainwindow.cpp" line="104"/>
         <source>_ready_to_start</source>
         <translation>まずファイルをインポートしてください。</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.cpp" line="130"/>
+        <location filename="../src/mainwindow.cpp" line="122"/>
         <source>_progress</source>
         <translation>進捗率</translation>
     </message>
     <message>
         <location filename="../src/mainwindow_callbacks.cpp" line="50"/>
-        <location filename="../src/mainwindow_atlas.cpp" line="69"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="70"/>
         <source>_delete_background</source>
         <translation>背景を自動で削除</translation>
     </message>
@@ -193,7 +193,7 @@
     </message>
     <message numerus="yes">
         <location filename="../src/mainwindow_callbacks.cpp" line="124"/>
-        <location filename="../src/mainwindow_atlas.cpp" line="513"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="515"/>
         <source>_confirm_delete</source>
         <translation>
             <numerusform>このアニメーションを削除してもよろしいですか?</numerusform>
@@ -240,73 +240,73 @@
         <translation>画像 </translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="479"/>
-        <location filename="../src/mainwindow_callbacks.cpp" line="482"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="480"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="483"/>
         <source>Export Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="479"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="480"/>
         <source>Export failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="482"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="483"/>
         <source>Export crashed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_atlas.cpp" line="142"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="143"/>
         <source>_file_error</source>
         <translation>ファイルエラー</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_atlas.cpp" line="142"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="143"/>
         <source>_gif_error</source>
         <translation>無効なGIFファイルです。</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_atlas.cpp" line="507"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="509"/>
         <source>_select_frames_first</source>
         <translation>少なくとも 1 つの画像を選択してください。</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_atlas.cpp" line="514"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="516"/>
         <source>_confirm_delete_frames</source>
         <translation>選択した写真を削除しますか</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_atlas.cpp" line="538"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="540"/>
         <source>_success</source>
         <translation>成功</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_atlas.cpp" line="539"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="541"/>
         <source>_frames_deleted</source>
         <translation>写真を削除しました。</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="444"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="445"/>
         <source>_export_error</source>
         <translation>エクスポートできません</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="444"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="445"/>
         <source>_please_load_frames</source>
         <translation>エクスポートを要求する前にフレームを選択またはロードしてください</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="448"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="449"/>
         <source>_export_formats_json</source>
         <translation>スプライトアトラス </translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="448"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="449"/>
         <source>_export_formats_png</source>
         <translation>PNG画像 </translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="452"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="453"/>
         <source>_export_atlas</source>
         <translation>スプライトアトラスをエクスポート</translation>
     </message>
@@ -463,7 +463,7 @@
     </message>
     <message>
         <location filename="../src/mainwindow_animation.cpp" line="106"/>
-        <location filename="../src/mainwindow_atlas.cpp" line="507"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="509"/>
         <source>_info</source>
         <translation>情報</translation>
     </message>
@@ -479,7 +479,7 @@
     </message>
     <message>
         <location filename="../src/mainwindow_frames.cpp" line="159"/>
-        <location filename="../src/mainwindow_atlas.cpp" line="94"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="95"/>
         <source>_ready</source>
         <translation type="unfinished"></translation>
     </message>

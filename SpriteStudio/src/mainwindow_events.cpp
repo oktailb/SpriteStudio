@@ -119,6 +119,17 @@ void MainWindow::timerEvent(QTimerEvent *event)
   Q_UNUSED(event);
 }
 
+void MainWindow::adjustZoomSliderToWindow()
+{
+    if (extractor == nullptr)
+        return;
+    zoomFactor = 100 *  ui->graphicsViewLayers->viewport()->height() / extractor->m_atlas.height();
+    zoomSlider->blockSignals(true);
+    zoomSlider->setValue(zoomFactor);
+    zoomSlider->blockSignals(false);
+    zoomLabel->setText(QString::number(zoomFactor) + "%");
+}
+
 void MainWindow::resizeEvent(QResizeEvent *event)
 {
   // Call the base class implementation first.
@@ -128,6 +139,7 @@ void MainWindow::resizeEvent(QResizeEvent *event)
   QGraphicsScene *atlasScene = ui->graphicsViewLayers->scene();
   if (atlasScene && !atlasScene->sceneRect().isEmpty()) {
       ui->graphicsViewLayers->fitInView(atlasScene->sceneRect(), Qt::KeepAspectRatio);
+      adjustZoomSliderToWindow();
     }
 
          // Re-fit the animation preview view (graphicsViewResult)

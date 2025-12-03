@@ -51,6 +51,7 @@ void MainWindow::removeAtlasBackgroundAndRefresh() {
         // Re-adjust scene to the picture size
         sceneLayers->setSceneRect(extractor->m_atlas.rect());
         ui->graphicsViewLayers->fitInView(item, Qt::KeepAspectRatio);
+        adjustZoomSliderToWindow();
 
         // 4. Refresn frame list view
         populateFrameList(extractor->m_frames, extractor->m_atlas_index);
@@ -216,7 +217,7 @@ void MainWindow::setupGraphicsView(const QImage &pixmap)
     // This makes the atlas occupy the maximum space without cropping or distortion.
     // Qt::KeepAspectRatio ensures the image doesn't stretch to fill the view if the aspect ratios differ.
     ui->graphicsViewLayers->fitInView(atlasItem, Qt::KeepAspectRatio);
-
+    adjustZoomSliderToWindow();
     // The animation preview view (graphicsViewResult) must also have its scene initialized,
     // although it will display individual frames later. We set its sceneRect to the max frame size.
     QGraphicsScene *resultScene = ui->graphicsViewResult->scene();
@@ -337,6 +338,7 @@ void MainWindow::fitSelectedFramesInView(int padding)
     unitedRect.adjust(-padding, -padding, padding, padding); // enought large to facilitate next selction
 
     ui->graphicsViewLayers->fitInView(unitedRect, Qt::KeepAspectRatio);
+    adjustZoomSliderToWindow();
 }
 
 void MainWindow::startSelection(const QPointF &scenePos)

@@ -65,13 +65,7 @@ MainWindow::MainWindow(QWidget *parent)
   ui->graphicsViewLayers->setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
   ui->graphicsViewLayers->setResizeAnchor(QGraphicsView::AnchorViewCenter);
   ui->graphicsViewLayers->fitInView(ui->graphicsViewLayers->sceneRect(), Qt::KeepAspectRatio);
-
-  // Configure the view that displays the animation preview (ui->graphicsViewResult).
-  ui->graphicsViewResult->setRenderHint(QPainter::Antialiasing, true);
-  ui->graphicsViewResult->setOptimizationFlag(QGraphicsView::DontAdjustForAntialiasing, true);
-  ui->graphicsViewResult->setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
-  ui->graphicsViewResult->setResizeAnchor(QGraphicsView::AnchorViewCenter);
-  ui->graphicsViewResult->fitInView(ui->graphicsViewResult->sceneRect(), Qt::KeepAspectRatio);
+  adjustZoomSliderToWindow();
 
   // Start the animation immediately (it will likely run with a single frame until a file is loaded).
   startAnimation();
@@ -116,8 +110,6 @@ MainWindow::MainWindow(QWidget *parent)
   zoomSlider->setMinimumWidth(200);
   zoomSlider->setTickInterval(10);
   ui->statusBar->addPermanentWidget(zoomSlider);
-  connect(zoomSlider, &QSlider::valueChanged,
-          this, &MainWindow::on_zoomSlider_valueChanged);
 
   zoomLabel = new QLabel(this);
   zoomLabel->setText(QString::number(zoomSlider->value()) + "%");
@@ -131,6 +123,9 @@ MainWindow::MainWindow(QWidget *parent)
   progressBar->setMinimumWidth(300);
 
   ui->statusBar->addPermanentWidget(progressBar);
+
+  connect(zoomSlider, &QSlider::valueChanged,
+          this, &MainWindow::zoomSliderChanged);
 
   // Set the ready flag to true now that basic initialization is complete.
   ready = true;
