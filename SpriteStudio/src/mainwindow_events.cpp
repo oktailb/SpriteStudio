@@ -123,9 +123,11 @@ void MainWindow::adjustZoomSliderToWindow()
 {
     if (extractor == nullptr)
         return;
-    zoomFactor = 100 *  ui->graphicsViewLayers->viewport()->height() / extractor->m_atlas.height();
+    zoomFactor = ui->graphicsViewLayers->viewport()->height() / extractor->m_atlas.height();
+    if (zoomFactor == 0.0)
+        zoomFactor = 1.0;
     zoomSlider->blockSignals(true);
-    zoomSlider->setValue(zoomFactor);
+    zoomSlider->setValue(zoomFactor + 100);
     zoomSlider->blockSignals(false);
     zoomLabel->setText(QString::number(zoomFactor) + "%");
 }

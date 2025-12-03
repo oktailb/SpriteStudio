@@ -306,7 +306,7 @@
     <message>
         <location filename="../src/mainwindow.cpp" line="28"/>
         <location filename="../src/mainwindow.cpp" line="92"/>
-        <location filename="../src/mainwindow_callbacks.cpp" line="306"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="309"/>
         <source>_timing</source>
         <translation>Timing</translation>
     </message>
@@ -333,7 +333,7 @@
     </message>
     <message numerus="yes">
         <location filename="../src/mainwindow_callbacks.cpp" line="124"/>
-        <location filename="../src/mainwindow_atlas.cpp" line="515"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="516"/>
         <source>_confirm_delete</source>
         <translation>
             <numerusform>Are You sure to delete this animations?</numerusform>
@@ -381,18 +381,18 @@
         <translation>Images </translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="480"/>
         <location filename="../src/mainwindow_callbacks.cpp" line="483"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="486"/>
         <source>Export Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="480"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="483"/>
         <source>Export failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="483"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="486"/>
         <source>Export crashed</source>
         <translation type="unfinished"></translation>
     </message>
@@ -407,47 +407,47 @@
         <translation>Invalid GIF file.</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_atlas.cpp" line="509"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="510"/>
         <source>_select_frames_first</source>
         <translation>Please select at least one frame</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_atlas.cpp" line="516"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="517"/>
         <source>_confirm_delete_frames</source>
         <translation>Frames will be definitely deleted. Really proceed to deletion ?</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_atlas.cpp" line="540"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="541"/>
         <source>_success</source>
         <translation>Deletion successfully done</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_atlas.cpp" line="541"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="542"/>
         <source>_frames_deleted</source>
         <translation>Frames deleted</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="445"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="448"/>
         <source>_export_error</source>
         <translation>Impossible to export</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="445"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="448"/>
         <source>_please_load_frames</source>
         <translation>Please select or load frames before request for export</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="449"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="452"/>
         <source>_export_formats_json</source>
         <translation>Sprite Atlas </translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="449"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="452"/>
         <source>_export_formats_png</source>
         <translation>PNG Image </translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_callbacks.cpp" line="453"/>
+        <location filename="../src/mainwindow_callbacks.cpp" line="456"/>
         <source>_export_atlas</source>
         <translation>Export Sprite Atlas</translation>
     </message>
@@ -464,7 +464,7 @@
     </message>
     <message>
         <location filename="../src/mainwindow_animation.cpp" line="106"/>
-        <location filename="../src/mainwindow_atlas.cpp" line="509"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="510"/>
         <source>_info</source>
         <translation>Informations</translation>
     </message>

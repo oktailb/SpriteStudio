@@ -292,7 +292,10 @@ void MainWindow::on_actionOpen_triggered()
   QString fileName = QFileDialog::getOpenFileName(this, title, "", formats);
   currentFilePath = fileName;
   processFile(currentFilePath);
+  statusLabel->setText(fileName);
+  setWindowTitle("SppriteStudio (" + fileName + ")");
   ui->verticalTolerance->setValue(extractor->m_maxFrameHeight / 3);
+  adjustZoomSliderToWindow();
 }
 
 void MainWindow::on_actionExit_triggered()
