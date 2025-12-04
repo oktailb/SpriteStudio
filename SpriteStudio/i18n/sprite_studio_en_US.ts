@@ -103,17 +103,17 @@
 <context>
     <name>GifExtractor</name>
     <message>
-        <location filename="../src/gifextractor.cpp" line="41"/>
+        <location filename="../src/extractor/gifextractor.cpp" line="41"/>
         <source>_error</source>
         <translation>Error</translation>
     </message>
     <message>
-        <location filename="../src/gifextractor.cpp" line="41"/>
+        <location filename="../src/extractor/gifextractor.cpp" line="41"/>
         <source>_invalid_gif</source>
         <translation>GIF file is invalid or doesn&apos;t exist</translation>
     </message>
     <message>
-        <location filename="../src/gifextractor.cpp" line="48"/>
+        <location filename="../src/extractor/gifextractor.cpp" line="48"/>
         <source>_gif_no_frames</source>
         <translation>GIF reports zero frames</translation>
     </message>
@@ -125,38 +125,38 @@
 <context>
     <name>JsonExtractor</name>
     <message>
-        <location filename="../src/jsonextractor.cpp" line="63"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="67"/>
         <source>_critical_error</source>
         <translation>Critical error</translation>
     </message>
     <message>
-        <location filename="../src/jsonextractor.cpp" line="63"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="67"/>
         <source>_painter_start</source>
         <translation>Impossible to start the painter for the Atlas</translation>
     </message>
     <message>
-        <location filename="../src/jsonextractor.cpp" line="116"/>
-        <location filename="../src/jsonextractor.cpp" line="144"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="120"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="148"/>
         <source>_write_error</source>
         <translation>Write error</translation>
     </message>
     <message>
-        <location filename="../src/jsonextractor.cpp" line="116"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="120"/>
         <source>_png_permissions</source>
         <translation>Impossible to write the PNG file. Please check permissions</translation>
     </message>
     <message>
-        <location filename="../src/jsonextractor.cpp" line="142"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="146"/>
         <source>_export_success</source>
         <translation>Export success</translation>
     </message>
     <message>
-        <location filename="../src/jsonextractor.cpp" line="142"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="146"/>
         <source>_export_atlas_success</source>
         <translation>Atlas and metadata exported successfully to: </translation>
     </message>
     <message>
-        <location filename="../src/jsonextractor.cpp" line="144"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="148"/>
         <source>_json_permissions</source>
         <translation>Impossible to write the PNG file. Please check permissions.</translation>
     </message>
@@ -333,7 +333,7 @@
     </message>
     <message numerus="yes">
         <location filename="../src/mainwindow_callbacks.cpp" line="124"/>
-        <location filename="../src/mainwindow_atlas.cpp" line="516"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="515"/>
         <source>_confirm_delete</source>
         <translation>
             <numerusform>Are You sure to delete this animations?</numerusform>
@@ -407,22 +407,22 @@
         <translation>Invalid GIF file.</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_atlas.cpp" line="510"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="509"/>
         <source>_select_frames_first</source>
         <translation>Please select at least one frame</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_atlas.cpp" line="517"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="516"/>
         <source>_confirm_delete_frames</source>
         <translation>Frames will be definitely deleted. Really proceed to deletion ?</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_atlas.cpp" line="541"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="540"/>
         <source>_success</source>
         <translation>Deletion successfully done</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_atlas.cpp" line="542"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="541"/>
         <source>_frames_deleted</source>
         <translation>Frames deleted</translation>
     </message>
@@ -464,7 +464,7 @@
     </message>
     <message>
         <location filename="../src/mainwindow_animation.cpp" line="106"/>
-        <location filename="../src/mainwindow_atlas.cpp" line="510"/>
+        <location filename="../src/mainwindow_atlas.cpp" line="509"/>
         <source>_info</source>
         <translation>Informations</translation>
     </message>
@@ -482,6 +482,29 @@
         <location filename="../src/mainwindow_frames.cpp" line="159"/>
         <location filename="../src/mainwindow_atlas.cpp" line="95"/>
         <source>_ready</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>jsonExtractorDialog</name>
+    <message>
+        <location filename="../src/extractor/jsonExtractordialog.ui" line="14"/>
+        <source>Dialog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/extractor/jsonExtractordialog.ui" line="33"/>
+        <source>Content</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/extractor/jsonExtractordialog.ui" line="40"/>
+        <source>Target application</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/extractor/jsonExtractordialog.ui" line="50"/>
+        <source>Atlas preview</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

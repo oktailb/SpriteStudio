@@ -1,0 +1,7 @@
+(undo-tree-save-format-version . 1)
+"aa898455b065a72f89d7c9fbe6774e3746a1897d"
+[nil nil nil nil (26928 54705 893649 793000) 0 nil]
+([nil nil ((67 . 80) (t 26928 54383 869684 602000)) nil (26928 54705 893646 19000) 0 nil])
+([nil nil ((126 . 139) (t 26928 54705 891538 108000)) nil (26928 54717 295129 740000) 0 nil])
+([nil current ((nil fontified t 1406 . 1412) (nil face (nxml-text) 1406 . 1412) (nil fontified t 1405 . 1406) (nil face (nxml-tag-delimiter) 1405 . 1406) (#(">Dialog" 0 1 (face (nxml-tag-delimiter) fontified t) 1 7 (face (nxml-text) fontified t)) . -1392) (1399 . 1419) (nil fontified t 1069 . 1075) (t 26928 54717 279443 271000) (nil face (nxml-text) 1069 . 1075) (t 26928 54717 279443 271000) (nil fontified t 1068 . 1069) (t 26928 54717 279443 271000) (nil face (nxml-tag-delimiter) 1068 . 1069) (t 26928 54717 279443 271000) (#(">Dialog" 0 1 (face (nxml-tag-delimiter) fontified t) 1 7 (face (nxml-text) fontified t)) . -1055) (t 26928 54717 279443 271000) (1062 . 1082) 873 (t 26928 54717 279443 271000)) nil (26928 54757 739376 202000) 0 nil])
+nil

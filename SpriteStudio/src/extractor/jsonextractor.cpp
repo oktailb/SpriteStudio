@@ -1,4 +1,6 @@
-#include "jsonextractor.h"
+#include "extractor/jsonextractor.h"
+#include "src/extractor/jsonExtractordialog.h"
+#include "ui_jsonExtractordialog.h"
 #include <QDebug>
 #include <QImage>
 #include <QStack>
@@ -38,6 +40,8 @@ QList<QPixmap> JsonExtractor::extractFromPixmap(int alphaThreshold, int vertical
 
 bool JsonExtractor::exportFrames(const QString &basePath, const QString &projectName, Extractor *in)
 {
+    jsonExtractorDialog* dialog = new jsonExtractorDialog();
+    dialog->show();
   // 'in' is the source extractor (e.g., SpriteExtractor) containing the frames and metadata.
   int totalFrames = in->m_frames.size();
   if (totalFrames == 0)

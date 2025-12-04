@@ -1,4 +1,4 @@
-#include "spriteextractor.h"
+#include "extractor/spriteextractor.h"
 #include <QDebug>
 #include <QStack>
 

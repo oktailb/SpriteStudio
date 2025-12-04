@@ -31,9 +31,10 @@ set (${PROJECT_NAME}_SRC
     src/mainwindow_frames.cpp
     src/mainwindow_atlas.cpp
     src/extractor.cpp
-    src/gifextractor.cpp
-    src/spriteextractor.cpp
-    src/jsonextractor.cpp
+    src/extractor/gifextractor.cpp
+    src/extractor/spriteextractor.cpp
+    src/extractor/jsonextractor.cpp
+    src/extractor/jsonExtractordialog.cpp
     src/arrangementmodel.cpp
     src/aboutdialog.cpp
     src/version.h.in
@@ -43,14 +44,16 @@ set (${PROJECT_NAME}_SRC
 
 set (${PROJECT_NAME}_UI
     src/mainwindow.ui
+    src/extractor/jsonExtractordialog.ui
 )
 
 set (${PROJECT_NAME}_INCLUDE
     include/mainwindow.h
     include/extractor.h
-    include/gifextractor.h
-    include/spriteextractor.h
-    include/jsonextractor.h
+    include/extractor/gifextractor.h
+    include/extractor/spriteextractor.h
+    include/extractor/jsonextractor.h
+    include/extractor/jsonextractor.h
     include/arrangementmodel.h
     include/aboutdialog.h
 )
@@ -67,6 +70,7 @@ qt_add_executable(${PROJECT_NAME}
     ${${PROJECT_NAME}_SRC}
     ${${PROJECT_NAME}_UI}
     ${${PROJECT_NAME}_INCLUDE}
+    src/extractor/jsonExtractordialog.h src/extractor/jsonExtractordialog.cpp src/extractor/jsonExtractordialog.ui
 )
 
 add_custom_target(translations ALL DEPENDS ${TS_FILES})

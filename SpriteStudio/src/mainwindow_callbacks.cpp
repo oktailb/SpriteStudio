@@ -13,9 +13,9 @@
 #include <QPen>
 #include <QMovie>
 #include <QGraphicsRectItem>
-#include "gifextractor.h"
-#include "spriteextractor.h"
-#include "jsonextractor.h"
+#include "extractor/gifextractor.h"
+#include "extractor/spriteextractor.h"
+#include "extractor/jsonextractor.h"
 
 void MainWindow::onAtlasContextMenuRequested(const QPoint &pos)
 {

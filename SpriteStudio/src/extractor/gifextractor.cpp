@@ -1,4 +1,4 @@
-#include "gifextractor.h"
+#include "extractor/gifextractor.h"
 #include <QMovie>
 #include <QDebug>
 #include <QApplication>
