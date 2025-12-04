@@ -102,7 +102,11 @@
     </widget>
    </item>
    <item row="4" column="1">
-    <widget class="QListWidget" name="animations"/>
+    <widget class="QListWidget" name="animations">
+     <property name="selectionMode">
+      <enum>QAbstractItemView::SelectionMode::MultiSelection</enum>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>

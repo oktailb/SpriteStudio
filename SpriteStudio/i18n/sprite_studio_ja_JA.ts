@@ -125,38 +125,36 @@
 <context>
     <name>JsonExtractor</name>
     <message>
-        <location filename="../src/extractor/jsonextractor.cpp" line="69"/>
         <source>_critical_error</source>
-        <translation>致命的なエラー</translation>
+        <translation type="vanished">致命的なエラー</translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonextractor.cpp" line="69"/>
         <source>_painter_start</source>
-        <translation>アトラスのペインターを開始できません</translation>
+        <translation type="vanished">アトラスのペインターを開始できません</translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonextractor.cpp" line="122"/>
-        <location filename="../src/extractor/jsonextractor.cpp" line="150"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="83"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="111"/>
         <source>_write_error</source>
         <translation>書き込みエラー</translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonextractor.cpp" line="122"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="83"/>
         <source>_png_permissions</source>
         <translation>PNGファイルに書き込めません。権限を確認してください。</translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonextractor.cpp" line="148"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="109"/>
         <source>_export_success</source>
         <translation>エクスポート成功</translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonextractor.cpp" line="148"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="109"/>
         <source>_export_atlas_success</source>
         <translation>アトラスとメタデータは正常にエクスポートされました:</translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonextractor.cpp" line="150"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="111"/>
         <source>_json_permissions</source>
         <translation>JSONファイルに書き込めません。権限を確認してください。</translation>
     </message>

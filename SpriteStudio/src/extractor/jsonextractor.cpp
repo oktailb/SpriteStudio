@@ -41,114 +41,76 @@ QList<QPixmap> JsonExtractor::extractFromPixmap(int alphaThreshold, int vertical
 
 bool JsonExtractor::exportFrames(const QString &basePath, const QString &projectName, Extractor *in)
 {
-    jsonExtractorDialog* dialog = new jsonExtractorDialog(in, projectName);
-    dialog->show();
-    ExportOptions opts = dialog->getOpts();
-    // 'in' is the source extractor (e.g., SpriteExtractor) containing the frames and metadata.
-  int totalFrames = in->m_frames.size();
-  if (totalFrames == 0)
-    return false;
+  jsonExtractorDialog* dialog = new jsonExtractorDialog(in, projectName);
+  dialog->exec();
 
-  // Use the maximum width/height found during the initial extraction to define grid cell size.
-  int w = in->m_maxFrameWidth;
-  int h = in->m_maxFrameHeight;
-
-  // Calculate the dimensions of the new atlas image grid (optimal square-like layout).
-  int nb_cols = (int)std::floor(std::sqrt(totalFrames));
-  if (nb_cols == 0) nb_cols = 1;
-  int nb_lines = (int)std::ceil((double)totalFrames / nb_cols);
-
-  // 1. ASSEMBLE NEW ATLAS IMAGE (PNG)
-
-  // Create a new image buffer for the final combined atlas with calculated dimensions.
-  QImage atlasImage(w * nb_cols, h * nb_lines, QImage::Format_ARGB32_Premultiplied);
-  atlasImage.fill(Qt::transparent); // Ensure a fully transparent background.
-  QPainter painter(&atlasImage); // Start drawing on the atlas image.
-
-  if (!painter.isActive()) {
-      qDebug() << tr("_critical_error") << ": " << tr("_painter_start");
-      return false;
-    }
+  ExportOptions opts = dialog->getOpts();
 
   QJsonArray framesArray; // JSON array to store metadata for each frame.
 
-  for (int i = 0; i < totalFrames; ++i) {
-      const QPixmap &currentPixmap = in->m_frames.at(i);
-      QImage currentImage = currentPixmap.toImage();
+  QList<QString> animationsNames = dialog->selectedAnimations();
 
-      // Calculate top-left position of the frame's cell in the grid.
-      int line = i / nb_cols;
-      int col = i % nb_cols;
-      int x = col * w;
-      int y = line * h;
+  for (const QString &anim : animationsNames) {
+      int totalFrames = in->m_animationsData[anim].frameIndices.count();
 
-      // Center the smaller frame within its fixed cell (w x h) for consistent alignment.
-      int x_offset = x + (w - currentImage.width()) / 2;
-      int y_offset = y + (h - currentImage.height()) / 2;
+      for (int frame = 0; frame < totalFrames; ++frame) {
 
-      // Draw the frame onto the atlas at its final coordinates.
-      painter.drawImage(QPoint(x_offset, y_offset), currentImage);
+          int boxID = in->m_animationsData[anim].frameIndices[frame];
+          // --- Build JSON Metadata (Coordinates on the NEW Atlas) ---
+          // Record the actual position and size of the drawn frame for the JSON file.
+          QJsonObject frameData;
+          frameData["filename"] = QString("frame_%1").arg(frame, 4, 10, QChar('0'));
 
-      // --- 2. Build JSON Metadata (Coordinates on the NEW Atlas) ---
-      // Record the actual position and size of the drawn frame for the JSON file.
-      QJsonObject frameData;
-      frameData["filename"] = QString("frame_%1").arg(i, 4, 10, QChar('0'));
+          QJsonObject frameRect;
+          frameRect["x"] = in->m_frames[boxID].rect().x();
+          frameRect["y"] = in->m_frames[boxID].rect().y();
+          frameRect["w"] = in->m_frames[boxID].rect().width();
+          frameRect["h"] = in->m_frames[boxID].rect().height();
 
-      QJsonObject frameRect;
-      frameRect["x"] = x_offset;
-      frameRect["y"] = y_offset;
-      frameRect["w"] = currentImage.width();
-      frameRect["h"] = currentImage.height();
+          frameData["frame"] = frameRect;
 
-      frameData["frame"] = frameRect;
+          // Simulate common Texture Packer metadata fields.frameData["rotated"] = false;
+          frameData["trimmed"] = false;
+          frameData["spriteSourceSize"] = frameRect;
 
-      // Simulate common Texture Packer metadata fields.frameData["rotated"] = false;
-      frameData["trimmed"] = false;
-      frameData["spriteSourceSize"] = frameRect;
+          framesArray.append(frameData);
+        }
+      QString jsonFilePath = QDir(basePath).filePath(projectName + "-" + anim + ".json");
+      QString pngFilePath = QDir(basePath).filePath(projectName + ".png");
 
-      framesArray.append(frameData);
-    }
+             // a) Save PNG Atlas
+      if (!in->m_atlas.save(pngFilePath, "PNG")) {
+          qDebug() << tr("_write_error") << ": " <<  tr("_png_permissions");
+          return false;
+        }
 
-  painter.end();// Stop drawing and finalize the QImage content.
+             // b) Save JSON Metadata
+      QJsonObject root;
+      root["frames"] = framesArray;
 
-  // --- 3. Save Files (PNG and JSON) ---
+             // Add metadata block for the entire atlas image.
+      QJsonObject meta;
+      meta["image"] = projectName + ".png"; // Reference to the atlas file
+      meta["size"] = QJsonObject({
+          {"w", in->m_atlas.width()},
+          {"h", in->m_atlas.height()}
+      });
+      meta["format"] = "RGBA8888"; // Specify color format
+      root["meta"] = meta;
 
-  // Define output file paths.
-  QString pngFilePath = QDir(basePath).filePath(projectName + ".png");
-  QString jsonFilePath = QDir(basePath).filePath(projectName + ".json");
+      QJsonDocument doc(root); // Create the final JSON document.
 
-  // a) Save PNG Atlas
-  if (!atlasImage.save(pngFilePath, "PNG")) {
-      qDebug() << tr("_write_error") << ": " <<  tr("_png_permissions");
-      return false;
-    }
+      QFile jsonFile(jsonFilePath);
+      if (jsonFile.open(QIODevice::WriteOnly)) {
+          // Write JSON data to file in an indented (human-readable) format.
+          jsonFile.write(doc.toJson(QJsonDocument::Indented));
+          jsonFile.close();
 
-  // b) Save JSON Metadata
-  QJsonObject root;
-  root["frames"] = framesArray;
-
-  // Add metadata block for the entire atlas image.
-  QJsonObject meta;
-  meta["image"] = projectName + ".png"; // Reference to the atlas file
-  meta["size"] = QJsonObject({
-      {"w", atlasImage.width()},
-      {"h", atlasImage.height()}
-  });
-  meta["format"] = "RGBA8888"; // Specify color format
-  root["meta"] = meta;
-
-  QJsonDocument doc(root); // Create the final JSON document.
-
-  QFile jsonFile(jsonFilePath);
-  if (jsonFile.open(QIODevice::WriteOnly)) {
-      // Write JSON data to file in an indented (human-readable) format.
-      jsonFile.write(doc.toJson(QJsonDocument::Indented));
-      jsonFile.close();
-
-      qDebug() << tr("_export_success") << tr("_export_atlas_success") << basePath;
-    } else {
-      qDebug() << tr("_write_error") << tr("_json_permissions");
-      return false;
+          qDebug() << tr("_export_success") << tr("_export_atlas_success") << basePath;
+        } else {
+          qDebug() << tr("_write_error") << tr("_json_permissions");
+          return false;
+        }
     }
   return true; // Export completed successfully.
 }

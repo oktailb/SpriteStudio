@@ -125,38 +125,36 @@
 <context>
     <name>JsonExtractor</name>
     <message>
-        <location filename="../src/extractor/jsonextractor.cpp" line="69"/>
         <source>_critical_error</source>
-        <translation>Critical error</translation>
+        <translation type="vanished">Critical error</translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonextractor.cpp" line="69"/>
         <source>_painter_start</source>
-        <translation>Impossible to start the painter for the Atlas</translation>
+        <translation type="vanished">Impossible to start the painter for the Atlas</translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonextractor.cpp" line="122"/>
-        <location filename="../src/extractor/jsonextractor.cpp" line="150"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="83"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="111"/>
         <source>_write_error</source>
         <translation>Write error</translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonextractor.cpp" line="122"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="83"/>
         <source>_png_permissions</source>
         <translation>Impossible to write the PNG file. Please check permissions</translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonextractor.cpp" line="148"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="109"/>
         <source>_export_success</source>
         <translation>Export success</translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonextractor.cpp" line="148"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="109"/>
         <source>_export_atlas_success</source>
         <translation>Atlas and metadata exported successfully to: </translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonextractor.cpp" line="150"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="111"/>
         <source>_json_permissions</source>
         <translation>Impossible to write the PNG file. Please check permissions.</translation>
     </message>

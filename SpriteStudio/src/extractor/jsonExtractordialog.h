@@ -19,11 +19,17 @@ public:
 
     ExportOptions getOpts() const;
 
-private:
-    Ui::jsonExtractorDialog *ui;
-    Extractor * m_in;
-    QString  m_baseName;
-    ExportOptions opts;
+    QList<QString> selectedAnimations() const;
+
+  private slots:
+    void on_animations_itemSelectionChanged();
+
+  private:
+    Ui::jsonExtractorDialog * ui;
+    Extractor *               m_in;
+    QString                   m_baseName;
+    ExportOptions             m_opts;
+    QList<QString>            m_selectedAnimations;
 };
 
 #endif // JSONEXTRACTORDIALOG_H
