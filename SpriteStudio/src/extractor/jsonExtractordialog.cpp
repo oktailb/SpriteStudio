@@ -27,9 +27,9 @@ jsonExtractorDialog::jsonExtractorDialog(Extractor* in, QString baseName, QWidge
     sceneLayers->setSceneRect(in->m_atlas.rect());
     ui->preview->fitInView(item, Qt::KeepAspectRatio);
     for(auto anim = in->m_animationsData.begin() ; anim != in->m_animationsData.end() ; anim++) {
-        QListWidgetItem item;
-        item.setData(Qt::DisplayRole, anim.key() + " (" + QString::number(anim.value().frameIndices.count()) + " frames)");
-        ui->animations->addItem(&item);
+        QListWidgetItem *item = new QListWidgetItem();
+        item->setData(Qt::DisplayRole, anim.key() + " (" + QString::number(anim.value().frameIndices.count()) + " frames)");
+        ui->animations->addItem(item);
     }
 }
 
