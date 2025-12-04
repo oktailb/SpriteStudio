@@ -125,38 +125,38 @@
 <context>
     <name>JsonExtractor</name>
     <message>
-        <location filename="../src/extractor/jsonextractor.cpp" line="67"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="69"/>
         <source>_critical_error</source>
         <translation>Critical error</translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonextractor.cpp" line="67"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="69"/>
         <source>_painter_start</source>
         <translation>Impossible to start the painter for the Atlas</translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonextractor.cpp" line="120"/>
-        <location filename="../src/extractor/jsonextractor.cpp" line="148"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="122"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="150"/>
         <source>_write_error</source>
         <translation>Write error</translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonextractor.cpp" line="120"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="122"/>
         <source>_png_permissions</source>
         <translation>Impossible to write the PNG file. Please check permissions</translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonextractor.cpp" line="146"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="148"/>
         <source>_export_success</source>
         <translation>Export success</translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonextractor.cpp" line="146"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="148"/>
         <source>_export_atlas_success</source>
         <translation>Atlas and metadata exported successfully to: </translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonextractor.cpp" line="148"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="150"/>
         <source>_json_permissions</source>
         <translation>Impossible to write the PNG file. Please check permissions.</translation>
     </message>
@@ -488,12 +488,17 @@
 <context>
     <name>jsonExtractorDialog</name>
     <message>
-        <location filename="../src/extractor/jsonExtractordialog.ui" line="14"/>
+        <location filename="../src/extractor/jsonExtractordialog.ui" line="20"/>
         <source>Dialog</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonExtractordialog.ui" line="33"/>
+        <location filename="../src/extractor/jsonExtractordialog.ui" line="83"/>
+        <source>Replace existing atlas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/extractor/jsonExtractordialog.ui" line="90"/>
         <source>Content</source>
         <translation type="unfinished"></translation>
     </message>
@@ -503,7 +508,32 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonExtractordialog.ui" line="50"/>
+        <location filename="../src/extractor/jsonExtractordialog.ui" line="26"/>
+        <source>Base name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/extractor/jsonExtractordialog.ui" line="33"/>
+        <source>TextLabel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/extractor/jsonExtractordialog.ui" line="48"/>
+        <source>TexturePacker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/extractor/jsonExtractordialog.ui" line="53"/>
+        <source>Phaser</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/extractor/jsonExtractordialog.ui" line="58"/>
+        <source>Aseprite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/extractor/jsonExtractordialog.ui" line="66"/>
         <source>Atlas preview</source>
         <translation type="unfinished"></translation>
     </message>

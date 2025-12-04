@@ -1,7 +1,7 @@
 #ifndef SPRITEEXTRACTOR_H
 #define SPRITEEXTRACTOR_H
 
-#include "extractor.h"
+#include "extractor/extractor.h"
 
 /**
  * @brief Extractor derivated class for Sprite Atlas (many aprites on the same picture).

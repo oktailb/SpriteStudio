@@ -6,15 +6,92 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>1024</width>
+    <height>279</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
   <layout class="QFormLayout" name="formLayout">
-   <item row="3" column="0">
+   <item row="0" column="0">
+    <widget class="QLabel" name="baseNameLabel">
+     <property name="text">
+      <string>Base name</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QLabel" name="baseName">
+     <property name="text">
+      <string>TextLabel</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="targetAppLabel">
+     <property name="text">
+      <string>Target application</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QComboBox" name="targetFormat">
+     <item>
+      <property name="text">
+       <string>TexturePacker</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Phaser</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Aseprite</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="atlasPreviewLabel">
+     <property name="text">
+      <string>Atlas preview</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QGraphicsView" name="preview">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <widget class="QCheckBox" name="replaceExistingAtlas">
+     <property name="text">
+      <string>Replace existing atlas</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="contentLabel">
+     <property name="text">
+      <string>Content</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="0" colspan="2">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Orientation::Horizontal</enum>
@@ -24,35 +101,8 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="1">
-    <widget class="QTableView" name="tableView"/>
-   </item>
-   <item row="2" column="0">
-    <widget class="QLabel" name="label">
-     <property name="text">
-      <string>Content</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="0">
-    <widget class="QLabel" name="label_2">
-     <property name="text">
-      <string>Target application</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="1">
-    <widget class="QComboBox" name="comboBox"/>
-   </item>
-   <item row="1" column="0">
-    <widget class="QLabel" name="label_3">
-     <property name="text">
-      <string>Atlas preview</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="1">
-    <widget class="QGraphicsView" name="graphicsView"/>
+   <item row="4" column="1">
+    <widget class="QListWidget" name="animations"/>
    </item>
   </layout>
  </widget>

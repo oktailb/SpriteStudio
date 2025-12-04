@@ -16,7 +16,7 @@
 #include <QTreeWidget>
 #include <QInputDialog>
 #include <QProgressBar>
-#include "extractor.h"
+#include "extractor/extractor.h"
 #include "arrangementmodel.h"
 
 QT_BEGIN_NAMESPACE

@@ -293,7 +293,7 @@ void MainWindow::on_actionOpen_triggered()
   currentFilePath = fileName;
   processFile(currentFilePath);
   statusLabel->setText(fileName);
-  setWindowTitle("SppriteStudio (" + fileName + ")");
+  setWindowTitle("SpriteStudio (" + fileName + ")");
   ui->verticalTolerance->setValue(extractor->m_maxFrameHeight / 3);
   adjustZoomSliderToWindow();
 }
@@ -478,7 +478,7 @@ void MainWindow::on_actionExport_triggered()
           extractorOut = new JsonExtractor();
         }
 
-      bool success = extractorOut->exportFrames(filePath, baseName, extractor);
+        bool success = extractorOut->exportFrames(filePath, baseName, extractor);
       if (!success) {
           QMessageBox::warning(this, tr("Export Error"), tr("Export failed"));
         }

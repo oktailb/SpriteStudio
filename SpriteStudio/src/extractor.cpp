@@ -1,4 +1,4 @@
-#include "extractor.h"
+#include "extractor/extractor.h"
 #include <QDebug>
 
 void Extractor::setAnimation(const QString &name, const QList<int> &frameIndices, int fps)
@@ -176,6 +176,11 @@ void Extractor::clearAtlasAreas(const QList<int> &indices)
         }
     }
     m_atlas = atlasImage;
+}
+
+ExportOptions Extractor::opts() const
+{
+    return m_opts;
 }
 
 double Extractor::overlapThreshold() const

@@ -1,7 +1,7 @@
 #ifndef GIFEXTRACTOR_H
 #define GIFEXTRACTOR_H
 
-#include "extractor.h"
+#include "extractor/extractor.h"
 
 /**
  * @brief Extractor derivated class for Animated GIF sprites.

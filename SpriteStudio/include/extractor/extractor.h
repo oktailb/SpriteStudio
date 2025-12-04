@@ -12,6 +12,7 @@
 #include <QMap>
 #include <QString>
 #include <QPainter>
+#include "export.h"
 
 /**
  * @brief Abstract base class (interface) for all sprite extractors.
@@ -23,7 +24,7 @@
  *
  * It inherits from QObject to enable signal/slot mechanisms (essential for asynchronous operations like GIFs).
  */
-class Extractor : public QObject
+class Extractor : public QObject, ExportManager
 {
     Q_OBJECT
 public:
@@ -187,6 +188,7 @@ public:
     QString                     m_filePath;       /**< The original data file from a supported format. */
     int                         m_maxFrameWidth;  /**< Maximum width among all extracted frames (used for animation bounding box). */
     int                         m_maxFrameHeight; /**< Maximum height among all extracted frames (used for animation bounding box). */
+    ExportOptions               m_opts;
 
     bool m_smartCropEnabled = true;
     double m_overlapThreshold = 0.1; // 10% de chevauchement minimum
@@ -199,7 +201,9 @@ public:
     double overlapThreshold() const;
     void setOverlapThreshold(double newOverlapThreshold);
 
-  signals:
+    ExportOptions opts() const;
+
+signals:
     /**
      * @brief Signal emitted when the frame extraction process is complete.
      * @param frameCount The total number of frames successfully extracted.

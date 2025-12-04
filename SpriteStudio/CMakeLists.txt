@@ -49,11 +49,12 @@ set (${PROJECT_NAME}_UI
 
 set (${PROJECT_NAME}_INCLUDE
     include/mainwindow.h
-    include/extractor.h
+    include/extractor/extractor.h
     include/extractor/gifextractor.h
     include/extractor/spriteextractor.h
     include/extractor/jsonextractor.h
     include/extractor/jsonextractor.h
+    include/extractor/export.h
     include/arrangementmodel.h
     include/aboutdialog.h
 )
