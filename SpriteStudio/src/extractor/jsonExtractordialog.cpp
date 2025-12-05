@@ -1,4 +1,4 @@
-#include "jsonExtractordialog.h"
+#include "extractor/jsonExtractordialog.h"
 #include "ui_jsonExtractordialog.h"
 #include <QGraphicsPixmapItem>
 

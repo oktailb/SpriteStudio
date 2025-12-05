@@ -53,7 +53,7 @@ set (${PROJECT_NAME}_INCLUDE
     include/extractor/gifextractor.h
     include/extractor/spriteextractor.h
     include/extractor/jsonextractor.h
-    include/extractor/jsonextractor.h
+    include/extractor/jsonExtractordialog.h
     include/extractor/export.h
     include/arrangementmodel.h
     include/aboutdialog.h
@@ -71,7 +71,6 @@ qt_add_executable(${PROJECT_NAME}
     ${${PROJECT_NAME}_SRC}
     ${${PROJECT_NAME}_UI}
     ${${PROJECT_NAME}_INCLUDE}
-    src/extractor/jsonExtractordialog.h src/extractor/jsonExtractordialog.cpp src/extractor/jsonExtractordialog.ui
 )
 
 add_custom_target(translations ALL DEPENDS ${TS_FILES})

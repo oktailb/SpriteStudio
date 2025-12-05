@@ -1,5 +1,5 @@
 #include "extractor/jsonextractor.h"
-#include "src/extractor/jsonExtractordialog.h"
+#include "extractor/jsonExtractordialog.h"
 #include "ui_jsonExtractordialog.h"
 #include "extractor/export.h"
 #include <QDebug>
