@@ -29,9 +29,14 @@ jsonExtractorDialog::jsonExtractorDialog(Extractor* in, QString baseName, QWidge
     for(auto anim = in->m_animationsData.begin() ; anim != in->m_animationsData.end() ; anim++) {
         QListWidgetItem *item = new QListWidgetItem();
         item->setData(Qt::DisplayRole, anim.key() + " (" + QString::number(anim.value().frameIndices.count()) + " frames)");
+        QImage deco = in->m_frames[anim.value().frameIndices.first()].toImage();
+        item->setData(Qt::DecorationRole, deco.scaled(60, 64, Qt::KeepAspectRatio));
         item->setData(Qt::UserRole, anim.key());
         ui->animations->addItem(item);
     }
+    ui->targetFormat->insertItem(0, "Texture Packer", Format::FORMAT_TEXTUREPACKER_JSON);
+    ui->targetFormat->insertItem(0, "Phaser", Format::FORMAT_PHASER_JSON);
+    ui->targetFormat->insertItem(0, "Aseprite", Format::FORMAT_ASEPRITE_JSON);
 }
 
 jsonExtractorDialog::~jsonExtractorDialog()
@@ -42,6 +47,16 @@ jsonExtractorDialog::~jsonExtractorDialog()
 ExportOptions jsonExtractorDialog::getOpts() const
 {
     return m_opts;
+}
+
+bool jsonExtractorDialog::replaceAtlas()
+{
+    return ui->replaceExistingAtlas->isChecked();
+}
+
+Format jsonExtractorDialog::selectedFormat()
+{
+    return (Format)ui->targetFormat->currentData().toInt();
 }
 
 void jsonExtractorDialog::on_animations_itemSelectionChanged()

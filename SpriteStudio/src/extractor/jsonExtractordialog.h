@@ -18,6 +18,8 @@ public:
     ~jsonExtractorDialog();
 
     ExportOptions getOpts() const;
+    bool replaceAtlas();
+    Format selectedFormat();
 
     QList<QString> selectedAnimations() const;
 

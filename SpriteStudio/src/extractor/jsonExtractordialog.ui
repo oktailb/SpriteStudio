@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1024</width>
-    <height>279</height>
+    <width>460</width>
+    <height>565</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -19,7 +19,10 @@
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <layout class="QFormLayout" name="formLayout">
+  <property name="sizeGripEnabled">
+   <bool>false</bool>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
     <widget class="QLabel" name="baseNameLabel">
      <property name="text">
@@ -42,23 +45,7 @@
     </widget>
    </item>
    <item row="1" column="1">
-    <widget class="QComboBox" name="targetFormat">
-     <item>
-      <property name="text">
-       <string>TexturePacker</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Phaser</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Aseprite</string>
-      </property>
-     </item>
-    </widget>
+    <widget class="QComboBox" name="targetFormat"/>
    </item>
    <item row="2" column="0">
     <widget class="QLabel" name="atlasPreviewLabel">
@@ -69,10 +56,19 @@
    </item>
    <item row="2" column="1">
     <widget class="QGraphicsView" name="preview">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="minimumSize">
       <size>
-       <width>0</width>
-       <height>0</height>
+       <width>320</width>
+       <height>240</height>
       </size>
      </property>
     </widget>
@@ -91,20 +87,20 @@
      </property>
     </widget>
    </item>
-   <item row="6" column="0" colspan="2">
+   <item row="4" column="1">
+    <widget class="QListWidget" name="animations">
+     <property name="selectionMode">
+      <enum>QAbstractItemView::SelectionMode::MultiSelection</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0" colspan="2">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Orientation::Horizontal</enum>
      </property>
      <property name="standardButtons">
       <set>QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::Ok</set>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="1">
-    <widget class="QListWidget" name="animations">
-     <property name="selectionMode">
-      <enum>QAbstractItemView::SelectionMode::MultiSelection</enum>
      </property>
     </widget>
    </item>
