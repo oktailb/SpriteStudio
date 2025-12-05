@@ -454,24 +454,24 @@
         <translation>情報</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_animation.cpp" line="22"/>
-        <location filename="../src/mainwindow_animation.cpp" line="24"/>
+        <location filename="../src/mainwindow_animation.cpp" line="26"/>
+        <location filename="../src/mainwindow_animation.cpp" line="28"/>
         <source>_new_animation</source>
         <translation>新しいアニメーション</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_animation.cpp" line="23"/>
+        <location filename="../src/mainwindow_animation.cpp" line="27"/>
         <source>_animation_name</source>
         <translation>アニメーション名</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_animation.cpp" line="106"/>
+        <location filename="../src/mainwindow_animation.cpp" line="110"/>
         <location filename="../src/mainwindow_atlas.cpp" line="509"/>
         <source>_info</source>
         <translation>情報</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_animation.cpp" line="106"/>
+        <location filename="../src/mainwindow_animation.cpp" line="110"/>
         <source>_select_animation_first</source>
         <translation>&gt;少なくとも 1 つのアニメーションを選択してください。</translation>
     </message>

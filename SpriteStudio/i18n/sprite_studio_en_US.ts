@@ -455,24 +455,24 @@
         <translation>Export Sprite Atlas</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_animation.cpp" line="22"/>
-        <location filename="../src/mainwindow_animation.cpp" line="24"/>
+        <location filename="../src/mainwindow_animation.cpp" line="26"/>
+        <location filename="../src/mainwindow_animation.cpp" line="28"/>
         <source>_new_animation</source>
         <translation>New animation</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_animation.cpp" line="23"/>
+        <location filename="../src/mainwindow_animation.cpp" line="27"/>
         <source>_animation_name</source>
         <translation>Animation name:</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_animation.cpp" line="106"/>
+        <location filename="../src/mainwindow_animation.cpp" line="110"/>
         <location filename="../src/mainwindow_atlas.cpp" line="509"/>
         <source>_info</source>
         <translation>Informations</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_animation.cpp" line="106"/>
+        <location filename="../src/mainwindow_animation.cpp" line="110"/>
         <source>_select_animation_first</source>
         <translation>Please select an animation first</translation>
     </message>

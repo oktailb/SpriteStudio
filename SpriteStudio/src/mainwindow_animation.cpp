@@ -14,7 +14,11 @@
 
 void MainWindow::createAnimationFromSelection()
 {
-    QList<int> selectedIndices = getSelectedFrameIndices();
+    QList<int> selectedIndices;
+    if (currentSelection.isEmpty())
+        selectedIndices = getSelectedFrameIndices();
+    else
+        selectedIndices = currentSelection;
 
     if (selectedIndices.isEmpty()) return;
 

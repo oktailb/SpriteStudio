@@ -455,24 +455,24 @@
         <translation>Exporter l&apos;altas de sprites</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_animation.cpp" line="22"/>
-        <location filename="../src/mainwindow_animation.cpp" line="24"/>
+        <location filename="../src/mainwindow_animation.cpp" line="26"/>
+        <location filename="../src/mainwindow_animation.cpp" line="28"/>
         <source>_new_animation</source>
         <translation>Nouvelle animation</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_animation.cpp" line="23"/>
+        <location filename="../src/mainwindow_animation.cpp" line="27"/>
         <source>_animation_name</source>
         <translation>Nom de l&apos;animation :</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_animation.cpp" line="106"/>
+        <location filename="../src/mainwindow_animation.cpp" line="110"/>
         <location filename="../src/mainwindow_atlas.cpp" line="509"/>
         <source>_info</source>
         <translation>Informations</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow_animation.cpp" line="106"/>
+        <location filename="../src/mainwindow_animation.cpp" line="110"/>
         <source>_select_animation_first</source>
         <translation>Veuiilez d&apos;abord sélectionner une animation</translation>
     </message>
