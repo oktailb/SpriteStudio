@@ -20,6 +20,7 @@ public:
     ExportOptions getOpts() const;
     bool replaceAtlas();
     Format selectedFormat();
+    QString imageFormat();
 
     QList<QString> selectedAnimations() const;
 

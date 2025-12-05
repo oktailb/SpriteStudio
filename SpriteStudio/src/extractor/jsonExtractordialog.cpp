@@ -1,6 +1,29 @@
 #include "extractor/jsonExtractordialog.h"
 #include "ui_jsonExtractordialog.h"
 #include <QGraphicsPixmapItem>
+#include <QMetaEnum>
+#include <QStandardItemModel>
+
+void setupImageFormatComboBox(QComboBox *comboBox) {
+    const QMetaObject &metaObject = QImage::staticMetaObject;
+    int enumIndex = metaObject.indexOfEnumerator("Format");
+    QMetaEnum metaEnum = metaObject.enumerator(enumIndex);
+
+    QStandardItemModel *model = new QStandardItemModel(comboBox);
+
+    for (int i = 0; i < metaEnum.keyCount(); ++i) {
+        QString key = metaEnum.key(i);
+        if (key.contains("_")) {
+            key = key.split("_")[1];
+            int value = metaEnum.value(i);
+            QStandardItem *item = new QStandardItem(key);
+            item->setData(value, Qt::UserRole);
+            model->appendRow(item);
+        }
+    }
+
+    comboBox->setModel(model);
+}
 
 jsonExtractorDialog::jsonExtractorDialog(Extractor* in, QString baseName, QWidget *parent)
     : QDialog(parent)
@@ -37,6 +60,10 @@ jsonExtractorDialog::jsonExtractorDialog(Extractor* in, QString baseName, QWidge
     ui->targetFormat->insertItem(0, "Texture Packer", Format::FORMAT_TEXTUREPACKER_JSON);
     ui->targetFormat->insertItem(0, "Phaser", Format::FORMAT_PHASER_JSON);
     ui->targetFormat->insertItem(0, "Aseprite", Format::FORMAT_ASEPRITE_JSON);
+
+    setupImageFormatComboBox(ui->imageFormats);
+    int currentIndex = ui->imageFormats->findData(in->m_atlas.format(), Qt::UserRole, Qt::MatchExactly);
+    ui->imageFormats->setCurrentIndex(currentIndex);
 }
 
 jsonExtractorDialog::~jsonExtractorDialog()
@@ -57,6 +84,11 @@ bool jsonExtractorDialog::replaceAtlas()
 Format jsonExtractorDialog::selectedFormat()
 {
     return (Format)ui->targetFormat->currentData().toInt();
+}
+
+QString jsonExtractorDialog::imageFormat()
+{
+    return ui->imageFormats->currentText();
 }
 
 void jsonExtractorDialog::on_animations_itemSelectionChanged()
