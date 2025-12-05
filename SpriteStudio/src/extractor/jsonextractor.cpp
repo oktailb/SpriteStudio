@@ -39,54 +39,77 @@ QList<QPixmap> JsonExtractor::extractFromPixmap(int alphaThreshold, int vertical
     return m_frames;
 }
 
-QJsonDocument* JsonExtractor::exportToTexturePacker(QString projectName,
-                                                    const ExportOptions &opts,
-                                                    const QString anim,
-                                                    Extractor * in) {
-    QJsonDocument *doc = nullptr;
-    QJsonArray framesArray; // JSON array to store metadata for each frame.
+QJsonDocument *JsonExtractor::exportToTexturePacker(QString projectName,
+                                     const ExportOptions &opts,
+                                     const QString anim,
+                                     Extractor * in)
+{
+    QList<int> frameIndices = in->m_animationsData[anim].frameIndices;
 
-    int totalFrames = in->m_animationsData[anim].frameIndices.count();
+    QJsonObject framesDict;
 
-    for (int frame = 0; frame < totalFrames; ++frame) {
+    for (int i = 0; i < frameIndices.size(); ++i) {
+        int frameIdx = frameIndices[i];
 
-        int boxID = in->m_animationsData[anim].frameIndices[frame];
-        // --- Build JSON Metadata (Coordinates on the NEW Atlas) ---
-        // Record the actual position and size of the drawn frame for the JSON file.
+        if (frameIdx < 0 || frameIdx >= in->m_atlas_index.size()) {
+            qWarning() << "Frame index out of bounds:" << frameIdx;
+            continue;
+        }
+
+        const Extractor::Box& realBox = in->m_atlas_index[frameIdx];
+
         QJsonObject frameData;
-        frameData["filename"] = QString("frame_%1").arg(frame, 4, 10, QChar('0'));
+        frameData["filename"] = QString("%1_%2").arg(anim).arg(i, 4, 10, QChar('0'));
 
         QJsonObject frameRect;
-        frameRect["x"] = in->m_frames[boxID].rect().x();
-        frameRect["y"] = in->m_frames[boxID].rect().y();
-        frameRect["w"] = in->m_frames[boxID].rect().width();
-        frameRect["h"] = in->m_frames[boxID].rect().height();
+        frameRect["x"] = realBox.rect.x();
+        frameRect["y"] = realBox.rect.y();
+        frameRect["w"] = realBox.rect.width();
+        frameRect["h"] = realBox.rect.height();
 
         frameData["frame"] = frameRect;
-
-        // Simulate common Texture Packer metadata fields.frameData["rotated"] = false;
+        frameData["rotated"] = false;
         frameData["trimmed"] = opts.trimSprites;
+
         frameData["spriteSourceSize"] = frameRect;
 
-        framesArray.append(frameData);
+        QJsonObject sourceSize;
+        sourceSize["w"] = realBox.rect.width();
+        sourceSize["h"] = realBox.rect.height();
+        frameData["sourceSize"] = sourceSize;
+
+        QString frameKey = QString("%1_%2").arg(anim).arg(i, 4, 10, QChar('0'));
+        framesDict[frameKey] = frameData;
     }
 
     QJsonObject root;
-    root["frames"] = framesArray;
+    root["frames"] = framesDict;
 
-    // Add metadata block for the entire atlas image.
     QJsonObject meta;
-    meta["image"] = projectName + ".png"; // Reference to the atlas file
-    meta["size"] = QJsonObject({
+    meta["app"] = "Sprite Studio";
+    meta["version"] = "1.0";
+    meta["image"] = projectName + ".png";
+    meta["format"] = "RGBA8888";
+    meta["size"] = QJsonObject{
         {"w", in->m_atlas.width()},
         {"h", in->m_atlas.height()}
-    });
-    meta["format"] = "RGBA8888"; // Specify color format
+    };
+    meta["scale"] = "1";
+
+    if (opts.embedAnimations) {
+        QJsonArray frameTags;
+        QJsonObject animTag;
+        animTag["name"] = anim;
+        animTag["from"] = 0;
+        animTag["to"] = frameIndices.size() - 1;
+        animTag["direction"] = "forward";
+        frameTags.append(animTag);
+        meta["frameTags"] = frameTags;
+    }
+
     root["meta"] = meta;
 
-    doc = new QJsonDocument(root); // Create the final JSON document.
-
-    return doc;
+    return new QJsonDocument(root);
 }
 
 bool JsonExtractor::exportFrames(const QString &basePath, const QString &projectName, Extractor *in)
