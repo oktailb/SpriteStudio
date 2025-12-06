@@ -149,19 +149,19 @@ void MainWindow::processFile(const QString &fileName)
 
         if (frameCount > 1) {
             // CASE 1 : Animated GIF -> Use GifExtractor
-            extractor = new GifExtractor(this);
+            extractor = new GifExtractor(statusLabel, progressBar, this);
         } else {
             // CASE 2 : non animated GIF (0 ou 1 frame) -> Use SpriteExtractor
-            extractor = new SpriteExtractor(this);
+            extractor = new SpriteExtractor(statusLabel, progressBar, this);
         }
     }
     else if ((extension == "png") || (extension == "jpg") || (extension == "jpeg") ||  (extension == "bmp") || (extension == "gif")) {
-        extractor = new SpriteExtractor();
+        extractor = new SpriteExtractor(statusLabel, progressBar, this);
         SpriteExtractor *tmp = static_cast<SpriteExtractor*>(extractor);
         tmp->setSmartCropEnabled(ui->enableSmartCropCheckbox->isEnabled());
         tmp->setOverlapThreshold(ui->overlapThresholdSpinbox->value());
     } else if (extension == "json") {
-        extractor = new JsonExtractor();
+        extractor = new JsonExtractor(statusLabel, progressBar, this);
     } else {
         QMessageBox::warning(this, "Erreur d'ouverture", "Format de fichier non supporté.");
         return;

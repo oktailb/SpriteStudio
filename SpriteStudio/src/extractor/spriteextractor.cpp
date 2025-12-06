@@ -2,7 +2,8 @@
 #include <QDebug>
 #include <QStack>
 
-SpriteExtractor::SpriteExtractor(QObject *parent) : Extractor(parent)
+SpriteExtractor::SpriteExtractor(QLabel *statusBar, QProgressBar *progressBar, QObject *parent)
+    : Extractor(statusBar, progressBar, parent)
 {
 }
 

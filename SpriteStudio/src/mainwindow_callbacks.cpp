@@ -469,13 +469,13 @@ void MainWindow::on_actionExport_triggered()
 
   try {
       if (extension == "json") {
-          extractorOut = new JsonExtractor();
+          extractorOut = new JsonExtractor(statusLabel, progressBar, this);
         } else if (extension == "png") {
-          extractorOut = new SpriteExtractor();
+          extractorOut = new SpriteExtractor(statusLabel, progressBar, this);
         } else if (extension == "gif") {
-          extractorOut = new GifExtractor();
+          extractorOut = new GifExtractor(statusLabel, progressBar, this);
         } else {
-          extractorOut = new JsonExtractor();
+          extractorOut = new JsonExtractor(statusLabel, progressBar, this);
         }
 
         bool success = extractorOut->exportFrames(filePath, baseName, extractor);

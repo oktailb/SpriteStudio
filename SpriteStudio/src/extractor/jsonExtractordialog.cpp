@@ -86,9 +86,14 @@ Format jsonExtractorDialog::selectedFormat()
     return (Format)ui->targetFormat->currentData().toInt();
 }
 
-QString jsonExtractorDialog::imageFormat()
+QString jsonExtractorDialog::imageFormatAsString()
 {
-    return ui->imageFormats->currentText();
+  return ui->imageFormats->currentText();
+}
+
+QImage::Format jsonExtractorDialog::imageFormat()
+{
+  return (QImage::Format)ui->imageFormats->currentData(Qt::UserRole).toInt();
 }
 
 void jsonExtractorDialog::on_animations_itemSelectionChanged()

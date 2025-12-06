@@ -12,7 +12,8 @@
 #include <QJsonArray>
 #include <QJsonObject>
 
-JsonExtractor::JsonExtractor(QObject *parent) : Extractor(parent)
+JsonExtractor::JsonExtractor(QLabel *statusBar, QProgressBar *progressBar, QObject *parent)
+    : Extractor(statusBar, progressBar, parent)
 {
 }
 
@@ -42,13 +43,17 @@ QList<QPixmap> JsonExtractor::extractFromPixmap(int alphaThreshold, int vertical
 QJsonDocument *JsonExtractor::exportToTexturePacker(QString projectName,
                                      const ExportOptions &opts,
                                      const QString anim,
+                                     const QString format,
                                      Extractor * in)
 {
     QList<int> frameIndices = in->m_animationsData[anim].frameIndices;
 
     QJsonObject framesDict;
 
+    m_progressBar->setValue(0);
     for (int i = 0; i < frameIndices.size(); ++i) {
+        m_progressBar->setValue(100 * i / frameIndices.size());
+
         int frameIdx = frameIndices[i];
 
         if (frameIdx < 0 || frameIdx >= in->m_atlas_index.size()) {
@@ -68,7 +73,7 @@ QJsonDocument *JsonExtractor::exportToTexturePacker(QString projectName,
         frameRect["h"] = realBox.rect.height();
 
         frameData["frame"] = frameRect;
-        frameData["rotated"] = false;
+        frameData["rotated"] = opts.rotateSprites;
         frameData["trimmed"] = opts.trimSprites;
 
         frameData["spriteSourceSize"] = frameRect;
@@ -81,7 +86,7 @@ QJsonDocument *JsonExtractor::exportToTexturePacker(QString projectName,
         QString frameKey = QString("%1_%2").arg(anim).arg(i, 4, 10, QChar('0'));
         framesDict[frameKey] = frameData;
     }
-
+    m_progressBar->setValue(100);
     QJsonObject root;
     root["frames"] = framesDict;
 
@@ -89,7 +94,7 @@ QJsonDocument *JsonExtractor::exportToTexturePacker(QString projectName,
     meta["app"] = "Sprite Studio";
     meta["version"] = "1.0";
     meta["image"] = projectName + ".png";
-    meta["format"] = "RGBA8888";
+    meta["format"] = format;
     meta["size"] = QJsonObject{
         {"w", in->m_atlas.width()},
         {"h", in->m_atlas.height()}
@@ -127,11 +132,11 @@ bool JsonExtractor::exportFrames(const QString &basePath, const QString &project
 
         switch (dialog->selectedFormat())
         {
-        case Format::FORMAT_TEXTUREPACKER_JSON: { doc = exportToTexturePacker(projectName, opts, anim, in); break; }
-        case Format::FORMAT_PHASER_JSON: { doc = exportToTexturePacker(projectName, opts, anim, in); break; }
-        case Format::FORMAT_ASEPRITE_JSON: { doc = exportToTexturePacker(projectName, opts, anim, in); break; }
+        case Format::FORMAT_TEXTUREPACKER_JSON: { doc = exportToTexturePacker(projectName, opts, anim, dialog->imageFormatAsString(), in); break; }
+        case Format::FORMAT_PHASER_JSON: { doc = exportToTexturePacker(projectName, opts, anim, dialog->imageFormatAsString(), in); break; }
+        case Format::FORMAT_ASEPRITE_JSON: { doc = exportToTexturePacker(projectName, opts, anim, dialog->imageFormatAsString(), in); break; }
         default: {
-            qDebug() << tr("_selected_format_error");
+            m_statusBar->setText(tr("_selected_format_error"));
             return false;
         }
         }
@@ -144,10 +149,9 @@ bool JsonExtractor::exportFrames(const QString &basePath, const QString &project
             // Write JSON data to file in an indented (human-readable) format.
             jsonFile.write(doc->toJson(QJsonDocument::Indented));
             jsonFile.close();
-
-            qDebug() << tr("_export_success") << tr("_export_atlas_success") << basePath;
+            m_statusBar->setText(tr("_export_success") + tr("_export_atlas_success") + basePath);
         } else {
-            qDebug() << tr("_write_error") << tr("_json_permissions");
+            m_statusBar->setText(tr("_write_error") + tr("_json_permissions"));
             delete doc;
             return false;
         }
@@ -155,12 +159,14 @@ bool JsonExtractor::exportFrames(const QString &basePath, const QString &project
     }
 
     if (dialog->replaceAtlas()) {
+        m_atlas = m_atlas.convertToFormat(dialog->imageFormat());
         QString pngFilePath = QDir(basePath).filePath(projectName + ".png");
 
         if (!in->m_atlas.save(pngFilePath, "PNG")) {
-            qDebug() << tr("_write_error") << ": " <<  tr("_png_permissions");
+            m_statusBar->setText(tr("_write_error") + ": " + tr("_png_permissions"));
             return false;
         }
     }
+    m_statusBar->setText(tr("_success"));
     return true; // Export completed successfully.
 }

@@ -7,7 +7,8 @@
 #include <QImage>
 #include <QCoreApplication>
 
-GifExtractor::GifExtractor(QObject *parent) : Extractor(parent)
+GifExtractor::GifExtractor(QLabel *statusBar, QProgressBar *progressBar, QObject *parent)
+    : Extractor(statusBar, progressBar, parent)
 {
   // Constructor. Initialization is handled by the Extractor base class.
 }

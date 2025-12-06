@@ -12,6 +12,8 @@
 #include <QMap>
 #include <QString>
 #include <QPainter>
+#include <QLabel>
+#include <QProgressBar>
 #include "export.h"
 
 /**
@@ -32,8 +34,10 @@ public:
      * @brief Constructor for the Extractor class.
      * @param parent The parent QObject.
      */
-    explicit Extractor(QObject *parent = nullptr) : QObject(parent)
+    explicit Extractor(QLabel * statusBar, QProgressBar * progressBar, QObject *parent = nullptr) : QObject(parent)
     {
+      m_statusBar = statusBar;
+      m_progressBar = progressBar;
       m_maxFrameWidth = 0;
       m_maxFrameHeight = 0;
     }
@@ -161,12 +165,12 @@ public:
      * during the export process.
      */
     struct Box {
-        QRect rect;
-//        QPolygon polygon;
-        bool selected;
-        int index;
-        int groupId;
-        QList<int> overlappingBoxes;
+        QRect       rect;
+//         QPolygon polygon;
+        bool        selected;
+        int         index;
+        int         groupId;
+        QList<int>  overlappingBoxes;
     };
 
     enum CropStrategy {
@@ -177,31 +181,29 @@ public:
     };
 
     struct AnimationData {
-        QList<int> frameIndices;
-        int fps;
+        QList<int>  frameIndices;
+        int         fps;
     };
 
-    QList<QPixmap>              m_frames;         /**< List of individual frames (used by the Frame List and Animation). */
-    QImage                      m_atlas;          /**< The complete source image (possibly composite, used by the 'Layers' view). */
-    QList<Box>                  m_atlas_index;    /**< List of Box coordinates for each frame within m_atlas. */
-    QMap<QString, AnimationData> m_animationsData; /**< List of individual animations */
-    QString                     m_filePath;       /**< The original data file from a supported format. */
-    int                         m_maxFrameWidth;  /**< Maximum width among all extracted frames (used for animation bounding box). */
-    int                         m_maxFrameHeight; /**< Maximum height among all extracted frames (used for animation bounding box). */
-    ExportOptions               m_opts;
+    QList<QPixmap>                m_frames;         /**< List of individual frames (used by the Frame List and Animation). */
+    QImage                        m_atlas;          /**< The complete source image (possibly composite, used by the 'Layers' view). */
+    QList<Box>                    m_atlas_index;    /**< List of Box coordinates for each frame within m_atlas. */
+    QMap<QString, AnimationData>  m_animationsData; /**< List of individual animations */
+    QString                       m_filePath;       /**< The original data file from a supported format. */
+    int                           m_maxFrameWidth;  /**< Maximum width among all extracted frames (used for animation bounding box). */
+    int                           m_maxFrameHeight; /**< Maximum height among all extracted frames (used for animation bounding box). */
+    ExportOptions                 m_opts;
+    QLabel *                      m_statusBar;
+    QProgressBar *                m_progressBar;
+    bool                          m_smartCropEnabled = true;
+    double                        m_overlapThreshold = 0.1; // 10% de chevauchement minimum
+    CropStrategy                  m_cropStrategy = SeparateStrategy;
 
-    bool m_smartCropEnabled = true;
-    double m_overlapThreshold = 0.1; // 10% de chevauchement minimum
-    CropStrategy m_cropStrategy = SeparateStrategy;
-
-    void setSmartCropEnabled(bool newSmartCropEnabled);
-
-    bool smartCropEnabled() const;
-
-    double overlapThreshold() const;
-    void setOverlapThreshold(double newOverlapThreshold);
-
-    ExportOptions opts() const;
+    void            setSmartCropEnabled(bool newSmartCropEnabled);
+    bool            smartCropEnabled() const;
+    double          overlapThreshold() const;
+    void            setOverlapThreshold(double newOverlapThreshold);
+    ExportOptions   opts() const;
 
 signals:
     /**

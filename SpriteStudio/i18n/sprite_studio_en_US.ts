@@ -103,17 +103,17 @@
 <context>
     <name>GifExtractor</name>
     <message>
-        <location filename="../src/extractor/gifextractor.cpp" line="41"/>
+        <location filename="../src/extractor/gifextractor.cpp" line="42"/>
         <source>_error</source>
         <translation>Error</translation>
     </message>
     <message>
-        <location filename="../src/extractor/gifextractor.cpp" line="41"/>
+        <location filename="../src/extractor/gifextractor.cpp" line="42"/>
         <source>_invalid_gif</source>
         <translation>GIF file is invalid or doesn&apos;t exist</translation>
     </message>
     <message>
-        <location filename="../src/extractor/gifextractor.cpp" line="48"/>
+        <location filename="../src/extractor/gifextractor.cpp" line="49"/>
         <source>_gif_no_frames</source>
         <translation>GIF reports zero frames</translation>
     </message>
@@ -133,35 +133,40 @@
         <translation type="vanished">Impossible to start the painter for the Atlas</translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonextractor.cpp" line="127"/>
-        <location filename="../src/extractor/jsonextractor.cpp" line="138"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="154"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="166"/>
         <source>_write_error</source>
         <translation>Write error</translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonextractor.cpp" line="138"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="166"/>
         <source>_png_permissions</source>
         <translation>Impossible to write the PNG file. Please check permissions</translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonextractor.cpp" line="125"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="152"/>
         <source>_export_success</source>
         <translation>Export success</translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonextractor.cpp" line="111"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="139"/>
         <source>_selected_format_error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonextractor.cpp" line="125"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="152"/>
         <source>_export_atlas_success</source>
         <translation>Atlas and metadata exported successfully to: </translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonextractor.cpp" line="127"/>
+        <location filename="../src/extractor/jsonextractor.cpp" line="154"/>
         <source>_json_permissions</source>
         <translation>Impossible to write the PNG file. Please check permissions.</translation>
+    </message>
+    <message>
+        <location filename="../src/extractor/jsonextractor.cpp" line="170"/>
+        <source>_success</source>
+        <translation>Success</translation>
     </message>
 </context>
 <context>
@@ -496,32 +501,37 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonExtractordialog.ui" line="79"/>
+        <location filename="../src/extractor/jsonExtractordialog.ui" line="96"/>
         <source>Replace existing atlas</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonExtractordialog.ui" line="86"/>
+        <location filename="../src/extractor/jsonExtractordialog.ui" line="46"/>
         <source>Content</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonExtractordialog.ui" line="43"/>
+        <location filename="../src/extractor/jsonExtractordialog.ui" line="29"/>
         <source>Target application</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonExtractordialog.ui" line="29"/>
+        <location filename="../src/extractor/jsonExtractordialog.ui" line="103"/>
         <source>Base name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonExtractordialog.ui" line="36"/>
+        <location filename="../src/extractor/jsonExtractordialog.ui" line="110"/>
+        <source>Image Format</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/extractor/jsonExtractordialog.ui" line="82"/>
         <source>TextLabel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/extractor/jsonExtractordialog.ui" line="53"/>
+        <location filename="../src/extractor/jsonExtractordialog.ui" line="36"/>
         <source>Atlas preview</source>
         <translation type="unfinished"></translation>
     </message>

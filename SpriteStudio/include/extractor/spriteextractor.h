@@ -11,7 +11,7 @@ class SpriteExtractor : public Extractor
 {
     Q_OBJECT
 public:
-    explicit SpriteExtractor(QObject *parent = nullptr);
+    explicit SpriteExtractor(QLabel *statusBar, QProgressBar *progressBar, QObject *parent = nullptr);
 
     QList<QPixmap> extractFrames(const QString &filePath, int alphaThreshold, int verticalTolerance) override;
     QList<QPixmap> extractFromPixmap(int alphaThreshold, int verticalTolerance) override;
