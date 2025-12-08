@@ -190,6 +190,20 @@ void MainWindow::processFile(const QString &fileName)
         view->show();
 
         populateFrameList(extractor->m_frames, extractor->m_atlas_index);
+
+        for (auto name : extractor->m_animationsData.keys()) {
+            updateAnimationsList();
+
+            QList<QTreeWidgetItem*> items = ui->animationList->findItems(name, Qt::MatchExactly, 0);
+            if (!items.isEmpty()) {
+                ui->animationList->setCurrentItem(items.first());
+                startAnimation();
+            }
+
+            for (int c = 0; c < ui->animationList->columnCount(); c++) {
+                ui->animationList->resizeColumnToContents(c);
+            }
+        }
     }
 }
 
