@@ -140,7 +140,14 @@ QList<QPixmap> JsonExtractor::extractFrames(const QString &filePath, int alphaTh
         animationFrames[defaultAnimName] = allFrames;
         m_animationsData[defaultAnimName].frameIndices = allFrames;
         m_animationsData[defaultAnimName].fps = 60; // FPS par défaut
+    } else {
+        for (auto animation : animationFrames.keys()) {
+            animationFrames[animation] = animationFrames[animation];
+            m_animationsData[animation].frameIndices = animationFrames[animation];
+            m_animationsData[animation].fps = 60; // how to do ?
+        }
     }
+
 
     // 8. Émettre le signal de fin d'extraction
     emit extractionFinished(m_frames.size());
