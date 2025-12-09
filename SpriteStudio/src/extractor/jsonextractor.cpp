@@ -17,22 +17,29 @@ JsonExtractor::JsonExtractor(QLabel *statusBar, QProgressBar *progressBar, QObje
 {
 }
 
-QList<QPixmap> JsonExtractor::extractFrames(const QString &filePath, int alphaThreshold, int verticalTolerance)
+QStringList findFilesGlob(const QString &path, const QString &fîlter)
 {
-    Q_UNUSED(alphaThreshold);
-    Q_UNUSED(verticalTolerance);
+    QStringList res;
+    QDir dir(path);
+    QStringList name_filters;
+    name_filters << fîlter;
+    QFileInfoList fil = dir.entryInfoList(name_filters, QDir::NoDotAndDotDot|QDir::AllDirs|QDir::Files);
+    for (int i = 0; i < fil.size(); i++)
+    {
+        QFileInfo fi = fil.at(i);
+        if (fi.isFile())
+            res.push_back(fi.fileName());
+    }
+    return res;
+}
 
-    m_frames.clear();
-    m_atlas_index.clear();
-    m_animationsData.clear();
-    m_filePath = filePath;
-
+bool getJsonRoot(const QString &filePath, QJsonObject & dest) {
     // 1. Charger et parser le fichier JSON
     QFile jsonFile(filePath);
     if (!jsonFile.open(QIODevice::ReadOnly)) {
         qWarning() << "Impossible d'ouvrir le fichier JSON:" << filePath
                    << "Erreur:" << jsonFile.errorString();
-        return m_frames;
+        return false;
     }
 
     QByteArray jsonData = jsonFile.readAll();
@@ -44,15 +51,32 @@ QList<QPixmap> JsonExtractor::extractFrames(const QString &filePath, int alphaTh
     if (parseError.error != QJsonParseError::NoError) {
         qWarning() << "Erreur de parsing JSON:" << parseError.errorString()
         << "à la position:" << parseError.offset;
-        return m_frames;
+        return false;
     }
 
     if (!doc.isObject()) {
         qWarning() << "Le document JSON n'est pas un objet";
-        return m_frames;
+        return false;
     }
+    dest = doc.object();
 
-    QJsonObject root = doc.object();
+    return true;
+}
+
+QList<QPixmap> JsonExtractor::extractFrames(const QString &filePath, int alphaThreshold, int verticalTolerance)
+{
+    Q_UNUSED(alphaThreshold);
+    Q_UNUSED(verticalTolerance);
+
+    m_frames.clear();
+    m_atlas_index.clear();
+    m_animationsData.clear();
+    m_filePath = filePath;
+
+    QFile jsonFile(m_filePath);
+    QJsonObject root;
+    bool ok = getJsonRoot(m_filePath, root);
+    if (! ok) return m_frames;
 
     // 2. Extraire les informations du meta
     QString imageFileName;
@@ -104,50 +128,58 @@ QList<QPixmap> JsonExtractor::extractFrames(const QString &filePath, int alphaTh
         return m_frames;
     }
 
-    // 5. Extraire les frames selon le format
-    bool hasFrameTags = false;
+    QFileInfo  fileInfo(imageFilePath);
+    QStringList friendAnimations = findFilesGlob(fileInfo.absolutePath(), fileInfo.baseName() + "-*.json");
     QMap<QString, QList<int>> animationFrames;
 
-    if (root.contains("frames")) {
-        // Format 1: TexturePacker (dictionnaire)
-        if (root["frames"].isObject()) {
-            QJsonObject framesObj = root["frames"].toObject();
-            extractFromTexturePackerFormat(framesObj, animationFrames);
+    for(auto currentAnimation : friendAnimations) {
+        qDebug() << currentAnimation;
+        QJsonObject currentRoot;
+        bool ok = getJsonRoot(fileInfo.absolutePath() + QDir::separator() + currentAnimation, currentRoot);
+
+        // 5. Extraire les frames selon le format
+        bool hasFrameTags = false;
+
+        if (currentRoot.contains("frames")) {
+            // Format 1: TexturePacker (dictionnaire)
+            if (currentRoot["frames"].isObject()) {
+                QJsonObject framesObj = currentRoot["frames"].toObject();
+                extractFromTexturePackerFormat(framesObj, animationFrames);
+            }
+            // Format 2: Aseprite/tableau
+            else if (currentRoot["frames"].isArray()) {
+                QJsonArray framesArray = currentRoot["frames"].toArray();
+                extractFromArrayFormat(framesArray, animationFrames);
+            }
         }
-        // Format 2: Aseprite/tableau
-        else if (root["frames"].isArray()) {
-            QJsonArray framesArray = root["frames"].toArray();
-            extractFromArrayFormat(framesArray, animationFrames);
+
+        // 6. Extraire les animations (frameTags)
+        if (currentRoot.contains("meta") && currentRoot["meta"].isObject()) {
+            QJsonObject meta = currentRoot["meta"].toObject();
+            if (meta.contains("frameTags") && meta["frameTags"].isArray()) {
+                hasFrameTags = true;
+                extractAnimationsFromFrameTags(meta["frameTags"].toArray(), animationFrames, m_frames.count());
+            }
+        }
+
+        // 7. Si pas d'animations définies, créer une animation par défaut
+        if (animationFrames.isEmpty() && !m_frames.isEmpty()) {
+            QString defaultAnimName = jsonFileInfo.completeBaseName();
+            QList<int> allFrames;
+            for (int i = 0; i < m_frames.size(); ++i) {
+                allFrames.append(i);
+            }
+            animationFrames[defaultAnimName] = allFrames;
+            m_animationsData[defaultAnimName].frameIndices = allFrames;
+            m_animationsData[defaultAnimName].fps = 60; // FPS par défaut
+        } else {
+            for (auto animation : animationFrames.keys()) {
+                animationFrames[animation] = animationFrames[animation];
+                m_animationsData[animation].frameIndices = animationFrames[animation];
+                m_animationsData[animation].fps = 6; // how to do ?
+            }
         }
     }
-
-    // 6. Extraire les animations (frameTags)
-    if (root.contains("meta") && root["meta"].isObject()) {
-        QJsonObject meta = root["meta"].toObject();
-        if (meta.contains("frameTags") && meta["frameTags"].isArray()) {
-            hasFrameTags = true;
-            extractAnimationsFromFrameTags(meta["frameTags"].toArray(), animationFrames);
-        }
-    }
-
-    // 7. Si pas d'animations définies, créer une animation par défaut
-    if (animationFrames.isEmpty() && !m_frames.isEmpty()) {
-        QString defaultAnimName = jsonFileInfo.completeBaseName();
-        QList<int> allFrames;
-        for (int i = 0; i < m_frames.size(); ++i) {
-            allFrames.append(i);
-        }
-        animationFrames[defaultAnimName] = allFrames;
-        m_animationsData[defaultAnimName].frameIndices = allFrames;
-        m_animationsData[defaultAnimName].fps = 60; // FPS par défaut
-    } else {
-        for (auto animation : animationFrames.keys()) {
-            animationFrames[animation] = animationFrames[animation];
-            m_animationsData[animation].frameIndices = animationFrames[animation];
-            m_animationsData[animation].fps = 60; // how to do ?
-        }
-    }
-
 
     // 8. Émettre le signal de fin d'extraction
     emit extractionFinished(m_frames.size());
@@ -308,7 +340,8 @@ void JsonExtractor::extractFromArrayFormat(const QJsonArray& framesArray,
 }
 
 void JsonExtractor::extractAnimationsFromFrameTags(const QJsonArray& frameTagsArray,
-                                                   QMap<QString, QList<int>>& animationFrames)
+                                                   QMap<QString, QList<int>>& animationFrames,
+                                                   int shift)
 {
     for (const QJsonValue& tagValue : frameTagsArray) {
         if (!tagValue.isObject()) continue;
@@ -330,7 +363,7 @@ void JsonExtractor::extractAnimationsFromFrameTags(const QJsonArray& frameTagsAr
         QList<int> frames;
         for (int i = from; i <= to; ++i) {
             if (i >= 0 && i < m_frames.size()) {
-                frames.append(i);
+                frames.append(i + shift);
             }
         }
 

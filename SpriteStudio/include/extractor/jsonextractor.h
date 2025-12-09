@@ -28,7 +28,7 @@ private:
     void            extractFromArrayFormat(const QJsonArray& framesArray,
                                            QMap<QString, QList<int>>& animationFrames);
     void            extractAnimationsFromFrameTags(const QJsonArray& frameTagsArray,
-                                                   QMap<QString, QList<int>>& animationFrames);
+                                        QMap<QString, QList<int>>& animationFrames, int shift);
     QString         extractAnimationName(const QString& frameName);
 };
 
