@@ -503,6 +503,34 @@ void MainWindow::on_Pause_clicked()
     if (animationTimer->isActive()) {
         animationTimer->stop();
     }
+
     ui->Play->setVisible(true);
     ui->Pause->setVisible(false);
+}
+
+void MainWindow::on_spriteEditButton_clicked()
+{
+
+}
+
+void MainWindow::on_spriteAlignButton_clicked()
+{
+
+}
+
+void MainWindow::on_mirrorButton_clicked()
+{
+    QList<QTreeWidgetItem*> selectedAnimations = ui->animationList->selectedItems();
+    QString animationName = selectedAnimations.first()->text(0);
+    for (int frameId : extractor->m_animationsData[animationName].frameIndices) {
+        extractor->m_frames[frameId] = extractor->m_frames[frameId].transformed(QTransform().scale(-1, 1));
+    }
+    updateAnimation();
+}
+
+void MainWindow::on_sliderFrom_sliderMoved(int position)
+{
+    currentAnimationFrameIndex = position;
+    on_Pause_clicked();
+    updateAnimation();
 }

@@ -343,6 +343,59 @@
       <item>
        <layout class="QVBoxLayout" name="animationArea">
         <item>
+         <layout class="QHBoxLayout" name="toolBox">
+          <item>
+           <widget class="QToolButton" name="spriteEditButton">
+            <property name="toolTip">
+             <string>Edit current frame pixels</string>
+            </property>
+            <property name="text">
+             <string>...</string>
+            </property>
+            <property name="icon">
+             <iconset theme="input-tablet"/>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="spriteAlignButton">
+            <property name="toolTip">
+             <string>Set fixed point</string>
+            </property>
+            <property name="text">
+             <string>...</string>
+            </property>
+            <property name="icon">
+             <iconset theme="format-text-direction-ltr"/>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="mirrorButton">
+            <property name="text">
+             <string>...</string>
+            </property>
+            <property name="icon">
+             <iconset theme="object-flip-horizontal"/>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
          <widget class="QGraphicsView" name="graphicsViewResult"/>
         </item>
         <item>
