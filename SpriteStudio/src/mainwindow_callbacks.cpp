@@ -515,7 +515,21 @@ void MainWindow::on_spriteEditButton_clicked()
 
 void MainWindow::on_spriteAlignButton_clicked()
 {
+    QGraphicsScene *scene = ui->graphicsViewResult->scene();
+    QList<QTreeWidgetItem*> selectedAnimations = ui->animationList->selectedItems();
+    QString animationName = selectedAnimations.first()->text(0);
 
+    scene->clear();
+    scene->setSceneRect(0, 0, extractor->m_maxFrameWidth, extractor->m_maxFrameHeight);
+
+    for (int frameId : extractor->m_animationsData[animationName].frameIndices) {
+        QPixmap currentFrame = extractor->m_frames[frameId];
+        QGraphicsPixmapItem *item = scene->addPixmap(currentFrame);
+
+        qreal x_offset = (extractor->m_maxFrameWidth - currentFrame.width()) / 2.0;
+        qreal y_offset = (extractor->m_maxFrameHeight - currentFrame.height()) / 2.0;
+        item->setPos(x_offset, y_offset);
+    }
 }
 
 void MainWindow::on_mirrorButton_clicked()
