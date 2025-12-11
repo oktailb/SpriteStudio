@@ -95,6 +95,10 @@ void MainWindow::on_animationList_itemClicked(QTreeWidgetItem *item, int column)
         ui->animationList->clearSelection();
     }
     ui->animationList->setCurrentItem(item);
+
+    clearBoundingBoxHighlighters();
+    setBoundingBoxHighllithers(selectedFrameRows);
+    adjustZoomSliderToWindow();
 }
 
 void MainWindow::removeSelectedAnimation()
