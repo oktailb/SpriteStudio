@@ -2,6 +2,7 @@
 #include "extractor/jsonExtractordialog.h"
 #include "ui_jsonExtractordialog.h"
 #include "extractor/export.h"
+#include "generated/version.h"
 #include <QDebug>
 #include <QImage>
 #include <QStack>
@@ -468,9 +469,24 @@ QJsonDocument *JsonExtractor::exportToTexturePacker(QString projectName,
   root["frames"] = framesDict;
 
   QJsonObject meta;
-  meta["app"] = "Sprite Studio";
-  meta["version"] = "1.0";
-  meta["image"] = projectName + ".png";
+  meta["app"] = PROJECT_NAME;
+  meta["version"] = PROJECT_VERSION;
+  if (dialog->replaceAtlas()) {
+      switch (dialog->selectedStrategy()) {
+      case AtlasStrategy::ATLASSTRATEGY_ONE_ATLAS_PER_ANIMATION: {
+          meta["image"] = projectName + "-" + anim + ".png";
+          break;
+      }
+      case AtlasStrategy::ATLASSTRATEGY_ONE_ATLAS_FOR_ALL_ANIMATIONS:
+      case AtlasStrategy::ATLASSTRATEGY_ORIGINAL_ATLAS: {
+          meta["image"] = projectName + ".png";
+          break;
+      }
+      default:
+          break;
+      }
+  } else {
+  }
   meta["format"] = format;
   meta["size"] = QJsonObject{
     {"w", in->m_atlas.width()},
@@ -496,7 +512,7 @@ QJsonDocument *JsonExtractor::exportToTexturePacker(QString projectName,
 
 bool JsonExtractor::exportFrames(const QString &basePath, const QString &projectName, Extractor *in)
 {
-  jsonExtractorDialog* dialog = new jsonExtractorDialog(in, projectName);
+  dialog = new jsonExtractorDialog(in, projectName);
   dialog->exec();
 
   ExportOptions opts = dialog->getOpts();
@@ -505,8 +521,8 @@ bool JsonExtractor::exportFrames(const QString &basePath, const QString &project
 
   if (dialog->replaceAtlas()) {
       switch (dialog->selectedStrategy()) {
-      case AtlasStrategy::ATLASSTRATEGY_ONE_ATLAS_PER_ANIMATION: { generatePackedAtlas(in); break; }
-      case AtlasStrategy::ATLASSTRATEGY_ONE_ATLAS_FOR_ALL_ANIMATIONS: { generateIndividualAtlas(in, basePath, projectName); break; }
+      case AtlasStrategy::ATLASSTRATEGY_ONE_ATLAS_PER_ANIMATION: { generateIndividualAtlas(in, basePath, projectName); break; }
+      case AtlasStrategy::ATLASSTRATEGY_ONE_ATLAS_FOR_ALL_ANIMATIONS: { generatePackedAtlas(in); break; }
       case AtlasStrategy::ATLASSTRATEGY_ORIGINAL_ATLAS: {
           m_atlas = in->m_atlas.convertToFormat(dialog->imageFormat());
           QString pngFilePath = QDir(basePath).filePath(projectName + ".png");
@@ -582,13 +598,13 @@ void JsonExtractor::generatePackedAtlas(Extractor *in)
     for (QString anim : in->m_animationsData.keys()) {
         for (int i = 0; i < in->m_animationsData[anim].frameIndices.count(); ++i) {
             const int currentIndice = in->m_animationsData[anim].frameIndices.at(i);
-            const QImage &currentImage = m_frames[currentIndice].toImage();
+            const QImage &currentImage = in->m_frames[currentIndice].toImage();
 
             // Calculate grid position (line and column)
             int line = i / nb_cols;
             int col = i % nb_cols;
-            int x = col * m_maxFrameWidth;
-            int y = line * m_maxFrameHeight;
+            int x = col * in->m_maxFrameWidth;
+            int y = line * in->m_maxFrameHeight;
 
             // Draw the frame at its calculated position
             painter.drawImage(x, y, currentImage);
@@ -631,13 +647,13 @@ void JsonExtractor::generateIndividualAtlas(Extractor *in, QString basePath, QSt
         for (QString anim : in->m_animationsData.keys()) {
             for (int i = 0; i < in->m_animationsData[anim].frameIndices.count(); ++i) {
                 const int currentIndice = in->m_animationsData[anim].frameIndices.at(i);
-                const QImage &currentImage = m_frames[currentIndice].toImage();
+                const QImage &currentImage = in->m_frames[currentIndice].toImage();
 
                 // Calculate grid position (line and column)
                 int line = i / nb_cols;
                 int col = i % nb_cols;
-                int x = col * m_maxFrameWidth;
-                int y = line * m_maxFrameHeight;
+                int x = col * in->m_maxFrameWidth;
+                int y = line * in->m_maxFrameHeight;
 
                 // Draw the frame at its calculated position
                 painter.drawImage(x, y, currentImage);
@@ -650,6 +666,7 @@ void JsonExtractor::generateIndividualAtlas(Extractor *in, QString basePath, QSt
                 m_atlas_index.push_back(box);
             }
         }
+        m_atlas = atlasImage;
         QString pngFilePath = QDir(basePath).filePath(projectName + "-" + anim + ".png");
 
         if (!m_atlas.save(pngFilePath, "PNG")) {

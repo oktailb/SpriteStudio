@@ -4,6 +4,7 @@
 #include "extractor.h"
 #include <QLabel>
 #include <QProgressBar>
+#include "extractor/jsonExtractordialog.h"
 
 /**
  * @brief Extractor derivated class for JSON sprite databases used in industry.
@@ -19,6 +20,8 @@ public:
     QList<QPixmap> extractFromPixmap(int alphaThreshold, int verticalTolerance) override;
     bool           exportFrames(const QString &basePath, const QString &projectName, Extractor* in) override;
 private:
+    jsonExtractorDialog* dialog;
+
     QJsonDocument * exportToTexturePacker(QString projectName,
                                           const ExportOptions &opts,
                                           const QString anim, const QString format,
