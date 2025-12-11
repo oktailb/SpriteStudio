@@ -4,8 +4,8 @@ if(WIN32)
 endif(WIN32)
 
 #set(CMAKE_BUILD_TYPE Release)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O5 -W -Wall -pedantic")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O5 -W -Wall -pedantic")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ggdb -W -Wall -pedantic")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -W -Wall -pedantic")
 set(QT_FORCE_CMP0156_TO_VALUE NEW)
 
 if (WIN32)

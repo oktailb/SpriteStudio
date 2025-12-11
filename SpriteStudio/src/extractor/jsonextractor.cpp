@@ -132,6 +132,8 @@ QList<QPixmap> JsonExtractor::extractFrames(const QString &filePath, int alphaTh
   QFileInfo  fileInfo(imageFilePath);
   QStringList friendAnimations = findFilesGlob(fileInfo.absolutePath(), fileInfo.baseName() + "-*.json");
   QMap<QString, QList<int>> animationFrames;
+  if (friendAnimations.isEmpty())
+    friendAnimations.push_back(jsonFileInfo.fileName());
 
   for(auto currentAnimation : friendAnimations) {
       qDebug() << currentAnimation;
