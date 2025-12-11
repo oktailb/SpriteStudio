@@ -31,6 +31,7 @@ private:
                                         QMap<QString, QList<int>>& animationFrames, int shift);
     QString         extractAnimationName(const QString& frameName);
     void            generatePackedAtlas(Extractor *in);
+    void            generateIndividualAtlas(Extractor *in, QString basePath, QString projectName);
 };
 
 #endif // JSONEXTRACTOR_H
