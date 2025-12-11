@@ -30,6 +30,7 @@ private:
     void            extractAnimationsFromFrameTags(const QJsonArray& frameTagsArray,
                                         QMap<QString, QList<int>>& animationFrames, int shift);
     QString         extractAnimationName(const QString& frameName);
+    void            generatePackedAtlas(Extractor *in);
 };
 
 #endif // JSONEXTRACTOR_H

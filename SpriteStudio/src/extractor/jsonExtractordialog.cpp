@@ -64,6 +64,11 @@ jsonExtractorDialog::jsonExtractorDialog(Extractor* in, QString baseName, QWidge
     setupImageFormatComboBox(ui->imageFormats);
     int currentIndex = ui->imageFormats->findData(in->m_atlas.format(), Qt::UserRole, Qt::MatchExactly);
     ui->imageFormats->setCurrentIndex(currentIndex);
+
+    ui->atlasSaveStrategy->insertItem(0, tr("Use original Atlas"), AtlasStrategy::ATLASSTRATEGY_ORIGINAL_ATLAS);
+    ui->atlasSaveStrategy->insertItem(0, tr("Generate same minimal Atlas for all animations"), AtlasStrategy::ATLASSTRATEGY_ONE_ATLAS_FOR_ALL_ANIMATIONS);
+    ui->atlasSaveStrategy->insertItem(0, tr("Generate one Atlas per animation"), AtlasStrategy::ATLASSTRATEGY_ONE_ATLAS_PER_ANIMATION);
+    ui->atlasSaveStrategy->setEnabled(ui->replaceExistingAtlas->isChecked());
 }
 
 jsonExtractorDialog::~jsonExtractorDialog()
@@ -110,3 +115,17 @@ QList<QString> jsonExtractorDialog::selectedAnimations() const
   return m_selectedAnimations;
 }
 
+void jsonExtractorDialog::on_replaceExistingAtlas_checkStateChanged(const Qt::CheckState &state)
+{
+    ui->atlasSaveStrategy->setEnabled((state == Qt::Checked)?true:false);
+}
+
+void jsonExtractorDialog::on_atlasSaveStrategy_currentIndexChanged(int index)
+{
+    m_selectedStrategy = (AtlasStrategy)ui->atlasSaveStrategy->currentData().toInt();
+}
+
+AtlasStrategy jsonExtractorDialog::selectedStrategy() const
+{
+    return m_selectedStrategy;
+}

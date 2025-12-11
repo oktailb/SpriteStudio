@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>460</width>
+    <width>469</width>
     <height>565</height>
    </rect>
   </property>
@@ -23,27 +23,27 @@
    <bool>false</bool>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="1" column="0">
-    <widget class="QLabel" name="targetAppLabel">
-     <property name="text">
-      <string>Target application</string>
+   <item row="7" column="0" colspan="2">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Orientation::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::Ok</set>
      </property>
     </widget>
    </item>
-   <item row="3" column="0">
-    <widget class="QLabel" name="atlasPreviewLabel">
+   <item row="0" column="0">
+    <widget class="QLabel" name="baseNameLabel">
      <property name="text">
-      <string>Atlas preview</string>
+      <string>Base name</string>
      </property>
     </widget>
    </item>
-   <item row="1" column="1">
-    <widget class="QComboBox" name="targetFormat"/>
-   </item>
-   <item row="5" column="0">
-    <widget class="QLabel" name="contentLabel">
+   <item row="2" column="0">
+    <widget class="QLabel" name="label">
      <property name="text">
-      <string>Content</string>
+      <string>Image Format</string>
      </property>
     </widget>
    </item>
@@ -66,27 +66,10 @@
      </property>
     </widget>
    </item>
-   <item row="6" column="0" colspan="2">
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="orientation">
-      <enum>Qt::Orientation::Horizontal</enum>
-     </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::Ok</set>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="1">
-    <widget class="QLabel" name="baseName">
+   <item row="1" column="0">
+    <widget class="QLabel" name="targetAppLabel">
      <property name="text">
-      <string>TextLabel</string>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="1">
-    <widget class="QListWidget" name="animations">
-     <property name="selectionMode">
-      <enum>QAbstractItemView::SelectionMode::MultiSelection</enum>
+      <string>Target application</string>
      </property>
     </widget>
    </item>
@@ -97,22 +80,49 @@
      </property>
     </widget>
    </item>
-   <item row="0" column="0">
-    <widget class="QLabel" name="baseNameLabel">
+   <item row="4" column="0">
+    <widget class="QLabel" name="label_2">
      <property name="text">
-      <string>Base name</string>
+      <string>Atlas save strategy</string>
      </property>
     </widget>
    </item>
-   <item row="2" column="0">
-    <widget class="QLabel" name="label">
+   <item row="6" column="0">
+    <widget class="QLabel" name="contentLabel">
      <property name="text">
-      <string>Image Format</string>
+      <string>Content</string>
      </property>
     </widget>
    </item>
    <item row="2" column="1">
     <widget class="QComboBox" name="imageFormats"/>
+   </item>
+   <item row="0" column="1">
+    <widget class="QLabel" name="baseName">
+     <property name="text">
+      <string>TextLabel</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="1">
+    <widget class="QListWidget" name="animations">
+     <property name="selectionMode">
+      <enum>QAbstractItemView::SelectionMode::MultiSelection</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QLabel" name="atlasPreviewLabel">
+     <property name="text">
+      <string>Atlas preview</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QComboBox" name="targetFormat"/>
+   </item>
+   <item row="5" column="1">
+    <widget class="QComboBox" name="atlasSaveStrategy"/>
    </item>
   </layout>
  </widget>

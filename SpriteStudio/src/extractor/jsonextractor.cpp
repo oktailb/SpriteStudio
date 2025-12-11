@@ -494,6 +494,8 @@ QJsonDocument *JsonExtractor::exportToTexturePacker(QString projectName,
   return new QJsonDocument(root);
 }
 
+
+
 bool JsonExtractor::exportFrames(const QString &basePath, const QString &projectName, Extractor *in)
 {
   jsonExtractorDialog* dialog = new jsonExtractorDialog(in, projectName);
@@ -507,6 +509,14 @@ bool JsonExtractor::exportFrames(const QString &basePath, const QString &project
 
       QJsonDocument * doc = nullptr;
 
+      switch (dialog->selectedStrategy()) {
+      case AtlasStrategy::ATLASSTRATEGY_ONE_ATLAS_PER_ANIMATION: { generatePackedAtlas(in); break; }
+      case AtlasStrategy::ATLASSTRATEGY_ONE_ATLAS_FOR_ALL_ANIMATIONS: { generatePackedAtlas(in); break; }
+      case AtlasStrategy::ATLASSTRATEGY_ORIGINAL_ATLAS:
+      default:
+          break;
+      }
+
       switch (dialog->selectedFormat())
         {
         case Format::FORMAT_TEXTUREPACKER_JSON: { doc = exportToTexturePacker(projectName, opts, anim, dialog->imageFormatAsString(), in); break; }
@@ -517,7 +527,6 @@ bool JsonExtractor::exportFrames(const QString &basePath, const QString &project
             return false;
           }
         }
-
 
       QString jsonFilePath = QDir(basePath).filePath(projectName + "-" + anim + ".json");
 
@@ -536,14 +545,65 @@ bool JsonExtractor::exportFrames(const QString &basePath, const QString &project
     }
 
   if (dialog->replaceAtlas()) {
-      m_atlas = m_atlas.convertToFormat(dialog->imageFormat());
+      m_atlas = in->m_atlas.convertToFormat(dialog->imageFormat());
       QString pngFilePath = QDir(basePath).filePath(projectName + ".png");
 
-      if (!in->m_atlas.save(pngFilePath, "PNG")) {
+      if (!m_atlas.save(pngFilePath, "PNG")) {
           m_statusBar->setText(tr("_write_error") + ": " + tr("_png_permissions"));
           return false;
         }
     }
   m_statusBar->setText(tr("_success"));
   return true; // Export completed successfully.
+}
+
+void JsonExtractor::generatePackedAtlas(Extractor *in)
+{
+    int nb_frames = 0;
+    for (QString anim : in->m_animationsData.keys()) {
+        nb_frames += in->m_animationsData[anim].frameIndices.count();
+    }
+
+    // Calculate optimal grid layout (as close to square as possible) for the atlas image.
+    int nb_cols = (int)std::floor(std::sqrt(nb_frames));
+    if (nb_cols == 0) nb_cols = 1;
+    int nb_lines = (int)std::ceil((double)nb_frames / nb_cols);
+
+    // Create the final QImage for the atlas with calculated dimensions and transparent background.
+    QImage atlasImage(in->m_maxFrameWidth * nb_cols,
+                      in->m_maxFrameHeight * nb_lines,
+                      in->m_atlas.format());
+    atlasImage.fill(Qt::transparent);
+
+    QPainter painter(&atlasImage);
+
+    if (!painter.isActive()) {
+        qWarning() << "Échec critique: QPainter ne peut pas démarrer même en contexte synchrone.";
+    }
+    m_atlas_index.clear();
+
+    for (QString anim : in->m_animationsData.keys()) {
+        for (int i = 0; i < in->m_animationsData[anim].frameIndices.count(); ++i) {
+            const int currentIndice = in->m_animationsData[anim].frameIndices.at(i);
+            const QImage &currentImage = m_frames[currentIndice].toImage();
+
+            // Calculate grid position (line and column)
+            int line = i / nb_cols;
+            int col = i % nb_cols;
+            int x = col * m_maxFrameWidth;
+            int y = line * m_maxFrameHeight;
+
+            // Draw the frame at its calculated position
+            painter.drawImage(x, y, currentImage);
+
+            // Record the bounding box coordinates (Box) for the metadata file (m_atlas_index).
+            Box box;
+            box.rect = {x, y, currentImage.width(), currentImage.height()};
+            box.index  = i;
+            box.selected = false;
+            m_atlas_index.push_back(box);
+        }
+    }
+    // Finalize the atlas Pixmap for display in the main view.
+    m_atlas = atlasImage;
 }

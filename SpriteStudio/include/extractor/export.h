@@ -15,6 +15,12 @@ enum Format {
     FORMAT_ASEPRITE_JSON
 };
 
+enum AtlasStrategy {
+    ATLASSTRATEGY_ORIGINAL_ATLAS,
+    ATLASSTRATEGY_ONE_ATLAS_FOR_ALL_ANIMATIONS,
+    ATLASSTRATEGY_ONE_ATLAS_PER_ANIMATION
+};
+
 struct ExportOptions {
     Format format;
     bool trimSprites;
