@@ -512,7 +512,7 @@ void MainWindow::on_Pause_clicked()
     ui->Pause->setVisible(false);
 }
 
-void MainWindow::on_spriteEditButton_clicked()
+void MainWindow::on_spriteCleanButton_clicked()
 {
 
 }

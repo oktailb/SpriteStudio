@@ -345,7 +345,7 @@
         <item>
          <layout class="QHBoxLayout" name="toolBox">
           <item>
-           <widget class="QToolButton" name="spriteEditButton">
+           <widget class="QToolButton" name="spriteCleanButton">
             <property name="toolTip">
              <string>Edit current frame pixels</string>
             </property>
@@ -353,7 +353,7 @@
              <string>...</string>
             </property>
             <property name="icon">
-             <iconset theme="input-tablet"/>
+             <iconset theme="edit-clear"/>
             </property>
            </widget>
           </item>

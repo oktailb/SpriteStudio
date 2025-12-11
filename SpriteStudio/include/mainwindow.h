@@ -397,7 +397,7 @@ private slots:
   void startAnimationTimer();
   void stopAnimationTimer();
   void updateAnimationUI(bool playing);
-  void on_spriteEditButton_clicked();
+  void on_spriteCleanButton_clicked();
   void on_spriteAlignButton_clicked();
   void on_mirrorButton_clicked();
   void on_sliderFrom_sliderMoved(int position);
