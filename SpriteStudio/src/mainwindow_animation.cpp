@@ -1,7 +1,5 @@
 #include "include/mainwindow.h"
-#include "./ui_mainwindow.h"
 #include "ui_mainwindow.h"
-#include <stdfloat>
 #include <QtGui>
 #include <QDialog>
 #include <QTextEdit>

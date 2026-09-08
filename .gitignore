@@ -31,6 +31,18 @@
 *.out
 *.app
 
-build
-bin
-.qtcreator
+build/
+bin/
+lib/
+.qtcreator/
+*.user
+*.user.*
+CMakeLists.txt.user*
+
+# Editor & Temporary files
+*~
+*.swp
+*.swo
+*.~undo-tree~
+.vscode/
+.idea/

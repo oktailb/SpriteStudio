@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 3.20)
 
 # Créer un fichier d'en-tête avec les informations de version
 configure_file(
@@ -39,7 +39,7 @@ set (${PROJECT_NAME}_SRC
     src/aboutdialog.cpp
     src/version.h.in
     src/haiku.PackageInfo.in
-    generated/version.h
+    ${CMAKE_CURRENT_BINARY_DIR}/generated/version.h
 )
 
 set (${PROJECT_NAME}_UI
@@ -59,21 +59,21 @@ set (${PROJECT_NAME}_INCLUDE
     include/aboutdialog.h
 )
 
-qt_add_translations(${PROJECT_NAME}
-    SOURCES
-        ${${PROJECT_NAME}_SRC}
-        ${${PROJECT_NAME}_INCLUDE}
-    TS_FILES
-        ${${PROJECT_NAME}_TS_FILES}
-)
-
 qt_add_executable(${PROJECT_NAME}
     ${${PROJECT_NAME}_SRC}
     ${${PROJECT_NAME}_UI}
     ${${PROJECT_NAME}_INCLUDE}
 )
 
-add_custom_target(translations ALL DEPENDS ${TS_FILES})
+qt_add_translations(${PROJECT_NAME}
+    TS_FILES
+        ${${PROJECT_NAME}_TS_FILES}
+    SOURCES
+        ${${PROJECT_NAME}_SRC}
+        ${${PROJECT_NAME}_INCLUDE}
+    RESOURCE_PREFIX
+        "/i18n"
+)
 
 qt6_add_resources(${PROJECT_NAME} "images"
     PREFIX "drawer"
@@ -83,12 +83,6 @@ qt6_add_resources(${PROJECT_NAME} "images"
     stop.png
     plus.png
     minus.png
-)
-
-qt6_add_resources(${PROJECT_NAME} "images"
-    PREFIX "i18n"
-    FILES
-    ${${PROJECT_NAME}_TS_FILES}
 )
 
 qt6_add_resources(${PROJECT_NAME} "text"
@@ -110,11 +104,10 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     Qt${QT_VERSION_MAJOR}::Multimedia
     Qt${QT_VERSION_MAJOR}::MultimediaWidgets
 )
-#message(FATAL_ERROR "TEST: ")
+
 target_include_directories(${PROJECT_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ../lib/include
-    ${CMAKE_BUILD_RPATH}/
+    ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Haiku")

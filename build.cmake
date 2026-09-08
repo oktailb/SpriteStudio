@@ -1,17 +1,30 @@
 if(WIN32)
-    set(CMAKE_PREFIX_PATH "./cots/")
-    set(CMAKE_LIBRARY_PATH "./cots/")
-endif(WIN32)
-
-#set(CMAKE_BUILD_TYPE Release)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ggdb -W -Wall -pedantic")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -W -Wall -pedantic")
-set(QT_FORCE_CMP0156_TO_VALUE NEW)
-
-if (WIN32)
-    message(AUTHOR_WARNING "PLEASE CONFIGURE IT REGARDING YOUR CONFIG")
-    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH};C:\\Qt6\\6.10.1\\mingw_64\\lib\\cmake\\Qt6)
+    # Check if Qt6 is already provided via CMAKE_PREFIX_PATH, Qt6_DIR, or environment
+    if(NOT CMAKE_PREFIX_PATH AND NOT Qt6_DIR AND NOT DEFINED ENV{QTDIR} AND NOT DEFINED ENV{CMAKE_PREFIX_PATH})
+        # Check standard default installation locations for Qt on Windows
+        file(GLOB QT_CANDIDATES
+            "C:/Qt/6.*/mingw_64"
+            "C:/Qt6/6.*/mingw_64"
+        )
+        if(QT_CANDIDATES)
+            list(SORT QT_CANDIDATES ORDER DESCENDING)
+            list(GET QT_CANDIDATES 0 QT_DETECTED)
+            message(STATUS "Auto-detected Qt6 at: ${QT_DETECTED}")
+            list(APPEND CMAKE_PREFIX_PATH "${QT_DETECTED}")
+        endif()
+    endif()
 endif()
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -W -Wall -pedantic")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -W -Wall -pedantic")
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ggdb")
+elseif(MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+endif()
+
+set(QT_FORCE_CMP0156_TO_VALUE NEW)
 
 string(TIMESTAMP CMAKE_BUILD_DATE "%Y-%m-%d %H:%M:%S")
 
@@ -68,20 +81,17 @@ function(get_git_info)
         COMMAND git log --format=%an
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         OUTPUT_VARIABLE ALL_AUTHORS
+        OUTPUT_STRIP_TRAILING_WHITESPACE
     )
 
     if(ALL_AUTHORS)
-        execute_process(
-            COMMAND echo "${ALL_AUTHORS}"
-            COMMAND sort
-            COMMAND uniq
-            COMMAND head -10
-            COMMAND tr "\\n" ","
-            COMMAND sed "s/,$//"
-            COMMAND sed "s/^,//"
-            OUTPUT_VARIABLE GIT_AUTHORS
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-        )
+        string(REPLACE "\n" ";" AUTHOR_LIST "${ALL_AUTHORS}")
+        list(REMOVE_DUPLICATES AUTHOR_LIST)
+        list(LENGTH AUTHOR_LIST NUM_AUTHORS)
+        if(NUM_AUTHORS GREATER 10)
+            list(SUBLIST AUTHOR_LIST 0 10 AUTHOR_LIST)
+        endif()
+        string(JOIN ", " GIT_AUTHORS ${AUTHOR_LIST})
     else()
         set(GIT_AUTHORS "Aucun auteur trouvé")
     endif()
@@ -92,24 +102,22 @@ function(get_git_info)
         OUTPUT_VARIABLE GIT_LAST_EMAIL
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
+
     execute_process(
         COMMAND git log --format=%ae
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         OUTPUT_VARIABLE ALL_AUTHORS_MAIL
+        OUTPUT_STRIP_TRAILING_WHITESPACE
     )
 
-    if(ALL_AUTHORS)
-        execute_process(
-            COMMAND echo "${ALL_AUTHORS_MAIL}"
-            COMMAND sort
-            COMMAND uniq
-            COMMAND head -10
-            COMMAND tr "\\n" ","
-            COMMAND sed "s/,$//"
-            COMMAND sed "s/^,//"
-            OUTPUT_VARIABLE GIT_AUTHORS_MAIL
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-        )
+    if(ALL_AUTHORS_MAIL)
+        string(REPLACE "\n" ";" MAIL_LIST "${ALL_AUTHORS_MAIL}")
+        list(REMOVE_DUPLICATES MAIL_LIST)
+        list(LENGTH MAIL_LIST NUM_MAILS)
+        if(NUM_MAILS GREATER 10)
+            list(SUBLIST MAIL_LIST 0 10 MAIL_LIST)
+        endif()
+        string(JOIN ", " GIT_AUTHORS_MAIL ${MAIL_LIST})
     else()
         set(GIT_AUTHORS_MAIL "Aucun mail trouvé")
     endif()

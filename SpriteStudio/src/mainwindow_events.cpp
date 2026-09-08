@@ -1,8 +1,6 @@
 #include "include/mainwindow.h"
-#include "./ui_mainwindow.h"
-#include "qfiledialog.h"
 #include "ui_mainwindow.h"
-#include <stdfloat>
+#include "qfiledialog.h"
 #include <QtGui>
 #include <QDialog>
 #include <QTextEdit>

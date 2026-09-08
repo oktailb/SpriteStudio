@@ -1,5 +1,4 @@
 #include "include/mainwindow.h"
-#include "./ui_mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QTimer>
 #include <QShortcut>
