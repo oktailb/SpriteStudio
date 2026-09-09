@@ -309,11 +309,21 @@ void MainWindow::updateAnimation()
     const QPixmap &currentFrame = extractor->m_frames.at(frameListIndex);
 
     QGraphicsScene *scene = ui->graphicsViewResult->scene();
-    scene->clear();
-
     scene->setSceneRect(0, 0, extractor->m_maxFrameWidth, extractor->m_maxFrameHeight);
 
-    QGraphicsPixmapItem *item = scene->addPixmap(currentFrame);
+    QGraphicsPixmapItem *item = nullptr;
+    const auto items = scene->items();
+    for (auto *i : items) {
+        item = dynamic_cast<QGraphicsPixmapItem*>(i);
+        if (item) break;
+    }
+
+    if (!item) {
+        scene->clear();
+        item = scene->addPixmap(currentFrame);
+    } else {
+        item->setPixmap(currentFrame);
+    }
 
     qreal x_offset = (extractor->m_maxFrameWidth - currentFrame.width()) / 2.0;
     qreal y_offset = (extractor->m_maxFrameHeight - currentFrame.height()) / 2.0;

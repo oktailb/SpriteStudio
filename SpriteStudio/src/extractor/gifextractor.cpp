@@ -55,7 +55,7 @@ QList<QPixmap> GifExtractor::extractFromPixmap(int alphaThreshold, int verticalT
 
   // Set up a connection to capture each frame as QMovie advances.
   QObject::connect(&movie, &QMovie::frameChanged,
-                    [&movie, &extractedImages, this](int frameNumber)
+                    [&movie, &extractedImages, this](int /*frameNumber*/)
                     {
                       QImage currentImage = movie.currentImage();
                       if (currentImage.isNull())

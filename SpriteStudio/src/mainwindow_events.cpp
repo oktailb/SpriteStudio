@@ -119,15 +119,15 @@ void MainWindow::timerEvent(QTimerEvent *event)
 
 void MainWindow::adjustZoomSliderToWindow()
 {
-    if (extractor == nullptr)
+    if (extractor == nullptr || extractor->m_atlas.isNull() || extractor->m_atlas.height() <= 0)
         return;
-    zoomFactor = ui->graphicsViewLayers->viewport()->height() / extractor->m_atlas.height();
-    if (zoomFactor == 0.0)
+    zoomFactor = static_cast<double>(ui->graphicsViewLayers->viewport()->height()) / static_cast<double>(extractor->m_atlas.height());
+    if (zoomFactor <= 0.0)
         zoomFactor = 1.0;
     zoomSlider->blockSignals(true);
-    zoomSlider->setValue(zoomFactor + 100);
+    zoomSlider->setValue(static_cast<int>(zoomFactor * 100.0));
     zoomSlider->blockSignals(false);
-    zoomLabel->setText(QString::number(zoomFactor) + "%");
+    zoomLabel->setText(QString::number(static_cast<int>(zoomFactor * 100.0)) + "%");
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event)

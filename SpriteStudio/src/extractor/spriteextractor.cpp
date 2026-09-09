@@ -1,6 +1,7 @@
 #include "extractor/spriteextractor.h"
 #include <QDebug>
 #include <QStack>
+#include <QDir>
 
 SpriteExtractor::SpriteExtractor(QLabel *statusBar, QProgressBar *progressBar, QObject *parent)
     : Extractor(statusBar, progressBar, parent)
@@ -162,9 +163,9 @@ QList<QPixmap> SpriteExtractor::extractFromPixmap(int alphaThreshold, int vertic
 
 bool SpriteExtractor::exportFrames(const QString &basePath, const QString &projectName, Extractor *in)
 {
-  Q_UNUSED(basePath);
-  Q_UNUSED(projectName);
-  Q_UNUSED(in);
-
-  return false;
+  if (!in || in->m_atlas.isNull()) {
+      return false;
+  }
+  QString pngPath = QDir(basePath).filePath(projectName + ".png");
+  return in->m_atlas.save(pngPath, "PNG");
 }

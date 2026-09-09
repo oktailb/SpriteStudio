@@ -98,14 +98,6 @@ void Extractor::removeFrame(int index)
                 frameIndex--;
             }
         }
-
-        QSet<int> uniqueIndices;
-        for (int frameIndex : frameIndices) {
-            uniqueIndices.insert(frameIndex);
-        }
-        frameIndices = uniqueIndices.values();
-
-        std::sort(frameIndices.begin(), frameIndices.end());
     }
 }
 
@@ -143,13 +135,7 @@ void Extractor::removeFrames(const QList<int> &indices)
                 updatedIndices.append(newIndex);
             }
         }
-
-        QSet<int> uniqueIndices;
-        for (int index : updatedIndices) {
-            uniqueIndices.insert(index);
-        }
-        frameIndices = uniqueIndices.values();
-        std::sort(frameIndices.begin(), frameIndices.end());
+        frameIndices = updatedIndices;
     }
 }
 
@@ -162,19 +148,16 @@ void Extractor::clearAtlasAreas(const QList<int> &indices)
         atlasImage = atlasImage.convertToFormat(QImage::Format_ARGB32);
     }
 
+    QPainter painter(&atlasImage);
+    painter.setCompositionMode(QPainter::CompositionMode_Clear);
+
     for (int index : indices) {
         if (index >= 0 && index < m_atlas_index.size()) {
             const Box &box = m_atlas_index.at(index);
-
-            for (int y = box.rect.y(); y < box.rect.bottom(); ++y) {
-                for (int x = box.rect.x(); x < box.rect.right(); ++x) {
-                    if (x < atlasImage.width() && y < atlasImage.height()) {
-                        atlasImage.setPixel(x, y, qRgba(0, 0, 0, 0)); // Transparent
-                    }
-                }
-            }
+            painter.fillRect(box.rect, Qt::transparent);
         }
     }
+    painter.end();
     m_atlas = atlasImage;
 }
 

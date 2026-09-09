@@ -31,7 +31,7 @@ void MainWindow::invertFrameSelection()
     setSelectedFrameIndices(newSelection);
 
     clearBoundingBoxHighlighters();
-    setBoundingBoxHighllithers(newSelection);
+    setBoundingBoxHighlighters(newSelection);
 }
 
 void MainWindow::deleteFrame(int row)

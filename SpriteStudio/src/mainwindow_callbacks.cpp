@@ -95,7 +95,7 @@ void MainWindow::on_animationList_itemClicked(QTreeWidgetItem *item, int column)
     ui->animationList->setCurrentItem(item);
 
     clearBoundingBoxHighlighters();
-    setBoundingBoxHighllithers(selectedFrameRows);
+    setBoundingBoxHighlighters(selectedFrameRows);
     adjustZoomSliderToWindow();
 }
 
@@ -156,7 +156,42 @@ void MainWindow::on_animationList_customContextMenuRequested(const QPoint &pos)
 
 void MainWindow::on_framesList_customContextMenuRequested(const QPoint &pos)
 {
+    if (!extractor || extractor->m_frames.isEmpty())
+        return;
 
+    QMenu menu(this);
+    QList<int> selectedIndices = getSelectedFrameIndices();
+
+    if (!selectedIndices.isEmpty()) {
+        if (selectedIndices.size() > 1) {
+            QAction *createAnimAction = menu.addAction(tr("_create_animation"));
+            connect(createAnimAction, &QAction::triggered,
+                    this, &MainWindow::createAnimationFromSelection);
+
+            QAction *reverseAction = menu.addAction(tr("_reverse_order"));
+            connect(reverseAction, &QAction::triggered,
+                    this, [this, selectedIndices]() {
+                        QList<int> indices = selectedIndices;
+                        reverseFramesOrder(indices);
+                    });
+
+            menu.addSeparator();
+        }
+
+        QString deleteText = (selectedIndices.size() > 1) ?
+                                 tr("_delete_selected_frames") : tr("_delete_frame");
+        QAction *deleteAction = menu.addAction(deleteText);
+        connect(deleteAction, &QAction::triggered,
+                this, &MainWindow::deleteSelectedFrame);
+
+        menu.addSeparator();
+
+        QAction *invertAction = menu.addAction(tr("_invert_selection"));
+        connect(invertAction, &QAction::triggered,
+                this, &MainWindow::invertSelection);
+    }
+
+    menu.exec(ui->framesList->viewport()->mapToGlobal(pos));
 }
 
 void MainWindow::updateAnimationsAfterFrameRemoval(int removedRow, int mergedRow)
@@ -181,13 +216,6 @@ void MainWindow::updateAnimationsAfterFrameRemoval(int removedRow, int mergedRow
             }
         }
 
-        QSet<int> uniqueIndices;
-        for (int index : updatedIndices) {
-            uniqueIndices.insert(index);
-        }
-        updatedIndices = uniqueIndices.values();
-
-        std::sort(updatedIndices.begin(), updatedIndices.end());
         extractor->setAnimation(name, updatedIndices, fps);
     }
 }
@@ -326,34 +354,9 @@ void MainWindow::on_enableSmartCropCheckbox_stateChanged(int state)
     if (extractor == nullptr) return;
     if (!currentFilePath.isEmpty()) {
         extractor->setSmartCropEnabled(state != 0);
-        connect(extractor, &Extractor::extractionFinished,
-                this, [this]() {
-
-                    this->populateFrameList(extractor->m_frames, extractor->m_atlas_index);
-                    // Ensure animation is started after the loading
-                    this->setupGraphicsView(extractor->m_atlas);
-                    this->stopAnimation();
-                    this->startAnimation();
-                    ui->verticalTolerance->setValue(extractor->m_maxFrameHeight / 3);
-                });
-
-        if  (ui->backgroundRemoval->isChecked())
-            removeAtlasBackground();;
+        if (ui->backgroundRemoval->isChecked())
+            removeAtlasBackground();
         extractor->extractFromPixmap(ui->alphaThreshold->value(), ui->verticalTolerance->value());
-        clearBoundingBoxHighlighters();
-        if (!extractor->m_frames.isEmpty()) {
-            auto view = ui->graphicsViewLayers;
-            auto scene = new QGraphicsScene(view);
-
-            QGraphicsPixmapItem *item = new QGraphicsPixmapItem(QPixmap::fromImage(extractor->m_atlas));
-            scene->addItem(item);
-            item->setPos(0, 0);
-            view->setScene(scene);
-            view->show();
-
-            populateFrameList(extractor->m_frames, extractor->m_atlas_index);
-        }
-
     }
 }
 
@@ -363,33 +366,9 @@ void MainWindow::on_overlapThresholdSpinbox_valueChanged(double threshold)
         return;
     if (!currentFilePath.isEmpty()) {
         extractor->setOverlapThreshold(threshold);
-        connect(extractor, &Extractor::extractionFinished,
-                this, [this]() {
-
-                    this->populateFrameList(extractor->m_frames, extractor->m_atlas_index);
-                    // Ensure animation is started after the loading
-                    this->setupGraphicsView(extractor->m_atlas);
-                    this->stopAnimation();
-                    this->startAnimation();
-                    ui->verticalTolerance->setValue(extractor->m_maxFrameHeight / 3);
-                });
-
-        if  (ui->backgroundRemoval->isChecked())
-            removeAtlasBackground();;
+        if (ui->backgroundRemoval->isChecked())
+            removeAtlasBackground();
         extractor->extractFromPixmap(ui->alphaThreshold->value(), ui->verticalTolerance->value());
-        clearBoundingBoxHighlighters();
-        if (!extractor->m_frames.isEmpty()) {
-            auto view = ui->graphicsViewLayers;
-            auto scene = new QGraphicsScene(view);
-
-            QGraphicsPixmapItem *item = new QGraphicsPixmapItem(QPixmap::fromImage(extractor->m_atlas));
-            scene->addItem(item);
-            item->setPos(0, 0);
-            view->setScene(scene);
-            view->show();
-
-            populateFrameList(extractor->m_frames, extractor->m_atlas_index);
-        }
     }
 }
 
@@ -439,14 +418,14 @@ void MainWindow::on_framesList_clicked(const QModelIndex &index)
     selectedIndices.push_back(index.data(Qt::UserRole).toInt());
 
     clearBoundingBoxHighlighters();
-    setBoundingBoxHighllithers(selectedIndices);
+    setBoundingBoxHighlighters(selectedIndices);
     adjustZoomSliderToWindow();
 }
 
 void MainWindow::on_actionExport_triggered()
 {
   // Check if have frames
-  if (extractor->m_frames.isEmpty()) {
+  if (!extractor || extractor->m_frames.isEmpty()) {
       QMessageBox::warning(this, tr("_export_error"), tr("_please_load_frames"));
       return;
     }

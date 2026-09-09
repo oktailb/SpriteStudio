@@ -27,7 +27,7 @@ void MainWindow::removeAtlasBackgroundAndRefresh() {
 
         // 1. Update sprite atlas on extractor data model
         extractor->m_atlas = image;
-        extractor->setSmartCropEnabled(ui->enableSmartCropCheckbox->isEnabled());
+        extractor->setSmartCropEnabled(ui->enableSmartCropCheckbox->isChecked());
         extractor->setOverlapThreshold(ui->overlapThresholdSpinbox->value());
         //extractor->set(ui->enableSmartCropCheckbox->isEnabled());
 
@@ -156,7 +156,7 @@ void MainWindow::processFile(const QString &fileName)
     else if ((extension == "png") || (extension == "jpg") || (extension == "jpeg") ||  (extension == "bmp") || (extension == "gif")) {
         extractor = new SpriteExtractor(statusLabel, progressBar, this);
         SpriteExtractor *tmp = static_cast<SpriteExtractor*>(extractor);
-        tmp->setSmartCropEnabled(ui->enableSmartCropCheckbox->isEnabled());
+        tmp->setSmartCropEnabled(ui->enableSmartCropCheckbox->isChecked());
         tmp->setOverlapThreshold(ui->overlapThresholdSpinbox->value());
     } else if (extension == "json") {
         extractor = new JsonExtractor(statusLabel, progressBar, this);
@@ -166,9 +166,7 @@ void MainWindow::processFile(const QString &fileName)
     }
     connect(extractor, &Extractor::extractionFinished,
             this, [this]() {
-
                 this->populateFrameList(extractor->m_frames, extractor->m_atlas_index);
-                // Ensure animation is started after the loading
                 this->setupGraphicsView(extractor->m_atlas);
                 this->stopAnimation();
                 this->startAnimation();
@@ -178,29 +176,17 @@ void MainWindow::processFile(const QString &fileName)
     extractor->extractFrames(fileName, alphaThreshold, verticalTolerance);
     clearBoundingBoxHighlighters();
     if (!extractor->m_frames.isEmpty()) {
-        auto view = ui->graphicsViewLayers;
-        auto scene = new QGraphicsScene(view);
-
-        QGraphicsPixmapItem *item = new QGraphicsPixmapItem(QPixmap::fromImage(extractor->m_atlas));
-        scene->addItem(item);
-        item->setPos(0, 0);
-        view->setScene(scene);
-        view->show();
-
-        populateFrameList(extractor->m_frames, extractor->m_atlas_index);
-
-        for (auto name : extractor->m_animationsData.keys()) {
-            updateAnimationsList();
-
-            QList<QTreeWidgetItem*> items = ui->animationList->findItems(name, Qt::MatchExactly, 0);
+        updateAnimationsList();
+        if (!extractor->m_animationsData.isEmpty()) {
+            QString firstAnim = extractor->m_animationsData.firstKey();
+            QList<QTreeWidgetItem*> items = ui->animationList->findItems(firstAnim, Qt::MatchExactly, 0);
             if (!items.isEmpty()) {
                 ui->animationList->setCurrentItem(items.first());
                 startAnimation();
             }
-
-            for (int c = 0; c < ui->animationList->columnCount(); c++) {
-                ui->animationList->resizeColumnToContents(c);
-            }
+        }
+        for (int c = 0; c < ui->animationList->columnCount(); c++) {
+            ui->animationList->resizeColumnToContents(c);
         }
     }
 }
@@ -258,7 +244,7 @@ void MainWindow::clearBoundingBoxHighlighters()
     boundingBoxHighlighters.clear();
 }
 
-void MainWindow::setBoundingBoxHighllithers(const QList<int> &selectedIndices)
+void MainWindow::setBoundingBoxHighlighters(const QList<int> &selectedIndices)
 {
     QGraphicsScene *scene = ui->graphicsViewLayers->scene();
     if (!scene || !extractor) return;
@@ -267,7 +253,7 @@ void MainWindow::setBoundingBoxHighllithers(const QList<int> &selectedIndices)
         int row = selectedIndices.at(i);
 
         if (row < 0 || row >= extractor->m_atlas_index.size()) {
-            qWarning() << "Index de frame invalide dans setBoundingBoxHighllithers:" << row;
+            qWarning() << "Index de frame invalide dans setBoundingBoxHighlighters:" << row;
             continue;
         }
 
@@ -291,9 +277,9 @@ void MainWindow::setBoundingBoxHighllithers(const QList<int> &selectedIndices)
 
         scene->addItem(highlighter);
         boundingBoxHighlighters.append(highlighter);
-        if (!isSelecting)
-            fitSelectedFramesInView(100);
     }
+    if (!isSelecting && !selectedIndices.isEmpty())
+        fitSelectedFramesInView(100);
 }
 
 void MainWindow::refreshFrameListDisplay()
@@ -423,7 +409,7 @@ void MainWindow::updateSelection(const QPointF &scenePos)
 
     // Update visual feedback
     clearBoundingBoxHighlighters();
-    setBoundingBoxHighllithers(currentSelection);
+    setBoundingBoxHighlighters(currentSelection);
     updateCurrentAnimation();
 
 }
@@ -445,7 +431,7 @@ void MainWindow::endSelection()
 
         // 3. Update all UI components
         clearBoundingBoxHighlighters();
-        setBoundingBoxHighllithers(currentSelection);
+        setBoundingBoxHighlighters(currentSelection);
 
         // 4. Animation is already updated by updateCurrentAnimation() in updateSelection()
         // Just ensure the animation list is synced
@@ -507,7 +493,7 @@ void MainWindow::selectFramesInList(const QList<int> &frameIndices)
     setSelectedFrameIndices(frameIndices);
 
     clearBoundingBoxHighlighters();
-    setBoundingBoxHighllithers(frameIndices);
+    setBoundingBoxHighlighters(frameIndices);
 
     updateCurrentAnimation();
 }

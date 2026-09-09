@@ -485,7 +485,7 @@ private slots:
   /**
    * @brief Update all bounding box highlighter on atlas view
    */
-  void setBoundingBoxHighllithers(const QList<int> &selectedIndices);
+  void setBoundingBoxHighlighters(const QList<int> &selectedIndices);
 
   /**
    * @brief Set zoom/position on atlas view to fit current selection

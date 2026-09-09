@@ -30,6 +30,7 @@ jsonExtractorDialog::jsonExtractorDialog(Extractor* in, QString baseName, QWidge
     , ui(new Ui::jsonExtractorDialog)
     , m_in(in)
     , m_baseName(baseName)
+    , m_selectedStrategy(AtlasStrategy::ATLASSTRATEGY_ORIGINAL_ATLAS)
 {
     ui->setupUi(this);
 
@@ -49,26 +50,41 @@ jsonExtractorDialog::jsonExtractorDialog(Extractor* in, QString baseName, QWidge
     QGraphicsPixmapItem *item = sceneLayers->addPixmap(QPixmap::fromImage(in->m_atlas));
     sceneLayers->setSceneRect(in->m_atlas.rect());
     ui->preview->fitInView(item, Qt::KeepAspectRatio);
-    for(auto anim = in->m_animationsData.begin() ; anim != in->m_animationsData.end() ; anim++) {
-        QListWidgetItem *item = new QListWidgetItem();
-        item->setData(Qt::DisplayRole, anim.key() + " (" + QString::number(anim.value().frameIndices.count()) + " frames)");
-        QImage deco = in->m_frames[anim.value().frameIndices.first()].toImage();
-        item->setData(Qt::DecorationRole, deco.scaled(60, 64, Qt::KeepAspectRatio));
-        item->setData(Qt::UserRole, anim.key());
-        ui->animations->addItem(item);
+    for(auto anim = in->m_animationsData.begin() ; anim != in->m_animationsData.end() ; ++anim) {
+        QListWidgetItem *listItem = new QListWidgetItem();
+        listItem->setData(Qt::DisplayRole, anim.key() + " (" + QString::number(anim.value().frameIndices.count()) + " frames)");
+        if (!anim.value().frameIndices.isEmpty()) {
+            int firstIdx = anim.value().frameIndices.first();
+            if (firstIdx >= 0 && firstIdx < in->m_frames.size()) {
+                QImage deco = in->m_frames[firstIdx].toImage();
+                listItem->setData(Qt::DecorationRole, deco.scaled(60, 64, Qt::KeepAspectRatio));
+            }
+        }
+        listItem->setData(Qt::UserRole, anim.key());
+        ui->animations->addItem(listItem);
     }
-    ui->targetFormat->insertItem(0, "Texture Packer", Format::FORMAT_TEXTUREPACKER_JSON);
-    ui->targetFormat->insertItem(0, "Phaser", Format::FORMAT_PHASER_JSON);
-    ui->targetFormat->insertItem(0, "Aseprite", Format::FORMAT_ASEPRITE_JSON);
+
+    ui->animations->selectAll();
+    for (int i = 0; i < ui->animations->count(); ++i) {
+        m_selectedAnimations.append(ui->animations->item(i)->data(Qt::UserRole).toString());
+    }
+
+    ui->targetFormat->addItem("Texture Packer", Format::FORMAT_TEXTUREPACKER_JSON);
+    ui->targetFormat->addItem("Phaser", Format::FORMAT_PHASER_JSON);
+    ui->targetFormat->addItem("Aseprite", Format::FORMAT_ASEPRITE_JSON);
 
     setupImageFormatComboBox(ui->imageFormats);
     int currentIndex = ui->imageFormats->findData(in->m_atlas.format(), Qt::UserRole, Qt::MatchExactly);
     ui->imageFormats->setCurrentIndex(currentIndex);
 
-    ui->atlasSaveStrategy->insertItem(0, tr("Use original Atlas"), AtlasStrategy::ATLASSTRATEGY_ORIGINAL_ATLAS);
-    ui->atlasSaveStrategy->insertItem(0, tr("Generate same minimal Atlas for all animations"), AtlasStrategy::ATLASSTRATEGY_ONE_ATLAS_FOR_ALL_ANIMATIONS);
-    ui->atlasSaveStrategy->insertItem(0, tr("Generate one Atlas per animation"), AtlasStrategy::ATLASSTRATEGY_ONE_ATLAS_PER_ANIMATION);
+    ui->atlasSaveStrategy->addItem(tr("Use original Atlas"), AtlasStrategy::ATLASSTRATEGY_ORIGINAL_ATLAS);
+    ui->atlasSaveStrategy->addItem(tr("Generate same minimal Atlas for all animations"), AtlasStrategy::ATLASSTRATEGY_ONE_ATLAS_FOR_ALL_ANIMATIONS);
+    ui->atlasSaveStrategy->addItem(tr("Generate one Atlas per animation"), AtlasStrategy::ATLASSTRATEGY_ONE_ATLAS_PER_ANIMATION);
+    m_selectedStrategy = (AtlasStrategy)ui->atlasSaveStrategy->currentData().toInt();
     ui->atlasSaveStrategy->setEnabled(ui->replaceExistingAtlas->isChecked());
+
+    connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
+    connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
 }
 
 jsonExtractorDialog::~jsonExtractorDialog()
@@ -122,7 +138,7 @@ void jsonExtractorDialog::on_replaceExistingAtlas_checkStateChanged(const Qt::Ch
 
 void jsonExtractorDialog::on_atlasSaveStrategy_currentIndexChanged(int index)
 {
-    m_selectedStrategy = (AtlasStrategy)ui->atlasSaveStrategy->currentData().toInt();
+    m_selectedStrategy = (AtlasStrategy)ui->atlasSaveStrategy->itemData(index).toInt();
 }
 
 AtlasStrategy jsonExtractorDialog::selectedStrategy() const
