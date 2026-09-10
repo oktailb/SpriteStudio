@@ -9,12 +9,61 @@ L'objectif est d'élever l'application d'un simple outil de découpe technique a
 
 | ID | Chantier | Priorité | Complexité | Statut |
 |---|---|---|---|---|
-| **M1** | [Édition Interactive des Bounding Boxes (Atlas Slicing)](#m1--édition-interactive-des-bounding-boxes-atlas-slicing) | **Haute** | Moyenne | 📝 Planifié |
+| **M0** | [Assainissement Architectural & Dette Technique (Audit Critique)](#m0--assainissement-architectural--dette-technique-audit-critique) | **Haute** | Haute | 🚨 Dette Prioritaire |
+| **M1** | [Édition Interactive des Bounding Boxes (Atlas Slicing)](#m1--édition-interactive-des-bounding-boxes-atlas-slicing) | **Haute** | Moyenne | 🟡 ~75% - Correctifs requis |
 | **M2** | [Gestionnaire Complet d'Animations & Timeline](#m2--gestionnaire-complet-danimations--timeline) | **Haute** | Moyenne | 📝 Planifié |
 | **M3** | [Points d'Ancrage & Pivots (Origins & Offsets)](#m3--points-dancrage--pivots-origins--offsets) | **Moyenne** | Faible | 📝 Planifié |
 | **M4** | [Outil d'Édition de Pixels (Pixel Art Retouching)](#m4--outil-dédition-de-pixels-pixel-art-retouching) | **Moyenne** | Haute | 📝 Planifié |
 | **M5** | [Format de Projet Natif (`.sps` - Sprite Studio Project)](#m5--format-de-projet-natif-sps---sprite-studio-project) | **Haute** | Faible | 📝 Planifié |
 | **M6** | [Algorithme d'Empaquetage Avancé (MaxRects Bin-Packing)](#m6--algorithme-dempaquetage-avancé-maxrects-bin-packing) | **Basse** | Moyenne | 📝 Planifié |
+
+---
+
+## M0 : Assainissement Architectural & Dette Technique (Audit Critique)
+
+### Contexte & Constat d'Audit
+L'application souffre d'une transition inachevée entre un code impératif legacy et une architecture orientée document. Pour garantir la maintenabilité des futurs modules (timeline M2, éditeur pixel M4), les faiblesses structurelles suivantes doivent être traitées :
+
+### 1. Dualité des Modèles de Données (`SpriteDocument` vs `Extractor`)
+- **Problème :** Il existe deux représentations concurrentes de la planche en mémoire : `SpriteDocument` (orienté modèle avec signaux Qt) et `Extractor` (contenant ses propres champs publics `m_frames`, `m_atlas`, `m_atlas_index`). L'application dépend de méthodes verbeuses et fragiles `syncToDocument()` et `syncFromDocument()`, créant des duplications de mémoire et des risques permanents de désynchronisation.
+- **Solution Cible :** Faire de `SpriteDocument` l'**unique source de vérité** (*Single Source of Truth*). Les classes dérivées d'`Extractor` doivent devenir des services purs ou des algorithmes *stateless* (exécutant l'extraction puis remplissant directement le document) sans conserver d'état miroir.
+
+### 2. Monolithe "God Object" `MainWindow`
+- **Problème :** `MainWindow` dépasse les 2000 lignes de code réparties arbitrairement sur 6 fichiers source (`mainwindow_atlas.cpp`, `mainwindow_events.cpp`, etc.). Malgré ce découpage physique, tout réside dans la même classe qui gère à la fois le graphe de scène, la lecture multimédia, les dialogues, le décodage d'images et la logique métier.
+- **Solution Cible :** Extraire des contrôleurs dédiés :
+  - `AtlasViewController` : gestion exclusive de `QGraphicsView`, zoom, pan, outils et interaction avec `AtlasBoxItem`.
+  - `AnimationController` : synchronisation du lecteur `AnimationPlayer` avec `animationList`.
+  - `ProjectController` : I/O, ouverture, export et intégration undo/redo.
+
+### 3. Gestion Mémoire & Pratiques Modernes C++17
+- **Problème :** Omniprésence de pointeurs bruts nus (`new`/`delete` manuels sur `extractor`), absence de smart pointers (`std::unique_ptr`), et gestion hasardeuse du cycle de vie des objets graphiques de scène (risque de pointeurs pendants après `scene->clear()`).
+- **Solution Cible :**
+  - Généraliser `std::unique_ptr` pour tous les objets possédés.
+  - Sécuriser le graphe de scène Qt en respectant strictement la hiérarchie parent-enfant et l'ownership de `QGraphicsScene`.
+  - Éliminer les constantes magiques disséminées (`margin = 16.0`, `tolerance = 10`, `minSize = 3.0`) au profit d'un fichier de constantes ou de configuration typé.
+
+### 4. Performance & Traitement d'Images sur le Thread Principal
+- **Problème :** Le flood-fill de `SpriteExtractor` et la suppression d'arrière-plan par balayage de pixels s'exécutent de façon synchrone sur le thread UI via des appels lents à `QImage::pixel(x, y)` et une pile `QStack<QPoint>`. Sur de grands atlas (2K/4K), l'interface freeze totalement.
+- **Solution Cible :**
+  - Remplacer les accès `pixel(x, y)` par des accès directs en mémoire contiguë (`scanLine()` / `constScanLine()`).
+  - Déporter les algorithmes d'extraction lourds sur un thread travailleur (`QThread` ou `QtConcurrent`) avec barre de progression non bloquante.
+  - Optimiser la pile Undo/Redo (`DeleteFramesCommand`) pour éviter de dupliquer des textures `QPixmap` entières en RAM.
+
+### 5. Standardisation de l'Ergonomie & Internationalisation (i18n)
+- **Problème :**
+  - Le zoom molette utilise un `resetTransform()` brutal qui recentre la vue au lieu de zoomer sous le pointeur de la souris.
+  - L'i18n est chaotique : clés opaques avec underscores (`tr("_file_error")`), libellés bilingues codés en dur (`tr("Trim to Pixels / Ajuster aux pixels")`), mélange anglais/français dans l'interface.
+  - Boutons d'outils textuels bruts sans icônes vectorielles cohérentes avec le reste de l'UI.
+- **Solution Cible :**
+  - Implémenter un zoom interactif centré sur la position de la souris dans le viewport.
+  - Normaliser toutes les chaînes en anglais propre et déléguer la traduction au système standard Qt Linguist (`.ts`).
+  - Intégrer un jeu d'icônes homogène pour la barre d'outils de slicing.
+
+### 6. DevOps, Tests Automatisés & Qualité
+- **Problème :** Couverture de test à 0%. Aucun test unitaire automatique pour les algorithmes critiques (`computeTrimmedRect`, `AtlasPacker`, commandes Undo/Redo). Aucune intégration continue (CI).
+- **Solution Cible :**
+  - Mettre en place un projet de test unitaire via `QTest` / `CTest` dans CMake.
+  - Ajouter un workflow GitHub Actions multi-plateforme (Ubuntu, Windows, macOS) validant le build à chaque commit/PR.
 
 ---
 
@@ -24,7 +73,7 @@ L'objectif est d'élever l'application d'un simple outil de découpe technique a
 La détection automatique par seuil alpha ou tolérance de couleur est efficace pour des planches simples, mais montre ses limites sur des sprites découpés en plusieurs morceaux disjoints (ex. un projectile séparé du personnage, des effets de particules, des membres détachés).  
 L'utilisateur doit pouvoir ajuster visuellement et manuellement les boîtes de découpe directement sur la vue de l'atlas.
 
-### Spécifications Fonctionnelles
+### Spécifications Fonctionnelles Initiales
 1. **Interaction Directe sur la Vue Atlas (`QGraphicsScene`) :**
    - **Poignées de redimensionnement (Handles) :** Chaque boîte sélectionnée affiche 8 poignées (coins et milieux des côtés) avec changement dynamique du curseur (`Qt::SizeHorCursor`, `Qt::SizeVerCursor`, `Qt::SizeFDiagCursor`, `Qt::SizeBDiagCursor`).
    - **Déplacement à la souris :** Glisser-déposer une boîte pour corriger son positionnement.
@@ -39,9 +88,32 @@ L'utilisateur doit pouvoir ajuster visuellement et manuellement les boîtes de d
 4. **Intégration Undo / Redo :**
    - Chaque déplacement, redimensionnement ou création doit passer par `QUndoCommand` pour permettre l'annulation (`Ctrl+Z`).
 
-### Fichiers & Composants Cibles
-- `SpriteStudio/include/atlasboxitem.h` / `src/atlasboxitem.cpp` : Objet graphique dérivé de `QGraphicsRectItem` avec gestion des poignées et des événements souris.
-- `SpriteStudio/src/mainwindow_atlas.cpp` : Branchement avec les signaux de `QGraphicsScene` et la synchronisation du `SpriteDocument`.
+### 📊 Point d'Étape & Bilan de Conformité (Avancement : ~75%)
+
+| Spécification M1 | Statut | Composant / Fichier | Diagnostic & Observations |
+|---|:---:|---|---|
+| **Poignées de redimensionnement (8 Handles)** | ✅ Fait | `atlasboxitem.h` / `.cpp` | 8 poignées fonctionnelles avec curseurs directionnels. **Bug visuel :** marge statique de 16px provoquant des traînées graphiques (*ghosting*) lors d'un fort dézoom. |
+| **Déplacement souris (Drag & Drop)** | ✅ Fait | `atlasboxitem.cpp` | Fonctionne avec contrainte aux bornes de l'atlas. Ne gère actuellement que le déplacement d'une boîte unique (multi-sélection ignorée au drag). |
+| **Déplacement clavier (Flèches, Shift)** | ❌ **CASSÉ** | `mainwindow_events.cpp` vs `mainwindow.cpp` | **Conflit critique de raccourcis :** `Key_Left` et `Key_Right` sont volés par `stepLeftShortcut` / `stepRightShortcut` de `AnimationPlayer` au niveau fenêtre. Déplacement fin inopérant. |
+| **Création manuelle (Outil Add Slice)** | 🟡 Partiel | `mainwindow.ui`, `mainwindow_events.cpp` | Tracé interactif opérationnel avec aperçu vert en pointillés. **Défaut ergonomique :** ne rebascule pas automatiquement en mode sélection après tracé. |
+| **Génération instantanée de la frame** | 🟡 Partiel | `spritedocument.cpp`, `mainwindow_atlas.cpp` | La frame est créée et synchronisée, mais entraîne une destruction/recréation intégrale coûteuse de tous les `AtlasBoxItem` de la scène. |
+| **Trim to Pixels (Shrink to Alpha)** | ✅ Fait | `spritedocument.cpp`, `mainwindow_atlas.cpp` | Calcul de boîte englobante opaque opérationnel (mono et multi-sélection). Manque un raccourci clavier direct (`Ctrl+T`). |
+| **Merge Slices (Fusion)** | ✅ Fait | `mainwindow_atlas.cpp`, `commands.cpp` | Opérationnel via clic droit (si ≥ 2 boîtes). Utilise `MergeFramesCommand`. Absent de la toolbar. |
+| **Suppression (Touche Suppr)** | ❌ **DÉFECTUEUX** | `mainwindow.cpp` | Le raccourci `Delete` est confiné au widget `framesList`. **Presser la touche `Suppr` avec le focus sur l'atlas ne fait rien.** |
+| **Intégration Undo / Redo** | ✅ Fait | `commands.h` / `commands.cpp` | Toutes les modifications géométriques et ajouts passent par `ChangeBoxRectCommand` et `AddSliceCommand` sur `QUndoStack`. |
+
+### 🛠️ Liste des Correctifs Prioritaires pour Valider M1
+1. **[Clavier] Résoudre le conflit `Key_Left` / `Key_Right` :**
+   - Conditionner les raccourcis de stepping de l'animation à l'absence de sélection dans l'atlas ou utiliser un raccourci distinct (ex. `Alt + Flèches` ou focus lecteur).
+   - Rendre les flèches directionnelles prioritaires pour le déplacement de boîte lorsque `graphicsViewLayers` ou une boîte est active.
+2. **[Clavier] Activer la touche `Suppr` globale :**
+   - Déclarer le raccourci `QKeySequence::Delete` au niveau de la fenêtre `MainWindow` ou l'intercepter dans `keyPressEvent` pour supprimer la tranche active sur l'atlas.
+3. **[UX] Workflow de création de boîte :**
+   - À la libération du bouton de souris après avoir tracé un rectangle : rebasculer automatiquement sur l'outil `ToolSelect`, cocher `btnToolSelect`, et sélectionner la nouvelle boîte créée pour permettre son ajustement immédiat.
+4. **[Rendu] Correction du ghosting des poignées :**
+   - Dans `AtlasBoxItem::boundingRect()`, adapter la marge de découpe à la taille réelle des poignées en fonction du zoom de la vue pour éliminer les résidus graphiques.
+5. **[Multi-sélection] Déplacement groupé à la souris :**
+   - Permettre de déplacer l'ensemble des tranches sélectionnées lors du drag d'une boîte appartenant à la sélection.
 
 ---
 
@@ -198,15 +270,17 @@ L'exportation actuelle vers Godot ou TexturePacker utilise un placement en grill
 
 ## 📅 Ordre de Déploiement Recommandé
 
-1. **Étape 1 — Sauvegarde & Projet (M5)** :
-   Sécuriser le travail de l'utilisateur dès le départ en lui permettant de sauvegarder et recharger son document complet (`.sps`).
-2. **Étape 2 — Séquençage & Multi-Animations (M2)** :
-   Donner toute la dimension "studio d'animation" avec la création d'animations multiples, le réglage de cadence et les boucles.
-3. **Étape 3 — Points d'Ancrage / Pivots (M3)** :
+1. **Étape 0 — Stabilisation & Clôture de M1 (M1-Fix)** :
+   Corriger immédiatement les conflits de raccourcis (flèches et touche Suppr), le workflow du mode Slice et le bug visuel des poignées avant d'entamer de nouveaux chantiers.
+2. **Étape 1 — Sauvegarde & Projet Natif (M5)** :
+   Sécuriser le travail de l'utilisateur dès le départ en lui permettant de sauvegarder et recharger son document complet (`.sps`), évitant toute perte de données lors des crashs ou fermetures.
+3. **Étape 2 — Séquençage & Multi-Animations (M2)** :
+   Donner toute la dimension "studio d'animation" avec la création d'animations multiples, le réglage de cadence et les boucles via une timeline ergonomique.
+4. **Étape 3 — Points d'Ancrage / Pivots (M3)** :
    Assurer la cohérence physique des animations avant l'export dans les moteurs de jeux.
-4. **Étape 4 — Édition Manuelle des Boîtes de Découpe (M1)** :
-   Permettre à l'utilisateur de corriger visuellement les découpes à la souris sur l'atlas.
-5. **Étape 5 — Outil d'Édition de Pixels (M4)** :
+5. **Étape 4 — Assainissement Architectural & Performance (M0)** :
+   Unification définitive du modèle sur `SpriteDocument`, élimination du state parallèle d'`Extractor`, multithreading des extractions et tests unitaires.
+6. **Étape 5 — Outil d'Édition de Pixels (M4)** :
    Offrir l'atelier de retouche pixel art autonome directement au cœur du workflow.
-6. **Étape 6 — Optimisation du Packing (M6)** :
-   Perfectionner le rendement de l'atlas PNG final pour la production.
+7. **Étape 6 — Optimisation du Packing (M6)** :
+   Perfectionner le rendement de l'atlas PNG final pour la production avec MaxRects.
