@@ -23,6 +23,9 @@
 #include "animation/animationplayer.h"
 #include "extractor/extractorregistry.h"
 #include "commands/commands.h"
+#include <QDragEnterEvent>
+#include <QDropEvent>
+#include <QMenu>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -170,6 +173,9 @@ protected:
    */
   void resizeEvent(QResizeEvent *event) override;
 
+  void dragEnterEvent(QDragEnterEvent *event) override;
+  void dropEvent(QDropEvent *event) override;
+
   /**
    * @brief When window is resized of image loaded for  fisrst ttime,  the picture is adjusted to the viw.
    * This method will recalculate the effective value of zoomFFactor and make it visible
@@ -211,6 +217,11 @@ private slots:
    *    * Prompts the user to select a sprite file (PNG, GIF, etc.) for processing.
    */
   void on_actionOpen_triggered();
+
+  /**
+   * @brief Slot triggered by the 'Save' action.
+   */
+  void on_actionSave_triggered();
 
   /**
    * @brief Slot triggered by the 'Exit' action.
@@ -442,6 +453,10 @@ private slots:
   SpriteDocument *m_document = nullptr;
   QUndoStack *m_undoStack = nullptr;
   AnimationPlayer *m_player = nullptr;
+  QMenu *m_recentMenu = nullptr;
+
+  void addRecentFile(const QString &filePath);
+  void updateRecentFilesMenu();
 
   void syncFromDocument();
   void syncToDocument();

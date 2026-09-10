@@ -220,7 +220,8 @@ void JsonExtractor::extractFromTexturePackerFormat(const QJsonObject& framesObj,
   for (const QString& animation : animationFrames.keys())
     frameIndex += animationFrames[animation].size();
 
-  m_progressBar->setValue(0);
+  emit progress(0);
+  if (m_progressBar) m_progressBar->setValue(0);
   for (auto it = framesObj.begin(); it != framesObj.end(); ++it) {
       QString frameName = it.key();
       QJsonValue frameValue = it.value();
@@ -276,7 +277,10 @@ void JsonExtractor::extractFromTexturePackerFormat(const QJsonObject& framesObj,
       if (!animName.isEmpty()) {
           animationFrames[animName].append(frameIndex);
         }
-      m_progressBar->setValue(100 + frameIndex / framesObj.count());
+
+      int pct = framesObj.count() > 0 ? (100 * (frameIndex + 1) / framesObj.count()) : 0;
+      emit progress(pct);
+      if (m_progressBar) m_progressBar->setValue(pct);
 
       frameIndex++;
 
@@ -284,7 +288,8 @@ void JsonExtractor::extractFromTexturePackerFormat(const QJsonObject& framesObj,
       if (w > m_maxFrameWidth) m_maxFrameWidth = w;
       if (h > m_maxFrameHeight) m_maxFrameHeight = h;
     }
-  m_progressBar->setValue(100);
+  emit progress(100);
+  if (m_progressBar) m_progressBar->setValue(100);
 }
 
 void JsonExtractor::extractFromArrayFormat(const QJsonArray& framesArray,

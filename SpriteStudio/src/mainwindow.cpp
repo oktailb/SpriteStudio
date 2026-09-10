@@ -2,6 +2,8 @@
 #include "ui_mainwindow.h"
 #include <QTimer>
 #include <QShortcut>
+#include <QSettings>
+#include <QFileInfo>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -17,6 +19,7 @@ MainWindow::MainWindow(QWidget *parent)
       , m_player(new AnimationPlayer(this))
 {
   ui->setupUi(this);
+  setAcceptDrops(true);
 
   // Initialize extractor registry
   ExtractorRegistry::instance();
@@ -34,8 +37,14 @@ MainWindow::MainWindow(QWidget *parent)
 
   // Standard File Shortcuts
   ui->actionOpen->setShortcut(QKeySequence::Open);
+  ui->actionSave->setShortcut(QKeySequence::Save);
   ui->actionExport->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_E));
   ui->actionExit->setShortcut(QKeySequence::Quit);
+
+  // Recent Files Submenu
+  m_recentMenu = new QMenu(tr("Recent Files"), this);
+  ui->menuFile->insertMenu(ui->actionSave, m_recentMenu);
+  updateRecentFilesMenu();
 
   // Animation and Navigation Shortcuts
   QShortcut *spaceShortcut = new QShortcut(QKeySequence(Qt::Key_Space), this);
@@ -202,4 +211,57 @@ MainWindow::~MainWindow()
     }
 
   delete ui;
+}
+
+void MainWindow::updateRecentFilesMenu()
+{
+  if (!m_recentMenu) return;
+  m_recentMenu->clear();
+  QSettings settings(QStringLiteral("SpriteStudio"), QStringLiteral("SpriteStudio"));
+  QStringList files = settings.value(QStringLiteral("recentFiles")).toStringList();
+
+  QStringList existingFiles;
+  for (const QString &f : files) {
+      if (QFile::exists(f)) {
+          existingFiles.append(f);
+      }
+  }
+
+  if (existingFiles.isEmpty()) {
+      QAction *emptyAction = m_recentMenu->addAction(tr("No Recent Files"));
+      emptyAction->setEnabled(false);
+  } else {
+      for (int i = 0; i < existingFiles.size(); ++i) {
+          QString filePath = existingFiles.at(i);
+          QString text = tr("&%1 %2").arg(i + 1).arg(QFileInfo(filePath).fileName());
+          QAction *act = m_recentMenu->addAction(text);
+          act->setToolTip(filePath);
+          connect(act, &QAction::triggered, this, [this, filePath]() {
+              processFile(filePath);
+              statusLabel->setText(filePath);
+              setWindowTitle(QStringLiteral("SpriteStudio (%1)").arg(filePath));
+          });
+      }
+      m_recentMenu->addSeparator();
+      QAction *clearAction = m_recentMenu->addAction(tr("Clear Recent Files"));
+      connect(clearAction, &QAction::triggered, this, [this]() {
+          QSettings s(QStringLiteral("SpriteStudio"), QStringLiteral("SpriteStudio"));
+          s.remove(QStringLiteral("recentFiles"));
+          updateRecentFilesMenu();
+      });
+  }
+}
+
+void MainWindow::addRecentFile(const QString &filePath)
+{
+  if (filePath.isEmpty()) return;
+  QSettings settings(QStringLiteral("SpriteStudio"), QStringLiteral("SpriteStudio"));
+  QStringList files = settings.value(QStringLiteral("recentFiles")).toStringList();
+  files.removeAll(filePath);
+  files.prepend(filePath);
+  while (files.size() > 10) {
+      files.removeLast();
+  }
+  settings.setValue(QStringLiteral("recentFiles"), files);
+  updateRecentFilesMenu();
 }

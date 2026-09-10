@@ -148,3 +148,38 @@ void MainWindow::resizeEvent(QResizeEvent *event)
       ui->graphicsViewResult->fitInView(resultScene->sceneRect(), Qt::KeepAspectRatio);
     }
 }
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *event)
+{
+    if (event->mimeData()->hasUrls()) {
+        const QList<QUrl> urls = event->mimeData()->urls();
+        if (!urls.isEmpty()) {
+            QString localFile = urls.first().toLocalFile();
+            if (!localFile.isEmpty()) {
+                Extractor *decoder = ExtractorRegistry::instance().findDecoder(localFile);
+                if (decoder) {
+                    event->acceptProposedAction();
+                    return;
+                }
+            }
+        }
+    }
+    QMainWindow::dragEnterEvent(event);
+}
+
+void MainWindow::dropEvent(QDropEvent *event)
+{
+    const QList<QUrl> urls = event->mimeData()->urls();
+    if (!urls.isEmpty()) {
+        QString localFile = urls.first().toLocalFile();
+        if (!localFile.isEmpty()) {
+            event->acceptProposedAction();
+            currentFilePath = localFile;
+            processFile(currentFilePath);
+            statusLabel->setText(currentFilePath);
+            setWindowTitle("SpriteStudio (" + currentFilePath + ")");
+            return;
+        }
+    }
+    QMainWindow::dropEvent(event);
+}

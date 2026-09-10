@@ -147,6 +147,7 @@ void MainWindow::processFile(const QString &fileName)
                 m_player->setSequence(anim.frameIndices, anim.fps, anim.loop);
                 m_player->play();
             }
+            addRecentFile(fileName);
             return;
         } else if (!ok && !errorMsg.isEmpty()) {
             QMessageBox::warning(this, tr("Open Error"), errorMsg);

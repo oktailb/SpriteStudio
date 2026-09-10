@@ -21,7 +21,7 @@ public:
         return { QStringLiteral("gif") };
     }
     Capabilities capabilities() const override {
-        return CanImport | CanExport | SupportsAnimations;
+        return CanImport | SupportsAnimations;
     }
     bool canDecode(const QString &filePath) const override;
 

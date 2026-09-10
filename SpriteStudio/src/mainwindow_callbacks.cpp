@@ -277,6 +277,7 @@ void MainWindow::on_actionOpen_triggered()
   processFile(currentFilePath);
   statusLabel->setText(fileName);
   setWindowTitle("SpriteStudio (" + fileName + ")");
+  addRecentFile(fileName);
 }
 
 void MainWindow::on_actionExit_triggered()
@@ -373,6 +374,40 @@ void MainWindow::on_framesList_clicked(const QModelIndex &index)
     adjustZoomSliderToWindow();
 }
 
+void MainWindow::on_actionSave_triggered()
+{
+  syncToDocument();
+  if (!m_document || m_document->frameCount() == 0) {
+      QMessageBox::warning(this, tr("_export_error"), tr("_please_load_frames"));
+      return;
+  }
+
+  if (currentFilePath.isEmpty()) {
+      on_actionExport_triggered();
+      return;
+  }
+
+  Extractor *encoder = ExtractorRegistry::instance().findEncoder(currentFilePath);
+  if (!encoder) {
+      on_actionExport_triggered();
+      return;
+  }
+
+  connect(encoder, &Extractor::progress, progressBar, &QProgressBar::setValue);
+  connect(encoder, &Extractor::statusMessage, statusLabel, &QLabel::setText);
+
+  ExportOptions opts;
+  opts.compressJson = false;
+  QString errorMsg;
+  bool ok = encoder->exportDocument(currentFilePath, *m_document, opts, &errorMsg);
+  if (!ok) {
+      QMessageBox::warning(this, tr("Save Error"), errorMsg.isEmpty() ? tr("Save failed") : errorMsg);
+  } else {
+      addRecentFile(currentFilePath);
+      statusLabel->setText(tr("Saved: %1").arg(QFileInfo(currentFilePath).fileName()));
+  }
+}
+
 void MainWindow::on_actionExport_triggered()
 {
   syncToDocument();
@@ -381,12 +416,16 @@ void MainWindow::on_actionExport_triggered()
       return;
   }
 
+  QString initialDir = currentFilePath.isEmpty()
+      ? QDir::homePath()
+      : QFileInfo(currentFilePath).absolutePath();
+
   const QString filter = ExtractorRegistry::instance().saveFilterString();
   QString selectedFilter;
   QString selectedFile = QFileDialog::getSaveFileName(
       this,
       tr("_export_atlas"),
-      QDir::homePath(),
+      initialDir,
       filter,
       &selectedFilter
   );
@@ -436,6 +475,7 @@ void MainWindow::on_actionExport_triggered()
   if (!ok) {
       QMessageBox::warning(this, tr("Export Error"), errorMsg.isEmpty() ? tr("Export failed") : errorMsg);
   } else {
+      addRecentFile(selectedFile);
       QMessageBox::information(this, tr("Export"), tr("Export completed successfully."));
   }
 }
