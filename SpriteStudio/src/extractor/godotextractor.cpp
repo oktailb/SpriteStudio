@@ -12,11 +12,6 @@ GodotExtractor::GodotExtractor(QObject *parent)
 {
 }
 
-GodotExtractor::GodotExtractor(QLabel *statusBar, QProgressBar *progressBar, QObject *parent)
-    : Extractor(statusBar, progressBar, parent)
-{
-}
-
 bool GodotExtractor::canDecode(const QString &filePath) const
 {
     QFileInfo fi(filePath);
@@ -34,8 +29,8 @@ bool GodotExtractor::canDecode(const QString &filePath) const
 
 bool GodotExtractor::extract(const QString &filePath, SpriteDocument &doc, QString *errorMsg)
 {
-    emit statusMessage(tr("Importing Godot SpriteFrames..."));
-    emit progress(10);
+    setStatusMessage(tr("Importing Godot SpriteFrames..."));
+    setProgress(10);
 
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -51,7 +46,7 @@ bool GodotExtractor::extract(const QString &filePath, SpriteDocument &doc, QStri
         return false;
     }
 
-    emit progress(25);
+    setProgress(25);
 
     // 1. Locate referenced atlas texture image
     QRegularExpression extRegex(QStringLiteral(R"re(\[ext_resource\s+[^\]]*path="([^"]+)"[^\]]*\])re"));
@@ -91,7 +86,7 @@ bool GodotExtractor::extract(const QString &filePath, SpriteDocument &doc, QStri
         return false;
     }
 
-    emit progress(40);
+    setProgress(40);
 
     QImage atlasImg(imagePath);
     if (atlasImg.isNull()) {
@@ -100,7 +95,7 @@ bool GodotExtractor::extract(const QString &filePath, SpriteDocument &doc, QStri
     }
     m_atlas = atlasImg;
 
-    emit progress(60);
+    setProgress(60);
 
     // 2. Parse sub_resources (AtlasTexture definitions)
     QMap<QString, int> subResToFrameIdx;
@@ -169,7 +164,7 @@ bool GodotExtractor::extract(const QString &filePath, SpriteDocument &doc, QStri
         return false;
     }
 
-    emit progress(80);
+    setProgress(80);
 
     // 3. Parse animations block inside [resource]
     QMap<QString, SpriteAnimation> parsedAnimations;
@@ -277,8 +272,8 @@ bool GodotExtractor::extract(const QString &filePath, SpriteDocument &doc, QStri
     // 5. Synchronize local extractor state
     syncFromDocument(doc);
 
-    emit progress(100);
-    emit statusMessage(tr("Imported Godot resource: %1 (%2 frames)").arg(fileInfo.fileName()).arg(frames.size()));
+    setProgress(100);
+    setStatusMessage(tr("Imported Godot resource: %1 (%2 frames)").arg(fileInfo.fileName()).arg(frames.size()));
     emit extractionFinished(frames.size());
     return true;
 }
@@ -321,8 +316,8 @@ bool GodotExtractor::exportDocument(const QString &filePath, const SpriteDocumen
         return false;
     }
 
-    emit statusMessage(tr("Packing atlas for Godot..."));
-    emit progress(20);
+    setStatusMessage(tr("Packing atlas for Godot..."));
+    setProgress(20);
 
     QFileInfo fileInfo(filePath);
     QDir dir = fileInfo.dir();
@@ -337,14 +332,14 @@ bool GodotExtractor::exportDocument(const QString &filePath, const SpriteDocumen
         return false;
     }
 
-    emit progress(60);
+    setProgress(60);
 
     if (!packResult.atlas.save(imagePath, "PNG")) {
         if (errorMsg) *errorMsg = QString("Failed to write Godot atlas image: %1").arg(imagePath);
         return false;
     }
 
-    emit progress(80);
+    setProgress(80);
 
     QFile outFile(tresPath);
     if (!outFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
@@ -411,7 +406,7 @@ bool GodotExtractor::exportDocument(const QString &filePath, const SpriteDocumen
     out << "]\n";
     outFile.close();
 
-    emit progress(100);
-    emit statusMessage(tr("Exported Godot resource: %1 and image %2").arg(QFileInfo(tresPath).fileName(), imageFilename));
+    setProgress(100);
+    setStatusMessage(tr("Exported Godot resource: %1 and image %2").arg(QFileInfo(tresPath).fileName(), imageFilename));
     return true;
 }

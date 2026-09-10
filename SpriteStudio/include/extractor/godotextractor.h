@@ -15,7 +15,6 @@ class GodotExtractor : public Extractor
 
 public:
     explicit GodotExtractor(QObject *parent = nullptr);
-    explicit GodotExtractor(QLabel *statusBar, QProgressBar *progressBar, QObject *parent = nullptr);
     ~GodotExtractor() override = default;
 
     QString id() const override { return QStringLiteral("godot_extractor"); }

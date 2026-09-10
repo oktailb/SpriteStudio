@@ -11,7 +11,6 @@ class SpriteExtractor : public Extractor
     Q_OBJECT
 public:
     explicit SpriteExtractor(QObject *parent = nullptr);
-    explicit SpriteExtractor(QLabel *statusBar, QProgressBar *progressBar, QObject *parent = nullptr);
 
     // Plugin metadata
     QString id() const override { return QStringLiteral("sprite_extractor"); }

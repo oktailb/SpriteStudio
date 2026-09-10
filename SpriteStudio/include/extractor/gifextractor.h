@@ -11,7 +11,6 @@ class GifExtractor : public Extractor
     Q_OBJECT
 public:
     explicit GifExtractor(QObject *parent = nullptr);
-    explicit GifExtractor(QLabel * statusBar, QProgressBar * progressBar, QObject *parent = nullptr);
 
     // Plugin metadata
     QString id() const override { return QStringLiteral("gif_extractor"); }

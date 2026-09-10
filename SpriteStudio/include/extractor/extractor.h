@@ -13,8 +13,6 @@
 #include <QString>
 #include <QStringList>
 #include <QPainter>
-#include <QLabel>
-#include <QProgressBar>
 #include "export.h"
 
 class SpriteDocument;
@@ -67,8 +65,13 @@ public:
     Q_DECLARE_FLAGS(Capabilities, Capability)
 
     explicit Extractor(QObject *parent = nullptr);
-    explicit Extractor(QLabel *statusBar, QProgressBar *progressBar, QObject *parent = nullptr);
     ~Extractor() override = default;
+
+    // Status & Progress API (Pull & Push)
+    int currentProgress() const { return m_progress; }
+    QString currentStatusMessage() const { return m_statusMessage; }
+    void setProgress(int percentage);
+    void setStatusMessage(const QString &message);
 
     // Plugin metadata & capabilities
     virtual QString id() const { return QString(); }
@@ -129,8 +132,8 @@ public:
     int                           m_maxFrameWidth = 0;
     int                           m_maxFrameHeight = 0;
     ExportOptions                 m_opts;
-    QLabel *                      m_statusBar = nullptr;
-    QProgressBar *                m_progressBar = nullptr;
+    int                           m_progress = 0;
+    QString                       m_statusMessage;
     bool                          m_smartCropEnabled = true;
     double                        m_overlapThreshold = 0.1;
     CropStrategy                  m_cropStrategy = SeparateStrategy;

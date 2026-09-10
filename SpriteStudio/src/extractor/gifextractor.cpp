@@ -9,12 +9,7 @@
 #include <QCoreApplication>
 
 GifExtractor::GifExtractor(QObject *parent)
-    : Extractor(nullptr, nullptr, parent)
-{
-}
-
-GifExtractor::GifExtractor(QLabel *statusBar, QProgressBar *progressBar, QObject *parent)
-    : Extractor(statusBar, progressBar, parent)
+    : Extractor(parent)
 {
 }
 
@@ -44,6 +39,9 @@ QList<QPixmap> GifExtractor::extractFromPixmap(int alphaThreshold, int verticalT
   // Mark parameters as unused since they are required by the Extractor interface but not used here.
   Q_UNUSED(alphaThreshold);
   Q_UNUSED(verticalTolerance);
+
+  setStatusMessage(tr("Extracting GIF frames..."));
+  setProgress(0);
 
   QList<QImage> extractedImages;
   QMovie movie(m_filePath); // QMovie is Qt's class for handling GIF files.
@@ -160,6 +158,8 @@ QList<QPixmap> GifExtractor::extractFromPixmap(int alphaThreshold, int verticalT
   m_atlas = atlasImage;
 
   // Signal the main window that the extraction is complete (e.g., to populate the frame list).
+  setProgress(100);
+  setStatusMessage(tr("Extracted %1 frames from GIF").arg(m_frames.size()));
   emit extractionFinished(m_frames.size());
 
   return m_frames;

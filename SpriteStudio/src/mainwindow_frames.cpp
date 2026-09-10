@@ -232,7 +232,9 @@ void MainWindow::syncFromDocument()
     if (!m_document) return;
 
     if (!extractor) {
-        extractor = new SpriteExtractor(statusLabel, progressBar, this);
+        extractor = new SpriteExtractor(this);
+        connect(extractor, &Extractor::progress, progressBar, &QProgressBar::setValue);
+        connect(extractor, &Extractor::statusMessage, statusLabel, &QLabel::setText);
     }
 
     extractor->m_frames = m_document->frames();

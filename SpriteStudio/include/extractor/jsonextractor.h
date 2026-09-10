@@ -2,8 +2,6 @@
 #define JSONEXTRACTOR_H
 
 #include "extractor/extractor.h"
-#include <QLabel>
-#include <QProgressBar>
 #include "extractor/jsonExtractordialog.h"
 
 /**
@@ -14,7 +12,6 @@ class JsonExtractor : public Extractor
     Q_OBJECT
 public:
     explicit JsonExtractor(QObject *parent = nullptr);
-    explicit JsonExtractor(QLabel * statusBar, QProgressBar * progressBar, QObject *parent = nullptr);
 
     // Plugin metadata
     QString id() const override { return QStringLiteral("json_extractor"); }

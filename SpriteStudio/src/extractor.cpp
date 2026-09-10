@@ -8,24 +8,22 @@ Extractor::Extractor(QObject *parent)
     : QObject(parent)
     , m_maxFrameWidth(0)
     , m_maxFrameHeight(0)
-    , m_statusBar(nullptr)
-    , m_progressBar(nullptr)
     , m_smartCropEnabled(true)
     , m_overlapThreshold(0.1)
     , m_cropStrategy(SeparateStrategy)
 {
 }
 
-Extractor::Extractor(QLabel *statusBar, QProgressBar *progressBar, QObject *parent)
-    : QObject(parent)
-    , m_maxFrameWidth(0)
-    , m_maxFrameHeight(0)
-    , m_statusBar(statusBar)
-    , m_progressBar(progressBar)
-    , m_smartCropEnabled(true)
-    , m_overlapThreshold(0.1)
-    , m_cropStrategy(SeparateStrategy)
+void Extractor::setProgress(int percentage)
 {
+    m_progress = percentage;
+    emit progress(percentage);
+}
+
+void Extractor::setStatusMessage(const QString &message)
+{
+    m_statusMessage = message;
+    emit statusMessage(message);
 }
 
 void Extractor::setAnimation(const QString &name, const QList<int> &frameIndices, int fps)

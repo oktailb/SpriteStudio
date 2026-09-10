@@ -4,12 +4,7 @@
 #include <QDir>
 
 SpriteExtractor::SpriteExtractor(QObject *parent)
-    : Extractor(nullptr, nullptr, parent)
-{
-}
-
-SpriteExtractor::SpriteExtractor(QLabel *statusBar, QProgressBar *progressBar, QObject *parent)
-    : Extractor(statusBar, progressBar, parent)
+    : Extractor(parent)
 {
 }
 
@@ -34,6 +29,9 @@ QList<QPixmap> SpriteExtractor::extractFrames(const QString &filePath, int alpha
 
 QList<QPixmap> SpriteExtractor::extractFromPixmap(int alphaThreshold, int verticalTolerance)
 {
+  setStatusMessage(tr("Extracting sprite frames..."));
+  setProgress(0);
+
   m_frames.clear();
   m_atlas_index.clear();
   m_maxFrameWidth = 0;
@@ -168,6 +166,8 @@ QList<QPixmap> SpriteExtractor::extractFromPixmap(int alphaThreshold, int vertic
     m_maxFrameHeight = qMax(m_maxFrameHeight, spriteFrame.height());
   }
 
+  setProgress(100);
+  setStatusMessage(tr("Extracted %1 frames").arg(m_frames.size()));
   emit extractionFinished(m_frames.size());
   return m_frames;
 }

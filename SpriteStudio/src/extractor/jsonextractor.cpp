@@ -15,12 +15,7 @@
 #include <QJsonObject>
 
 JsonExtractor::JsonExtractor(QObject *parent)
-    : Extractor(nullptr, nullptr, parent)
-{
-}
-
-JsonExtractor::JsonExtractor(QLabel *statusBar, QProgressBar *progressBar, QObject *parent)
-    : Extractor(statusBar, progressBar, parent)
+    : Extractor(parent)
 {
 }
 
@@ -200,15 +195,13 @@ QList<QPixmap> JsonExtractor::extractFrames(const QString &filePath, int alphaTh
          // 8. Émettre le signal de fin d'extraction
   emit extractionFinished(m_frames.size());
 
-         // 9. Mettre à jour la status bar
-  if (m_statusBar) {
-      QString message = tr("_import_success") + " " +
-                        QString::number(m_frames.size()) + " " + tr("_frames");
-      if (!animationFrames.isEmpty()) {
-          message += ", " + QString::number(animationFrames.size()) + " " + tr("_animations");
-        }
-      m_statusBar->setText(message);
-    }
+         // 9. Mettre à jour le statut
+  QString message = tr("_import_success") + " " +
+                    QString::number(m_frames.size()) + " " + tr("_frames");
+  if (!animationFrames.isEmpty()) {
+      message += ", " + QString::number(animationFrames.size()) + " " + tr("_animations");
+  }
+  setStatusMessage(message);
 
   return m_frames;
 }
@@ -220,8 +213,7 @@ void JsonExtractor::extractFromTexturePackerFormat(const QJsonObject& framesObj,
   for (const QString& animation : animationFrames.keys())
     frameIndex += animationFrames[animation].size();
 
-  emit progress(0);
-  if (m_progressBar) m_progressBar->setValue(0);
+  setProgress(0);
   for (auto it = framesObj.begin(); it != framesObj.end(); ++it) {
       QString frameName = it.key();
       QJsonValue frameValue = it.value();
@@ -279,8 +271,7 @@ void JsonExtractor::extractFromTexturePackerFormat(const QJsonObject& framesObj,
         }
 
       int pct = framesObj.count() > 0 ? (100 * (frameIndex + 1) / framesObj.count()) : 0;
-      emit progress(pct);
-      if (m_progressBar) m_progressBar->setValue(pct);
+      setProgress(pct);
 
       frameIndex++;
 
@@ -288,8 +279,7 @@ void JsonExtractor::extractFromTexturePackerFormat(const QJsonObject& framesObj,
       if (w > m_maxFrameWidth) m_maxFrameWidth = w;
       if (h > m_maxFrameHeight) m_maxFrameHeight = h;
     }
-  emit progress(100);
-  if (m_progressBar) m_progressBar->setValue(100);
+  setProgress(100);
 }
 
 void JsonExtractor::extractFromArrayFormat(const QJsonArray& framesArray,
@@ -440,7 +430,7 @@ QList<QPixmap> JsonExtractor::extractFromPixmap(int alphaThreshold, int vertical
 bool JsonExtractor::exportFrames(const QString &basePath, const QString &projectName, Extractor *in)
 {
   if (!in || in->m_frames.isEmpty()) {
-      if (m_statusBar) m_statusBar->setText(tr("_export_error") + ": " + tr("_please_load_frames"));
+      setStatusMessage(tr("_export_error") + ": " + tr("_please_load_frames"));
       return false;
   }
 
@@ -457,7 +447,7 @@ bool JsonExtractor::exportFrames(const QString &basePath, const QString &project
   if (animationsNames.isEmpty()) {
       delete dialog;
       dialog = nullptr;
-      if (m_statusBar) m_statusBar->setText(tr("_selected_format_error"));
+      setStatusMessage(tr("_selected_format_error"));
       return false;
   }
 
@@ -526,7 +516,7 @@ bool JsonExtractor::exportFrames(const QString &basePath, const QString &project
           QString pngPath = QDir(basePath).filePath(info.imageName);
           if (shouldReplaceAtlas || !QFile::exists(pngPath)) {
               if (!atlasImg.save(pngPath, "PNG")) {
-                  if (m_statusBar) m_statusBar->setText(tr("_write_error") + ": " + tr("_png_permissions"));
+                  setStatusMessage(tr("_write_error") + ": " + tr("_png_permissions"));
                   delete dialog;
                   dialog = nullptr;
                   return false;
@@ -589,7 +579,7 @@ bool JsonExtractor::exportFrames(const QString &basePath, const QString &project
           QString pngPath = QDir(basePath).filePath(atlasName);
           if (shouldReplaceAtlas || !QFile::exists(pngPath)) {
               if (!atlasImg.save(pngPath, "PNG")) {
-                  if (m_statusBar) m_statusBar->setText(tr("_write_error") + ": " + tr("_png_permissions"));
+                  setStatusMessage(tr("_write_error") + ": " + tr("_png_permissions"));
                   delete dialog;
                   dialog = nullptr;
                   return false;
@@ -626,7 +616,7 @@ bool JsonExtractor::exportFrames(const QString &basePath, const QString &project
                   atlasImg = atlasImg.convertToFormat(imgFormat);
               }
               if (!atlasImg.save(pngPath, "PNG")) {
-                  if (m_statusBar) m_statusBar->setText(tr("_write_error") + ": " + tr("_png_permissions"));
+                  setStatusMessage(tr("_write_error") + ": " + tr("_png_permissions"));
                   delete dialog;
                   dialog = nullptr;
                   return false;
@@ -653,10 +643,10 @@ bool JsonExtractor::exportFrames(const QString &basePath, const QString &project
       QJsonObject framesDict;
       const QList<Box> &boxes = info.boxes;
 
-      if (m_progressBar) m_progressBar->setValue(0);
+      setProgress(0);
       for (int i = 0; i < boxes.size(); ++i) {
-          if (m_progressBar && !boxes.isEmpty())
-              m_progressBar->setValue(100 * i / boxes.size());
+          if (!boxes.isEmpty())
+              setProgress(100 * i / boxes.size());
 
           const Box &b = boxes[i];
           QJsonObject frameData;
@@ -681,7 +671,7 @@ bool JsonExtractor::exportFrames(const QString &basePath, const QString &project
 
           framesDict[frameKey] = frameData;
       }
-      if (m_progressBar) m_progressBar->setValue(100);
+      setProgress(100);
 
       QJsonObject root;
       root["frames"] = framesDict;
@@ -720,9 +710,9 @@ bool JsonExtractor::exportFrames(const QString &basePath, const QString &project
       if (jsonFile.open(QIODevice::WriteOnly)) {
           jsonFile.write(doc.toJson(QJsonDocument::Indented));
           jsonFile.close();
-          if (m_statusBar) m_statusBar->setText(tr("_export_success") + tr("_export_atlas_success") + basePath);
+          setStatusMessage(tr("_export_success") + tr("_export_atlas_success") + basePath);
       } else {
-          if (m_statusBar) m_statusBar->setText(tr("_write_error") + tr("_json_permissions"));
+          setStatusMessage(tr("_write_error") + tr("_json_permissions"));
           delete dialog;
           dialog = nullptr;
           return false;
@@ -731,7 +721,7 @@ bool JsonExtractor::exportFrames(const QString &basePath, const QString &project
 
   delete dialog;
   dialog = nullptr;
-  if (m_statusBar) m_statusBar->setText(tr("_success"));
+  setStatusMessage(tr("_success"));
   return true;
 }
 
