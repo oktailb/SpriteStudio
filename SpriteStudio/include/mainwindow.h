@@ -140,6 +140,12 @@ public:
    */
   ~MainWindow();
 
+  /**
+   * @brief Determines the file type, creates the appropriate Extractor, and starts the extraction process.
+   * @param fileName The path to the file to be processed.
+   */
+  void processFile(const QString &fileName);
+
 protected:
   /**
    * @brief Handles system timer events.
@@ -448,11 +454,6 @@ private slots:
   void populateFrameList(const QList<QPixmap> &frameList, const QList<Extractor::Box> &boxList);
   void populateFrameList(const QList<QPixmap> &frameList, const QList<SpriteBox> &boxList);
 
-  /**
-   * @brief Determines the file type, creates the appropriate Extractor, and starts the extraction process.
-   * @param fileName The path to the file to be processed.
-   */
-  void processFile(const QString &fileName);
 
   /**
    * @brief Sets up the graphics view to display the main sprite atlas.

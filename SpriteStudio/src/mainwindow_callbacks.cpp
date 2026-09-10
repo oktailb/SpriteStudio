@@ -382,18 +382,28 @@ void MainWindow::on_actionExport_triggered()
   }
 
   const QString filter = ExtractorRegistry::instance().saveFilterString();
+  QString selectedFilter;
   QString selectedFile = QFileDialog::getSaveFileName(
       this,
       tr("_export_atlas"),
       QDir::homePath(),
-      filter
+      filter,
+      &selectedFilter
   );
 
   if (selectedFile.isEmpty()) {
       return;
   }
 
-  Extractor *encoder = ExtractorRegistry::instance().findEncoder(selectedFile);
+  // 1. Identify encoder primarily by the filter explicitly chosen by the user
+  Extractor *encoder = ExtractorRegistry::instance().findEncoderByFilter(selectedFilter);
+
+  // 2. Fallback to detection by file extension
+  if (!encoder) {
+      encoder = ExtractorRegistry::instance().findEncoder(selectedFile);
+  }
+
+  // 3. Fallback default
   if (!encoder) {
       encoder = ExtractorRegistry::instance().findExtractorById("json_extractor");
   }
@@ -401,6 +411,19 @@ void MainWindow::on_actionExport_triggered()
   if (!encoder) {
       QMessageBox::warning(this, tr("Export Error"), tr("No appropriate exporter found for this file."));
       return;
+  }
+
+  // Ensure selectedFile has the expected extension for this encoder
+  QFileInfo fi(selectedFile);
+  QString ext = fi.suffix().toLower();
+  if (encoder->id() == "godot_extractor" && ext != "tres") {
+      selectedFile = fi.dir().filePath(fi.completeBaseName() + ".tres");
+  } else if (encoder->id() == "json_extractor" && ext != "json") {
+      selectedFile = fi.dir().filePath(fi.completeBaseName() + ".json");
+  } else if (encoder->id() == "gif_extractor" && ext != "gif") {
+      selectedFile = fi.dir().filePath(fi.completeBaseName() + ".gif");
+  } else if (ext.isEmpty() && !encoder->supportedExtensions().isEmpty()) {
+      selectedFile += "." + encoder->supportedExtensions().first();
   }
 
   connect(encoder, &Extractor::progress, progressBar, &QProgressBar::setValue);

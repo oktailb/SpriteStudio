@@ -36,6 +36,9 @@ void MainWindow::removeAtlasBackgroundAndRefresh() {
                                      ui->verticalTolerance->value());
 
         // 3. Refresh main view
+        clearBoundingBoxHighlighters();
+        mergeHighlighter = nullptr;
+        selectionRectItem = nullptr;
         QGraphicsScene *sceneLayers = ui->graphicsViewLayers->scene();
         if (!sceneLayers) {
             sceneLayers = new QGraphicsScene(this);
@@ -222,6 +225,10 @@ void MainWindow::processFile(const QString &fileName)
 
 void MainWindow::setupGraphicsView(const QImage &pixmap)
 {
+    clearBoundingBoxHighlighters();
+    mergeHighlighter = nullptr;
+    selectionRectItem = nullptr;
+
     // Get the existing scene or create a new one if it's the first time.
     QGraphicsScene *scene = ui->graphicsViewLayers->scene();
     if (!scene) {
@@ -264,9 +271,17 @@ void MainWindow::setupGraphicsView(const QImage &pixmap)
 
 void MainWindow::clearBoundingBoxHighlighters()
 {
-    for (QGraphicsRectItem *highlighter : boundingBoxHighlighters) {
-        if (highlighter && highlighter->scene()) {
-            highlighter->scene()->removeItem(highlighter);
+    QGraphicsScene *scene = ui->graphicsViewLayers ? ui->graphicsViewLayers->scene() : nullptr;
+    if (scene) {
+        QList<QGraphicsItem*> sceneItems = scene->items();
+        for (QGraphicsRectItem *highlighter : boundingBoxHighlighters) {
+            if (highlighter && sceneItems.contains(highlighter)) {
+                scene->removeItem(highlighter);
+                delete highlighter;
+            }
+        }
+    } else {
+        for (QGraphicsRectItem *highlighter : boundingBoxHighlighters) {
             delete highlighter;
         }
     }

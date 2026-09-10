@@ -277,8 +277,11 @@ void MainWindow::syncToDocument()
 {
     if (!m_document || !extractor) return;
 
+    QSignalBlocker blocker(m_document);
+
     m_document->setAtlas(extractor->m_atlas);
     QList<SpriteBox> sboxes;
+    sboxes.reserve(extractor->m_atlas_index.size());
     for (const Extractor::Box &eb : extractor->m_atlas_index) {
         SpriteBox sb;
         sb.rect = eb.rect;

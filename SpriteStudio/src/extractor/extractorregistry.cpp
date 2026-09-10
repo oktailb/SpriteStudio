@@ -111,6 +111,19 @@ Extractor* ExtractorRegistry::findEncoder(const QString &filePathOrExt) const
     return nullptr;
 }
 
+Extractor* ExtractorRegistry::findEncoderByFilter(const QString &filter) const
+{
+    if (filter.isEmpty()) return nullptr;
+
+    for (Extractor *extractor : m_extractors) {
+        if ((extractor->capabilities() & Extractor::CanExport) &&
+            filter.contains(extractor->displayName(), Qt::CaseInsensitive)) {
+            return extractor;
+        }
+    }
+    return nullptr;
+}
+
 Extractor* ExtractorRegistry::findExtractorById(const QString &id) const
 {
     for (Extractor *extractor : m_extractors) {
@@ -137,7 +150,11 @@ QString ExtractorRegistry::openFilterString() const
                 allExtensions += "*." + ext;
             }
         }
-        individualFilters.append(QString("%1 (%2)").arg(extractor->displayName(), wildcards.join(" ")));
+        QString name = extractor->displayName();
+        if (!name.contains('(')) {
+            name = QString("%1 (%2)").arg(name, wildcards.join(" "));
+        }
+        individualFilters.append(name);
     }
 
     QString result;
@@ -159,7 +176,11 @@ QString ExtractorRegistry::saveFilterString() const
         for (const QString &ext : extractor->supportedExtensions()) {
             wildcards.append("*." + ext);
         }
-        individualFilters.append(QString("%1 (%2)").arg(extractor->displayName(), wildcards.join(" ")));
+        QString name = extractor->displayName();
+        if (!name.contains('(')) {
+            name = QString("%1 (%2)").arg(name, wildcards.join(" "));
+        }
+        individualFilters.append(name);
     }
 
     return individualFilters.join(";;");

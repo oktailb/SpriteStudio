@@ -2,6 +2,7 @@
 #include "extractor/jsonExtractordialog.h"
 #include "ui_jsonExtractordialog.h"
 #include "extractor/export.h"
+#include "packer/atlaspacker.h"
 #include "generated/version.h"
 #include <QDebug>
 #include <QImage>
@@ -468,7 +469,7 @@ bool JsonExtractor::exportFrames(const QString &basePath, const QString &project
 
   QMap<QString, AtlasInfo> animAtlasInfo;
 
-  if (shouldReplaceAtlas && strategy == AtlasStrategy::ATLASSTRATEGY_ONE_ATLAS_PER_ANIMATION) {
+  if (strategy == AtlasStrategy::ATLASSTRATEGY_ONE_ATLAS_PER_ANIMATION) {
       // 1. Un atlas PNG individuel par animation
       for (const QString &anim : animationsNames) {
           const QList<int> &frameIndices = in->m_animationsData[anim].frameIndices;
@@ -518,15 +519,17 @@ bool JsonExtractor::exportFrames(const QString &basePath, const QString &project
           painter.end();
 
           QString pngPath = QDir(basePath).filePath(info.imageName);
-          if (!atlasImg.save(pngPath, "PNG")) {
-              if (m_statusBar) m_statusBar->setText(tr("_write_error") + ": " + tr("_png_permissions"));
-              delete dialog;
-              dialog = nullptr;
-              return false;
+          if (shouldReplaceAtlas || !QFile::exists(pngPath)) {
+              if (!atlasImg.save(pngPath, "PNG")) {
+                  if (m_statusBar) m_statusBar->setText(tr("_write_error") + ": " + tr("_png_permissions"));
+                  delete dialog;
+                  dialog = nullptr;
+                  return false;
+              }
           }
           animAtlasInfo[anim] = info;
       }
-  } else if (shouldReplaceAtlas && strategy == AtlasStrategy::ATLASSTRATEGY_ONE_ATLAS_FOR_ALL_ANIMATIONS) {
+  } else if (strategy == AtlasStrategy::ATLASSTRATEGY_ONE_ATLAS_FOR_ALL_ANIMATIONS) {
       // 2. Un seul atlas PNG compact regroupant toutes les frames des animations sélectionnées
       QMap<int, int> originalToPackedIndex;
       QList<int> uniqueFrames;
@@ -579,11 +582,13 @@ bool JsonExtractor::exportFrames(const QString &basePath, const QString &project
 
           QString atlasName = projectName + ".png";
           QString pngPath = QDir(basePath).filePath(atlasName);
-          if (!atlasImg.save(pngPath, "PNG")) {
-              if (m_statusBar) m_statusBar->setText(tr("_write_error") + ": " + tr("_png_permissions"));
-              delete dialog;
-              dialog = nullptr;
-              return false;
+          if (shouldReplaceAtlas || !QFile::exists(pngPath)) {
+              if (!atlasImg.save(pngPath, "PNG")) {
+                  if (m_statusBar) m_statusBar->setText(tr("_write_error") + ": " + tr("_png_permissions"));
+                  delete dialog;
+                  dialog = nullptr;
+                  return false;
+              }
           }
 
           for (const QString &anim : animationsNames) {
@@ -602,14 +607,25 @@ bool JsonExtractor::exportFrames(const QString &basePath, const QString &project
   } else {
       // 3. Atlas original
       QString atlasName = projectName + ".png";
-      if (shouldReplaceAtlas) {
-          QImage atlasImg = in->m_atlas.convertToFormat(imgFormat);
-          QString pngPath = QDir(basePath).filePath(atlasName);
-          if (!atlasImg.save(pngPath, "PNG")) {
-              if (m_statusBar) m_statusBar->setText(tr("_write_error") + ": " + tr("_png_permissions"));
-              delete dialog;
-              dialog = nullptr;
-              return false;
+      QString pngPath = QDir(basePath).filePath(atlasName);
+      if (shouldReplaceAtlas || !QFile::exists(pngPath)) {
+          QImage atlasImg = in->m_atlas;
+          if (atlasImg.isNull() && !in->m_frames.isEmpty()) {
+              AtlasPackResult packResult = AtlasPacker::pack(in->m_frames, 2);
+              if (packResult.success) {
+                  atlasImg = packResult.atlas;
+              }
+          }
+          if (!atlasImg.isNull()) {
+              if (imgFormat != QImage::Format_Invalid && imgFormat != atlasImg.format()) {
+                  atlasImg = atlasImg.convertToFormat(imgFormat);
+              }
+              if (!atlasImg.save(pngPath, "PNG")) {
+                  if (m_statusBar) m_statusBar->setText(tr("_write_error") + ": " + tr("_png_permissions"));
+                  delete dialog;
+                  dialog = nullptr;
+                  return false;
+              }
           }
       }
       for (const QString &anim : animationsNames) {
@@ -689,7 +705,12 @@ bool JsonExtractor::exportFrames(const QString &basePath, const QString &project
       root["meta"] = meta;
 
       QJsonDocument doc(root);
-      QString jsonFilePath = QDir(basePath).filePath(projectName + "-" + anim + ".json");
+      QString jsonFilePath;
+      if (animationsNames.size() == 1) {
+          jsonFilePath = QDir(basePath).filePath(projectName + ".json");
+      } else {
+          jsonFilePath = QDir(basePath).filePath(projectName + "-" + anim + ".json");
+      }
       QFile jsonFile(jsonFilePath);
       if (jsonFile.open(QIODevice::WriteOnly)) {
           jsonFile.write(doc.toJson(QJsonDocument::Indented));

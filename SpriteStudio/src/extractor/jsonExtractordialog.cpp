@@ -50,6 +50,15 @@ jsonExtractorDialog::jsonExtractorDialog(Extractor* in, QString baseName, QWidge
     QGraphicsPixmapItem *item = sceneLayers->addPixmap(QPixmap::fromImage(in->m_atlas));
     sceneLayers->setSceneRect(in->m_atlas.rect());
     ui->preview->fitInView(item, Qt::KeepAspectRatio);
+    if (in->m_animationsData.isEmpty() && !in->m_frames.isEmpty()) {
+        Extractor::AnimationData defaultAnim;
+        defaultAnim.fps = 12;
+        for (int i = 0; i < in->m_frames.size(); ++i) {
+            defaultAnim.frameIndices.append(i);
+        }
+        in->m_animationsData.insert(QStringLiteral("default"), defaultAnim);
+    }
+
     for(auto anim = in->m_animationsData.begin() ; anim != in->m_animationsData.end() ; ++anim) {
         QListWidgetItem *listItem = new QListWidgetItem();
         listItem->setData(Qt::DisplayRole, anim.key() + " (" + QString::number(anim.value().frameIndices.count()) + " frames)");
@@ -81,7 +90,9 @@ jsonExtractorDialog::jsonExtractorDialog(Extractor* in, QString baseName, QWidge
     ui->atlasSaveStrategy->addItem(tr("Generate same minimal Atlas for all animations"), AtlasStrategy::ATLASSTRATEGY_ONE_ATLAS_FOR_ALL_ANIMATIONS);
     ui->atlasSaveStrategy->addItem(tr("Generate one Atlas per animation"), AtlasStrategy::ATLASSTRATEGY_ONE_ATLAS_PER_ANIMATION);
     m_selectedStrategy = (AtlasStrategy)ui->atlasSaveStrategy->currentData().toInt();
-    ui->atlasSaveStrategy->setEnabled(ui->replaceExistingAtlas->isChecked());
+
+    ui->replaceExistingAtlas->setChecked(true);
+    ui->atlasSaveStrategy->setEnabled(true);
 
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);

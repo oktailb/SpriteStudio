@@ -15,7 +15,7 @@ public:
 
     // Plugin metadata
     QString id() const override { return QStringLiteral("sprite_extractor"); }
-    QString displayName() const override { return QStringLiteral("Sprite Sheet (*.png *.jpg *.jpeg *.bmp)"); }
+    QString displayName() const override { return QStringLiteral("Sprite Sheet"); }
     QString description() const override { return QStringLiteral("Static sprite sheet with automatic alpha edge detection."); }
     QStringList supportedExtensions() const override {
         return { QStringLiteral("png"), QStringLiteral("jpg"), QStringLiteral("jpeg"), QStringLiteral("bmp") };

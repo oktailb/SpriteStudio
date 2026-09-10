@@ -15,7 +15,7 @@ public:
 
     // Plugin metadata
     QString id() const override { return QStringLiteral("gif_extractor"); }
-    QString displayName() const override { return QStringLiteral("Animated GIF (*.gif)"); }
+    QString displayName() const override { return QStringLiteral("Animated GIF"); }
     QString description() const override { return QStringLiteral("Animated GIF format with frame sequence extraction."); }
     QStringList supportedExtensions() const override {
         return { QStringLiteral("gif") };

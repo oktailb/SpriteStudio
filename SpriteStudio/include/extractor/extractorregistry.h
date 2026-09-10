@@ -24,6 +24,7 @@ public:
 
     Extractor* findDecoder(const QString &filePath) const;
     Extractor* findEncoder(const QString &filePathOrExt) const;
+    Extractor* findEncoderByFilter(const QString &filter) const;
     Extractor* findExtractorById(const QString &id) const;
 
     QString openFilterString() const;

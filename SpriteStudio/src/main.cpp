@@ -24,6 +24,10 @@ int main(int argc, char *argv[])
 
   MainWindow w;
 
+  if (argc > 1) {
+      w.processFile(QString::fromLocal8Bit(argv[1]));
+  }
+
   w.show();
 
   return a.exec();

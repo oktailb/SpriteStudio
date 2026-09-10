@@ -19,30 +19,21 @@ public:
     ~GodotExtractor() override = default;
 
     QString id() const override { return QStringLiteral("godot_extractor"); }
-    QString displayName() const override { return QStringLiteral("Godot Engine 4.x SpriteFrames (*.tres)"); }
+    QString displayName() const override { return QStringLiteral("Godot Engine 4.x SpriteFrames"); }
     QString description() const override { return QStringLiteral("Native Godot 4 SpriteFrames resource for AnimatedSprite2D."); }
     QStringList supportedExtensions() const override {
         return { QStringLiteral("tres") };
     }
 
     Capabilities capabilities() const override {
-        return CanExport | SupportsAnimations | SupportsAtlasMetadata;
+        return CanImport | CanExport | SupportsAnimations | SupportsAtlasMetadata;
     }
 
-    bool canDecode(const QString &filePath) const override {
-        Q_UNUSED(filePath);
-        return false;
-    }
+    bool canDecode(const QString &filePath) const override;
+    bool extract(const QString &filePath, SpriteDocument &doc, QString *errorMsg = nullptr) override;
 
-    QList<QPixmap> extractFrames(const QString &filePath, int alphaThreshold, int verticalTolerance) override {
-        Q_UNUSED(filePath); Q_UNUSED(alphaThreshold); Q_UNUSED(verticalTolerance);
-        return {};
-    }
-
-    QList<QPixmap> extractFromPixmap(int alphaThreshold, int verticalTolerance) override {
-        Q_UNUSED(alphaThreshold); Q_UNUSED(verticalTolerance);
-        return {};
-    }
+    QList<QPixmap> extractFrames(const QString &filePath, int alphaThreshold, int verticalTolerance) override;
+    QList<QPixmap> extractFromPixmap(int alphaThreshold, int verticalTolerance) override;
 
     bool exportFrames(const QString &basePath, const QString &projectName, Extractor* in) override;
     bool exportDocument(const QString &filePath, const SpriteDocument &doc, const ExportOptions &options, QString *errorMsg = nullptr) override;

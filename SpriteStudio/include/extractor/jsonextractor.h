@@ -18,7 +18,7 @@ public:
 
     // Plugin metadata
     QString id() const override { return QStringLiteral("json_extractor"); }
-    QString displayName() const override { return QStringLiteral("JSON Atlas (*.json)"); }
+    QString displayName() const override { return QStringLiteral("JSON Atlas"); }
     QString description() const override { return QStringLiteral("TexturePacker and Aseprite JSON atlas descriptor with image."); }
     QStringList supportedExtensions() const override {
         return { QStringLiteral("json") };
