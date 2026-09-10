@@ -3,9 +3,20 @@
 #include <QStack>
 #include <QDir>
 
+SpriteExtractor::SpriteExtractor(QObject *parent)
+    : Extractor(nullptr, nullptr, parent)
+{
+}
+
 SpriteExtractor::SpriteExtractor(QLabel *statusBar, QProgressBar *progressBar, QObject *parent)
     : Extractor(statusBar, progressBar, parent)
 {
+}
+
+bool SpriteExtractor::canDecode(const QString &filePath) const
+{
+    QFileInfo fi(filePath);
+    return supportedExtensions().contains(fi.suffix().toLower());
 }
 
 QList<QPixmap> SpriteExtractor::extractFrames(const QString &filePath, int alphaThreshold, int verticalTolerance)

@@ -34,19 +34,14 @@ void MainWindow::createAnimationFromSelection()
 
 void MainWindow::createAnimation(QString name, QList<int> selectedIndices, int fps)
 {
+    syncToDocument();
     if (name == "current") {
-        extractor->setAnimation(name, currentSelection, fps);
-
-        updateAnimationsList();
-
-        for (int c = 0; c < ui->animationList->columnCount(); c++) {
-            ui->animationList->resizeColumnToContents(c);
-        }
+        m_document->setAnimation(name, currentSelection, fps, true);
+        syncFromDocument();
         return;
     }
 
-    extractor->setAnimation(name, selectedIndices, fps);
-    updateAnimationsList();
+    m_undoStack->push(new CreateAnimationCommand(m_document, name, selectedIndices, fps));
 
     QList<QTreeWidgetItem*> items = ui->animationList->findItems(name, Qt::MatchExactly, 0);
     if (!items.isEmpty()) {
@@ -112,12 +107,8 @@ void MainWindow::reverseAnimationOrder()
     QTreeWidgetItem* selectedAnimation = selectedAnimations.first();
     QString animationName = selectedAnimation->text(0);
 
-    extractor->reverseAnimationFrames(animationName);
-    syncAnimationListWidget();
-
-    if (animationTimer->isActive()) {
-        startAnimation();
-    }
+    syncToDocument();
+    m_undoStack->push(new ReverseAnimationCommand(m_document, animationName));
 }
 
 void MainWindow::syncAnimationListWidget()

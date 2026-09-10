@@ -1,5 +1,6 @@
 #include "include/mainwindow.h"
 #include "ui_mainwindow.h"
+#include "extractor/spriteextractor.h"
 
 void MainWindow::reverseFramesOrder(QList<int> &selectedIndices)
 {
@@ -55,17 +56,10 @@ void MainWindow::deleteSelectedFrame()
 
 void MainWindow::deleteFrames(const QList<int> &frameIndices)
 {
-    if (frameIndices.isEmpty() || !extractor) return;
+    if (frameIndices.isEmpty()) return;
 
-    QList<int> sortedIndices = frameIndices;
-    std::sort(sortedIndices.begin(), sortedIndices.end(), std::greater<int>());
-    for (int rowToDelete : sortedIndices) {
-        extractor->removeFrame(rowToDelete);
-    }
-    populateFrameList(extractor->m_frames, extractor->m_atlas_index);
-    clearBoundingBoxHighlighters();
-    updateCurrentAnimation();
-    stopAnimation();
+    syncToDocument();
+    m_undoStack->push(new DeleteFramesCommand(m_document, frameIndices));
 }
 
 void MainWindow::setMergeHighlight(const QModelIndex &index, bool show)
@@ -216,3 +210,88 @@ void MainWindow::updateFrameListSelectionFromModel()
   ui->framesList->selectionModel()->select(selection,
                                              QItemSelectionModel::ClearAndSelect);
 }
+
+void MainWindow::populateFrameList(const QList<QPixmap> &frameList, const QList<SpriteBox> &boxList)
+{
+    QList<Extractor::Box> eboxes;
+    eboxes.reserve(boxList.size());
+    for (const SpriteBox &sb : boxList) {
+        Extractor::Box eb;
+        eb.rect = sb.rect;
+        eb.index = sb.index;
+        eb.selected = sb.selected;
+        eb.groupId = sb.groupId;
+        eb.overlappingBoxes = sb.overlappingBoxes;
+        eboxes.append(eb);
+    }
+    populateFrameList(frameList, eboxes);
+}
+
+void MainWindow::syncFromDocument()
+{
+    if (!m_document) return;
+
+    if (!extractor) {
+        extractor = new SpriteExtractor(statusLabel, progressBar, this);
+    }
+
+    extractor->m_frames = m_document->frames();
+    extractor->m_atlas = m_document->atlas();
+    extractor->m_atlas_index.clear();
+    for (const SpriteBox &sb : m_document->boxes()) {
+        Extractor::Box eb;
+        eb.rect = sb.rect;
+        eb.index = sb.index;
+        eb.selected = sb.selected;
+        eb.groupId = sb.groupId;
+        eb.overlappingBoxes = sb.overlappingBoxes;
+        extractor->m_atlas_index.append(eb);
+    }
+
+    extractor->m_animationsData.clear();
+    for (auto it = m_document->animations().begin(); it != m_document->animations().end(); ++it) {
+        Extractor::AnimationData ad;
+        ad.frameIndices = it.value().frameIndices;
+        ad.fps = it.value().fps;
+        extractor->m_animationsData[it.key()] = ad;
+    }
+
+    extractor->m_maxFrameWidth = m_document->maxFrameWidth();
+    extractor->m_maxFrameHeight = m_document->maxFrameHeight();
+
+    populateFrameList(extractor->m_frames, extractor->m_atlas_index);
+    setupGraphicsView(extractor->m_atlas);
+    syncAnimationListWidget();
+
+    if (!m_document->animations().isEmpty()) {
+        QString firstAnim = m_document->animations().firstKey();
+        QList<QTreeWidgetItem*> items = ui->animationList->findItems(firstAnim, Qt::MatchExactly, 0);
+        if (!items.isEmpty()) {
+            ui->animationList->setCurrentItem(items.first());
+            startAnimation();
+        }
+    }
+}
+
+void MainWindow::syncToDocument()
+{
+    if (!m_document || !extractor) return;
+
+    m_document->setAtlas(extractor->m_atlas);
+    QList<SpriteBox> sboxes;
+    for (const Extractor::Box &eb : extractor->m_atlas_index) {
+        SpriteBox sb;
+        sb.rect = eb.rect;
+        sb.index = eb.index;
+        sb.selected = eb.selected;
+        sb.groupId = eb.groupId;
+        sb.overlappingBoxes = eb.overlappingBoxes;
+        sboxes.append(sb);
+    }
+    m_document->setFrames(extractor->m_frames, sboxes);
+
+    for (auto it = extractor->m_animationsData.begin(); it != extractor->m_animationsData.end(); ++it) {
+        m_document->setAnimation(it.key(), it.value().frameIndices, it.value().fps, true);
+    }
+}
+

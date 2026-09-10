@@ -16,8 +16,13 @@
 #include <QTreeWidget>
 #include <QInputDialog>
 #include <QProgressBar>
+#include <QUndoStack>
 #include "extractor/extractor.h"
 #include "arrangementmodel.h"
+#include "model/spritedocument.h"
+#include "animation/animationplayer.h"
+#include "extractor/extractorregistry.h"
+#include "commands/commands.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -428,12 +433,20 @@ private slots:
   QSlider* zoomSlider;
   double zoomFactor = 1.0;
 
+  SpriteDocument *m_document = nullptr;
+  QUndoStack *m_undoStack = nullptr;
+  AnimationPlayer *m_player = nullptr;
+
+  void syncFromDocument();
+  void syncToDocument();
+
   /**
    * @brief Populates the frame list model with frames and metadata from the extractor.
    * @param frameList The list of QPixmap frames.
    * @param boxList The corresponding list of bounding boxes.
    */
   void populateFrameList(const QList<QPixmap> &frameList, const QList<Extractor::Box> &boxList);
+  void populateFrameList(const QList<QPixmap> &frameList, const QList<SpriteBox> &boxList);
 
   /**
    * @brief Determines the file type, creates the appropriate Extractor, and starts the extraction process.

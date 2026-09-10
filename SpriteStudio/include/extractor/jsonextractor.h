@@ -1,26 +1,39 @@
 #ifndef JSONEXTRACTOR_H
 #define JSONEXTRACTOR_H
 
-#include "extractor.h"
+#include "extractor/extractor.h"
 #include <QLabel>
 #include <QProgressBar>
 #include "extractor/jsonExtractordialog.h"
 
 /**
- * @brief Extractor derivated class for JSON sprite databases used in industry.
- *
+ * @brief Extractor derived class and plugin for JSON sprite databases (TexturePacker, Aseprite).
  */
 class JsonExtractor : public Extractor
 {
     Q_OBJECT
 public:
+    explicit JsonExtractor(QObject *parent = nullptr);
     explicit JsonExtractor(QLabel * statusBar, QProgressBar * progressBar, QObject *parent = nullptr);
+
+    // Plugin metadata
+    QString id() const override { return QStringLiteral("json_extractor"); }
+    QString displayName() const override { return QStringLiteral("JSON Atlas (*.json)"); }
+    QString description() const override { return QStringLiteral("TexturePacker and Aseprite JSON atlas descriptor with image."); }
+    QStringList supportedExtensions() const override {
+        return { QStringLiteral("json") };
+    }
+    Capabilities capabilities() const override {
+        return CanImport | CanExport | SupportsAnimations | SupportsAtlasMetadata;
+    }
+    bool canDecode(const QString &filePath) const override;
 
     QList<QPixmap> extractFrames(const QString &filePath, int alphaThreshold, int verticalTolerance) override;
     QList<QPixmap> extractFromPixmap(int alphaThreshold, int verticalTolerance) override;
     bool           exportFrames(const QString &basePath, const QString &projectName, Extractor* in) override;
+
 private:
-    jsonExtractorDialog* dialog;
+    jsonExtractorDialog* dialog = nullptr;
 
     QJsonDocument * exportToTexturePacker(QString projectName,
                                           const ExportOptions &opts,

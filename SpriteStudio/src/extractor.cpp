@@ -1,5 +1,32 @@
 #include "extractor/extractor.h"
+#include "model/spritedocument.h"
 #include <QDebug>
+#include <QFileInfo>
+#include <algorithm>
+
+Extractor::Extractor(QObject *parent)
+    : QObject(parent)
+    , m_maxFrameWidth(0)
+    , m_maxFrameHeight(0)
+    , m_statusBar(nullptr)
+    , m_progressBar(nullptr)
+    , m_smartCropEnabled(true)
+    , m_overlapThreshold(0.1)
+    , m_cropStrategy(SeparateStrategy)
+{
+}
+
+Extractor::Extractor(QLabel *statusBar, QProgressBar *progressBar, QObject *parent)
+    : QObject(parent)
+    , m_maxFrameWidth(0)
+    , m_maxFrameHeight(0)
+    , m_statusBar(statusBar)
+    , m_progressBar(progressBar)
+    , m_smartCropEnabled(true)
+    , m_overlapThreshold(0.1)
+    , m_cropStrategy(SeparateStrategy)
+{
+}
 
 void Extractor::setAnimation(const QString &name, const QList<int> &frameIndices, int fps)
 {
@@ -184,4 +211,78 @@ bool Extractor::smartCropEnabled() const
 void Extractor::setSmartCropEnabled(bool newSmartCropEnabled)
 {
     m_smartCropEnabled = newSmartCropEnabled;
+}
+
+void Extractor::syncToDocument(SpriteDocument &doc) const
+{
+    doc.setFilePath(m_filePath);
+    doc.setAtlas(m_atlas);
+    QList<SpriteBox> sboxes;
+    sboxes.reserve(m_atlas_index.size());
+    for (const auto &b : m_atlas_index) {
+        SpriteBox sb;
+        sb.rect = b.rect;
+        sb.selected = b.selected;
+        sb.index = b.index;
+        sb.groupId = b.groupId;
+        sb.overlappingBoxes = b.overlappingBoxes;
+        sboxes.append(sb);
+    }
+    doc.setFrames(m_frames, sboxes);
+    for (auto it = m_animationsData.begin(); it != m_animationsData.end(); ++it) {
+        doc.setAnimation(it.key(), it.value().frameIndices, it.value().fps, true);
+    }
+}
+
+void Extractor::syncFromDocument(const SpriteDocument &doc)
+{
+    m_filePath = doc.filePath();
+    m_atlas = doc.atlas();
+    m_frames = doc.frames();
+    m_atlas_index.clear();
+    m_atlas_index.reserve(doc.boxes().size());
+    for (const auto &sb : doc.boxes()) {
+        Box b;
+        b.rect = sb.rect;
+        b.selected = sb.selected;
+        b.index = sb.index;
+        b.groupId = sb.groupId;
+        b.overlappingBoxes = sb.overlappingBoxes;
+        m_atlas_index.append(b);
+    }
+    m_maxFrameWidth = doc.maxFrameWidth();
+    m_maxFrameHeight = doc.maxFrameHeight();
+    m_animationsData.clear();
+    for (auto it = doc.animations().begin(); it != doc.animations().end(); ++it) {
+        AnimationData ad;
+        ad.frameIndices = it.value().frameIndices;
+        ad.fps = it.value().fps;
+        m_animationsData[it.key()] = ad;
+    }
+}
+
+bool Extractor::extract(const QString &filePath, SpriteDocument &doc, QString *errorMsg)
+{
+    m_filePath = filePath;
+    m_frames = extractFrames(filePath, 20, 5);
+    if (m_frames.isEmpty()) {
+        if (errorMsg) *errorMsg = tr("No frames could be extracted from: %1").arg(filePath);
+        return false;
+    }
+    syncToDocument(doc);
+    return true;
+}
+
+bool Extractor::exportDocument(const QString &filePath, const SpriteDocument &doc, const ExportOptions &options, QString *errorMsg)
+{
+    m_opts = options;
+    syncFromDocument(doc);
+    QFileInfo fi(filePath);
+    QString basePath = fi.absolutePath();
+    QString projectName = fi.completeBaseName();
+    bool ok = exportFrames(basePath, projectName, this);
+    if (!ok && errorMsg) {
+        *errorMsg = tr("Export failed for %1").arg(filePath);
+    }
+    return ok;
 }

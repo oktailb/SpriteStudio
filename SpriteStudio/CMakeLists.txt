@@ -30,10 +30,16 @@ set (${PROJECT_NAME}_SRC
     src/mainwindow_animation.cpp
     src/mainwindow_frames.cpp
     src/mainwindow_atlas.cpp
+    src/model/spritedocument.cpp
+    src/packer/atlaspacker.cpp
+    src/animation/animationplayer.cpp
+    src/commands/commands.cpp
     src/extractor.cpp
-    src/extractor/gifextractor.cpp
+    src/extractor/extractorregistry.cpp
     src/extractor/spriteextractor.cpp
+    src/extractor/gifextractor.cpp
     src/extractor/jsonextractor.cpp
+    src/extractor/godotextractor.cpp
     src/extractor/jsonExtractordialog.cpp
     src/arrangementmodel.cpp
     src/aboutdialog.cpp
@@ -49,10 +55,16 @@ set (${PROJECT_NAME}_UI
 
 set (${PROJECT_NAME}_INCLUDE
     include/mainwindow.h
+    include/model/spritedocument.h
+    include/packer/atlaspacker.h
+    include/animation/animationplayer.h
+    include/commands/commands.h
     include/extractor/extractor.h
-    include/extractor/gifextractor.h
+    include/extractor/extractorregistry.h
     include/extractor/spriteextractor.h
+    include/extractor/gifextractor.h
     include/extractor/jsonextractor.h
+    include/extractor/godotextractor.h
     include/extractor/jsonExtractordialog.h
     include/extractor/export.h
     include/arrangementmodel.h

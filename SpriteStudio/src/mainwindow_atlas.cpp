@@ -122,10 +122,39 @@ void MainWindow::removeAtlasBackground()
 
 void MainWindow::processFile(const QString &fileName)
 {
+    currentFilePath = fileName;
+
+    // 1. Try extraction via ExtractorRegistry (modular extractor plugins)
+    Extractor *decoder = ExtractorRegistry::instance().findDecoder(fileName);
+    if (decoder) {
+        connect(decoder, &Extractor::progress, progressBar, &QProgressBar::setValue);
+        connect(decoder, &Extractor::statusMessage, statusLabel, &QLabel::setText);
+        QString errorMsg;
+        bool ok = decoder->extract(fileName, *m_document, &errorMsg);
+        if (ok && m_document->frameCount() > 0) {
+            m_undoStack->clear();
+            syncFromDocument();
+            clearBoundingBoxHighlighters();
+            ui->verticalTolerance->setValue(m_document->maxFrameHeight() / 3);
+            adjustZoomSliderToWindow();
+
+            if (!m_document->animations().isEmpty()) {
+                QString firstAnim = m_document->animations().firstKey();
+                SpriteAnimation anim = m_document->animation(firstAnim);
+                m_player->setSequence(anim.frameIndices, anim.fps, anim.loop);
+                m_player->play();
+            }
+            return;
+        } else if (!ok && !errorMsg.isEmpty()) {
+            QMessageBox::warning(this, tr("Open Error"), errorMsg);
+            return;
+        }
+    }
+
+    // 2. Legacy fallback
     int alphaThreshold = ui->alphaThreshold->value();
     int verticalTolerance = ui->verticalTolerance->value();
 
-    currentFilePath = fileName;
     QFileInfo fileInfo(fileName);
     QString extension = fileInfo.suffix().toLower();
 

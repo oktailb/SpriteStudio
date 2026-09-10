@@ -1,0 +1,51 @@
+#ifndef GODOTEXTRACTOR_H
+#define GODOTEXTRACTOR_H
+
+#include "extractor/extractor.h"
+
+/**
+ * @brief Extractor plugin for Godot Engine 4.x SpriteFrames (.tres) format.
+ *
+ * Exports native Godot 4 text resource (.tres) with embedded AtlasTexture regions
+ * and an accompanying PNG sprite sheet.
+ */
+class GodotExtractor : public Extractor
+{
+    Q_OBJECT
+
+public:
+    explicit GodotExtractor(QObject *parent = nullptr);
+    explicit GodotExtractor(QLabel *statusBar, QProgressBar *progressBar, QObject *parent = nullptr);
+    ~GodotExtractor() override = default;
+
+    QString id() const override { return QStringLiteral("godot_extractor"); }
+    QString displayName() const override { return QStringLiteral("Godot Engine 4.x SpriteFrames (*.tres)"); }
+    QString description() const override { return QStringLiteral("Native Godot 4 SpriteFrames resource for AnimatedSprite2D."); }
+    QStringList supportedExtensions() const override {
+        return { QStringLiteral("tres") };
+    }
+
+    Capabilities capabilities() const override {
+        return CanExport | SupportsAnimations | SupportsAtlasMetadata;
+    }
+
+    bool canDecode(const QString &filePath) const override {
+        Q_UNUSED(filePath);
+        return false;
+    }
+
+    QList<QPixmap> extractFrames(const QString &filePath, int alphaThreshold, int verticalTolerance) override {
+        Q_UNUSED(filePath); Q_UNUSED(alphaThreshold); Q_UNUSED(verticalTolerance);
+        return {};
+    }
+
+    QList<QPixmap> extractFromPixmap(int alphaThreshold, int verticalTolerance) override {
+        Q_UNUSED(alphaThreshold); Q_UNUSED(verticalTolerance);
+        return {};
+    }
+
+    bool exportFrames(const QString &basePath, const QString &projectName, Extractor* in) override;
+    bool exportDocument(const QString &filePath, const SpriteDocument &doc, const ExportOptions &options, QString *errorMsg = nullptr) override;
+};
+
+#endif // GODOTEXTRACTOR_H

@@ -5,12 +5,23 @@
 #include <QPainter>
 #include <cmath>
 #include <QImage>
+#include <QFileInfo>
 #include <QCoreApplication>
+
+GifExtractor::GifExtractor(QObject *parent)
+    : Extractor(nullptr, nullptr, parent)
+{
+}
 
 GifExtractor::GifExtractor(QLabel *statusBar, QProgressBar *progressBar, QObject *parent)
     : Extractor(statusBar, progressBar, parent)
 {
-  // Constructor. Initialization is handled by the Extractor base class.
+}
+
+bool GifExtractor::canDecode(const QString &filePath) const
+{
+    QFileInfo fi(filePath);
+    return fi.suffix().toLower() == QStringLiteral("gif");
 }
 
 QList<QPixmap> GifExtractor::extractFrames(const QString &filePath, int alphaThreshold, int verticalTolerance)

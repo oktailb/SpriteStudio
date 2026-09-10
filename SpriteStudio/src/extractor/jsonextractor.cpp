@@ -13,9 +13,20 @@
 #include <QJsonArray>
 #include <QJsonObject>
 
+JsonExtractor::JsonExtractor(QObject *parent)
+    : Extractor(nullptr, nullptr, parent)
+{
+}
+
 JsonExtractor::JsonExtractor(QLabel *statusBar, QProgressBar *progressBar, QObject *parent)
     : Extractor(statusBar, progressBar, parent)
 {
+}
+
+bool JsonExtractor::canDecode(const QString &filePath) const
+{
+    QFileInfo fi(filePath);
+    return fi.suffix().toLower() == QStringLiteral("json");
 }
 
 QStringList findFilesGlob(const QString &path, const QString &fîlter)

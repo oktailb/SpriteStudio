@@ -127,10 +127,10 @@ void MainWindow::removeAnimations(const QStringList &animationNames)
                                   QMessageBox::Yes | QMessageBox::No);
 
     if (reply == QMessageBox::Yes) {
+        syncToDocument();
         for (const QString &animationName : animationNames) {
-            extractor->removeAnimation(animationName);
+            m_undoStack->push(new DeleteAnimationCommand(m_document, animationName));
         }
-        syncAnimationListWidget();
         stopAnimation();
     }
 }
@@ -222,63 +222,14 @@ void MainWindow::updateAnimationsAfterFrameRemoval(int removedRow, int mergedRow
 
 void MainWindow::onMergeFrames(int sourceRow, int targetRow)
 {
-  if (sourceRow < 0 || sourceRow >= extractor->m_atlas_index.size() ||
-      targetRow < 0 || targetRow >= extractor->m_atlas_index.size()) {
-      return;
+    syncToDocument();
+    if (sourceRow < 0 || sourceRow >= m_document->frameCount() ||
+        targetRow < 0 || targetRow >= m_document->frameCount() ||
+        sourceRow == targetRow) {
+        return;
     }
 
-    QString currentAnimationName;
-    QList<QTreeWidgetItem*> selectedAnimations = ui->animationList->selectedItems();
-    if (!selectedAnimations.isEmpty()) {
-        currentAnimationName = selectedAnimations.first()->text(0);
-    }
-
-    // 1. Compute and merge
-    Extractor::Box srcBox = extractor->m_atlas_index[sourceRow];
-    Extractor::Box tgtBox = extractor->m_atlas_index[targetRow];
-
-    QRect srcRect(srcBox.rect);
-    QRect tgtRect(tgtBox.rect);
-    QRect unitedRect = srcRect.united(tgtRect);
-
-    QPixmap mergedPixmap = QPixmap::fromImage(this->extractor->m_atlas).copy(unitedRect);
-
-    // 2. Update target internal data
-    Extractor::Box newBox;
-    newBox.rect = unitedRect;
-    newBox.selected = srcBox.selected || tgtBox.selected; // Conserver la sélection
-    newBox.index = tgtBox.index; // Conserver l'index original
-
-    extractor->m_atlas_index[targetRow] = newBox;
-    extractor->m_frames[targetRow] = mergedPixmap;
-
-    // 3. update the item in the extractor data model
-    if (targetRow < frameModel->rowCount()) {
-        QStandardItem *targetItem = frameModel->item(targetRow, 0);
-        if (targetItem) {
-            QPixmap thumbnail = mergedPixmap.scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-            targetItem->setData(thumbnail, Qt::DecorationRole);
-            // Utiliser +1 pour l'affichage utilisateur
-            targetItem->setData(QString("Frame %1 + %2 merged")
-                                     .arg(sourceRow + 1).arg(targetRow + 1),
-                                 Qt::DisplayRole);
-          }
-      }
-    extractor->removeFrame(sourceRow);
-    populateFrameList(extractor->m_frames, extractor->m_atlas_index);
-    syncAnimationListWidget();
-    if (!currentAnimationName.isEmpty()) {
-        QList<QTreeWidgetItem*> items = ui->animationList->findItems(currentAnimationName, Qt::MatchExactly, 0);
-        if (!items.isEmpty()) {
-            ui->animationList->setCurrentItem(items.first());
-        } else {
-            stopAnimation();
-        }
-    } else {
-        stopAnimation();
-    }
-
-    // Graphical cleanup
+    m_undoStack->push(new MergeFramesCommand(m_document, sourceRow, targetRow));
     clearBoundingBoxHighlighters();
 }
 
@@ -318,14 +269,14 @@ void MainWindow::on_actionAbout_triggered()
 void MainWindow::on_actionOpen_triggered()
 {
   const QString title = tr("_open_file");
-  const QString formats = tr("_images") + " (*.png *.jpg *.jpeg *.bmp *.gif *.json)";
+  const QString formats = ExtractorRegistry::instance().openFilterString();
   QString fileName = QFileDialog::getOpenFileName(this, title, "", formats);
+  if (fileName.isEmpty()) return;
+
   currentFilePath = fileName;
   processFile(currentFilePath);
   statusLabel->setText(fileName);
   setWindowTitle("SpriteStudio (" + fileName + ")");
-  ui->verticalTolerance->setValue(extractor->m_maxFrameHeight / 3);
-  adjustZoomSliderToWindow();
 }
 
 void MainWindow::on_actionExit_triggered()
@@ -424,49 +375,46 @@ void MainWindow::on_framesList_clicked(const QModelIndex &index)
 
 void MainWindow::on_actionExport_triggered()
 {
-  // Check if have frames
-  if (!extractor || extractor->m_frames.isEmpty()) {
+  syncToDocument();
+  if (!m_document || m_document->frameCount() == 0) {
       QMessageBox::warning(this, tr("_export_error"), tr("_please_load_frames"));
       return;
-    }
-  Extractor * extractorOut = nullptr;
-  const QString filter = tr("_export_formats_json") + "(*.png *.json);;" + tr("_export_formats_png") + "(*.png)";
+  }
 
+  const QString filter = ExtractorRegistry::instance().saveFilterString();
   QString selectedFile = QFileDialog::getSaveFileName(
       this,
       tr("_export_atlas"),
-      QDir::homePath(), // Default path TODO: remember previous if export is used multiple times
+      QDir::homePath(),
       filter
-      );
+  );
 
   if (selectedFile.isEmpty()) {
-      return; // Cancel case
-    }
+      return;
+  }
 
-  QFileInfo fileInfo(selectedFile);
-  QString filePath = fileInfo.absolutePath();
-  QString baseName = fileInfo.completeBaseName();
-  QString extension = fileInfo.suffix().toLower();
+  Extractor *encoder = ExtractorRegistry::instance().findEncoder(selectedFile);
+  if (!encoder) {
+      encoder = ExtractorRegistry::instance().findExtractorById("json_extractor");
+  }
 
-  try {
-      if (extension == "json") {
-          extractorOut = new JsonExtractor(statusLabel, progressBar, this);
-        } else if (extension == "png") {
-          extractorOut = new SpriteExtractor(statusLabel, progressBar, this);
-        } else if (extension == "gif") {
-          extractorOut = new GifExtractor(statusLabel, progressBar, this);
-        } else {
-          extractorOut = new JsonExtractor(statusLabel, progressBar, this);
-        }
+  if (!encoder) {
+      QMessageBox::warning(this, tr("Export Error"), tr("No appropriate exporter found for this file."));
+      return;
+  }
 
-        bool success = extractorOut->exportFrames(filePath, baseName, extractor);
-      if (!success) {
-          QMessageBox::warning(this, tr("Export Error"), tr("Export failed"));
-        }
-    } catch (...) {
-      QMessageBox::critical(this, tr("Export Error"), tr("Export crashed"));
-    }
-  delete extractorOut;
+  connect(encoder, &Extractor::progress, progressBar, &QProgressBar::setValue);
+  connect(encoder, &Extractor::statusMessage, statusLabel, &QLabel::setText);
+
+  ExportOptions opts;
+  opts.compressJson = false;
+  QString errorMsg;
+  bool ok = encoder->exportDocument(selectedFile, *m_document, opts, &errorMsg);
+  if (!ok) {
+      QMessageBox::warning(this, tr("Export Error"), errorMsg.isEmpty() ? tr("Export failed") : errorMsg);
+  } else {
+      QMessageBox::information(this, tr("Export"), tr("Export completed successfully."));
+  }
 }
 
 void MainWindow::on_Play_clicked()
@@ -476,11 +424,19 @@ void MainWindow::on_Play_clicked()
         return;
     }
 
-    startAnimation();
+    QString animName = selectedAnimations.first()->text(0);
+    SpriteAnimation anim = m_document->animation(animName);
+    if (!anim.frameIndices.isEmpty()) {
+        m_player->setSequence(anim.frameIndices, anim.fps, anim.loop);
+        m_player->play();
+    } else {
+        startAnimation();
+    }
 }
 
 void MainWindow::on_Pause_clicked()
 {
+    m_player->pause();
     if (animationTimer->isActive()) {
         animationTimer->stop();
     }

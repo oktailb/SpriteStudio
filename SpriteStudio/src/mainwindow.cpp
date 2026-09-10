@@ -12,8 +12,67 @@ MainWindow::MainWindow(QWidget *parent)
       , extractor(nullptr)
       , animationTimer(new QTimer(this))
       , currentAnimationFrameIndex(0)
+      , m_document(new SpriteDocument(this))
+      , m_undoStack(new QUndoStack(this))
+      , m_player(new AnimationPlayer(this))
 {
   ui->setupUi(this);
+
+  // Initialize extractor registry
+  ExtractorRegistry::instance();
+
+  // Create Edit Menu for Undo/Redo
+  QMenu *editMenu = new QMenu(tr("&Edit"), this);
+  menuBar()->insertMenu(ui->menuHelp->menuAction(), editMenu);
+  QAction *undoAction = m_undoStack->createUndoAction(this, tr("&Undo"));
+  undoAction->setShortcut(QKeySequence::Undo);
+  editMenu->addAction(undoAction);
+
+  QAction *redoAction = m_undoStack->createRedoAction(this, tr("&Redo"));
+  redoAction->setShortcut(QKeySequence::Redo);
+  editMenu->addAction(redoAction);
+
+  // Standard File Shortcuts
+  ui->actionOpen->setShortcut(QKeySequence::Open);
+  ui->actionExport->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_E));
+  ui->actionExit->setShortcut(QKeySequence::Quit);
+
+  // Animation and Navigation Shortcuts
+  QShortcut *spaceShortcut = new QShortcut(QKeySequence(Qt::Key_Space), this);
+  connect(spaceShortcut, &QShortcut::activated, this, [this]() {
+      if (m_player->isPlaying()) {
+          on_Pause_clicked();
+      } else {
+          on_Play_clicked();
+      }
+  });
+
+  QShortcut *stepLeftShortcut = new QShortcut(QKeySequence(Qt::Key_Left), this);
+  connect(stepLeftShortcut, &QShortcut::activated, m_player, &AnimationPlayer::stepBackward);
+
+  QShortcut *stepRightShortcut = new QShortcut(QKeySequence(Qt::Key_Right), this);
+  connect(stepRightShortcut, &QShortcut::activated, m_player, &AnimationPlayer::stepForward);
+
+  QShortcut *framesListDeleteShortcut = new QShortcut(QKeySequence::Delete, ui->framesList);
+  connect(framesListDeleteShortcut, &QShortcut::activated, this, &MainWindow::deleteSelectedFrame);
+
+  // Connect Player
+  connect(m_player, &AnimationPlayer::frameChanged, this, [this](int seqIdx, int /*globalIdx*/) {
+      currentAnimationFrameIndex = seqIdx;
+      updateAnimation();
+  });
+  connect(m_player, &AnimationPlayer::playbackStateChanged, this, [this](bool playing) {
+      ui->Play->setVisible(!playing);
+      ui->Pause->setVisible(playing);
+  });
+
+  // Connect Document signals to UI synchronization
+  connect(m_document, &SpriteDocument::framesChanged, this, &MainWindow::syncFromDocument);
+  connect(m_document, &SpriteDocument::animationsChanged, this, &MainWindow::syncAnimationListWidget);
+  connect(m_document, &SpriteDocument::atlasChanged, this, [this]() {
+      setupGraphicsView(m_document->atlas());
+  });
+
   // Enable drag and drop events for the main window (to handle file drops).
   setAcceptDrops(true);
   // Start a low-frequency system timer (100ms interval) for general background checks/updates.
