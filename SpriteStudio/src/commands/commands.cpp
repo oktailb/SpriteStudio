@@ -45,6 +45,62 @@ void DeleteFramesCommand::undo()
     }
 }
 
+// --- EraseAtlasPixelsCommand ---
+
+EraseAtlasPixelsCommand::EraseAtlasPixelsCommand(SpriteDocument *doc, const QList<int> &indices, QUndoCommand *parent)
+    : QUndoCommand(parent)
+    , m_doc(doc)
+    , m_indicesToDelete(indices)
+{
+    setText(QObject::tr("Erase Atlas Pixels for %n frame(s)", "", indices.size()));
+
+    std::sort(m_indicesToDelete.begin(), m_indicesToDelete.end());
+    m_indicesToDelete.erase(std::unique(m_indicesToDelete.begin(), m_indicesToDelete.end()), m_indicesToDelete.end());
+
+    for (int idx : m_indicesToDelete) {
+        if (idx >= 0 && idx < m_doc->frameCount()) {
+            FrameBackup fb;
+            fb.originalIndex = idx;
+            fb.image = m_doc->frame(idx).toImage();
+            fb.box = m_doc->box(idx);
+            m_deletedFrames.append(fb);
+        }
+    }
+
+    m_animationsBackup = m_doc->animations();
+    m_atlasBefore = m_doc->atlas();
+    m_atlasAfter = (m_atlasBefore.format() == QImage::Format_ARGB32)
+        ? m_atlasBefore.copy()
+        : m_atlasBefore.convertToFormat(QImage::Format_ARGB32);
+
+    for (const FrameBackup &fb : m_deletedFrames) {
+        QRect r = fb.box.rect.intersected(m_atlasAfter.rect());
+        for (int y = r.top(); y <= r.bottom(); ++y) {
+            QRgb *line = reinterpret_cast<QRgb*>(m_atlasAfter.scanLine(y));
+            for (int x = r.left(); x <= r.right(); ++x) {
+                line[x] = qRgba(0, 0, 0, 0);
+            }
+        }
+    }
+}
+
+void EraseAtlasPixelsCommand::redo()
+{
+    m_doc->setAtlas(m_atlasAfter);
+    m_doc->removeFrames(m_indicesToDelete);
+}
+
+void EraseAtlasPixelsCommand::undo()
+{
+    m_doc->setAtlas(m_atlasBefore);
+    for (const FrameBackup &fb : m_deletedFrames) {
+        m_doc->insertFrame(fb.originalIndex, QPixmap::fromImage(fb.image), fb.box);
+    }
+    for (auto it = m_animationsBackup.begin(); it != m_animationsBackup.end(); ++it) {
+        m_doc->setAnimation(it.key(), it.value().frameIndices, it.value().fps, it.value().loop);
+    }
+}
+
 // --- MergeFramesCommand ---
 
 MergeFramesCommand::MergeFramesCommand(SpriteDocument *doc, int sourceIndex, int targetIndex, QUndoCommand *parent)

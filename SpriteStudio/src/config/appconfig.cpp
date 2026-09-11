@@ -135,6 +135,7 @@ bool AppConfig::load(const QString &filePath)
         m_animation.defaultFps = animObj.value(QStringLiteral("default_fps")).toInt(m_animation.defaultFps);
         m_animation.minFps = animObj.value(QStringLiteral("min_fps")).toInt(m_animation.minFps);
         m_animation.maxFps = animObj.value(QStringLiteral("max_fps")).toInt(m_animation.maxFps);
+        m_animation.autoPlayOnSelection = animObj.value(QStringLiteral("auto_play_on_selection")).toBool(m_animation.autoPlayOnSelection);
     }
 
     // 4. Project section
@@ -193,6 +194,7 @@ bool AppConfig::save(const QString &filePath) const
     animObj[QStringLiteral("default_fps")] = m_animation.defaultFps;
     animObj[QStringLiteral("min_fps")] = m_animation.minFps;
     animObj[QStringLiteral("max_fps")] = m_animation.maxFps;
+    animObj[QStringLiteral("auto_play_on_selection")] = m_animation.autoPlayOnSelection;
     root[QStringLiteral("animation")] = animObj;
 
     // 4. Project

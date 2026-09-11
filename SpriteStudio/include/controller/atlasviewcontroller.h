@@ -75,6 +75,7 @@ public:
     void trimSelectedSlice(int alphaThreshold = -1);
     void mergeSelectedSlices();
     void deleteSelectedSlices();
+    void eraseSelectedSlicesPixels();
     void nudgeSelectedBoxes(int dx, int dy);
 
     // Context Menu & Views

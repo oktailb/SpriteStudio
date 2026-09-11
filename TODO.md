@@ -94,9 +94,20 @@ L'application souffre d'une transition inachevée entre un code impératif legac
   - **Optimisation mémoire de la pile Undo/Redo (`QUndoStack`) :**
     - Ajout du paramètre configurable `undoLimit` (50 par défaut) dans `AppConfig` (`projectConfig`).
     - Migration des structures de sauvegarde de commandes (`DeleteFramesCommand`, `MergeFramesCommand`) : remplacement des `QPixmap` par des `QImage` brutes, éliminant les fuites de descripteurs GDI/GPU en RAM lors des opérations d'annulation/rétablissement répétées.
+  - **Découplage architectural de la vision par ordinateur (`SpriteDetector`) :**
+    - Extraction intégrale de la détection de silhouettes et de composantes connexes hors de `SpriteExtractor` vers un moteur autonome `SpriteDetector` (`include/image/spritedetector.h` / `src/image/spritedetector.cpp`).
+    - Respect strict du principe de responsabilité unique (SRP) : les `Extractor` redeviennent des codecs de formats de fichiers purs. `SpriteDetector` est directement utilisable par `ProjectController`, le futur éditeur de pixels ou tout codec sans couplage artificiel.
+  - **Nettoyage d'atlas : Effacement destructif de pixels (`Shift + Suppr`) :**
+    - Création de `EraseAtlasPixelsCommand` (`include/commands/commands.h`) : permet d'effacer les pixels de l'atlas sous les rectangles sélectionnés (remplissage à `alpha = 0`) tout en supprimant les tranches associées, avec support complet de l'annulation (`Ctrl+Z`) et du rétablissement (`Ctrl+Y`).
+    - Intégration du raccourci clavier `Shift + Delete` et d'une action dédiée dans le menu contextuel clic-droit de l'atlas (*Erase Pixels from Atlas*).
+  - **Fluidification du lecteur d'animation & Auto-play :**
+    - **Maintien de la lecture active** : la modification de la sélection de frames n'interrompt plus brutalement la lecture en cours si le player tournait déjà.
+    - **Auto-play configurable** : ajout de `autoPlayOnSelection` dans `AppConfig` (`AnimationConfig`). Dès qu'au moins 2 frames sont sélectionnées, le player démarre automatiquement la boucle. Sélectionner 1 seule frame affiche cette frame en pause.
+    - **Raccourci universel `Espace`** : la barre d'espace bascule `Play / Pause` depuis n'importe où dans la fenêtre principale sans conflit avec les champs textuels.
   - **Suite de tests automatisée étendue :**
-    - Nouveaux tests dans `tests/test_extractors.cpp` (`testExtractToImagesEquivalence`, `testExtractPerformance`) validant la conformité et la vitesse sous 500 ms.
-    - Nouveaux tests dans `tests/test_controllers.cpp` (`testProjectControllerOpenAsync`, `testProjectControllerRemoveBgAsync`, `testUndoStackLimitAndImageStorage`) validant la synchronisation multi-thread (`QSignalSpy`) et le plafonnement de la pile Undo. Total de 39 tests unitaires avec 100% de réussite.
+    - Nouveaux tests dans `tests/test_extractors.cpp` (`testExtractToImagesEquivalence`, `testExtractPerformance`, `testSpriteDetectorBasics`).
+    - Nouveaux tests dans `tests/test_controllers.cpp` (`testProjectControllerOpenAsync`, `testProjectControllerRemoveBgAsync`, `testUndoStackLimitAndImageStorage`, `testAnimationControllerAutoPlay`, `testAtlasViewControllerErasePixels`).
+    - Total de **42 tests unitaires individuels** sous CTest avec **100% de réussite**.
 
 ### 5. Standardisation de l'Ergonomie & Internationalisation (i18n)
 - **Problème :**

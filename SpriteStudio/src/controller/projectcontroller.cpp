@@ -2,6 +2,7 @@
 #include "include/model/spritedocument.h"
 #include "include/extractor/extractorregistry.h"
 #include "include/extractor/spriteextractor.h"
+#include "include/image/spritedetector.h"
 #include "include/config/appconfig.h"
 #include <QUndoStack>
 #include <QSettings>
@@ -126,8 +127,8 @@ void ProjectController::openFileAsync(const QString &filePath)
             return result;
         }
 
-        SpriteExtractor spriteExt;
-        if (!spriteExt.extractToImages(image, result.frameImages, result.boxes)) {
+        SpriteDetectionOptions detOpts;
+        if (!SpriteDetector::detectToImages(image, result.frameImages, result.boxes, detOpts)) {
             result.success = false;
             result.errorMessage = QObject::tr("Failed to segment sprite frames.");
             return result;
@@ -301,23 +302,19 @@ bool ProjectController::removeAtlasBackgroundAndRefresh(int alphaThreshold,
     int defaultTol = AppConfig::instance().project().backgroundRemovalTolerance;
     QImage cleanedImage = removeBackgroundFromImage(m_document->atlas(), defaultTol);
 
-    SpriteExtractor spriteExt;
-    spriteExt.setSmartCropEnabled(smartCrop);
-    spriteExt.setOverlapThreshold(overlapThreshold);
-
     if (alphaThreshold < 0) {
         alphaThreshold = AppConfig::instance().atlas().defaultAlphaThreshold;
     }
 
     QList<QImage> frameImages;
     QList<SpriteBox> boxes;
-    SpriteSheetOptions opts;
+    SpriteDetectionOptions opts;
     opts.alphaThreshold = alphaThreshold;
     opts.verticalTolerance = verticalTolerance;
     opts.smartCrop = smartCrop;
     opts.overlapThreshold = overlapThreshold;
 
-    if (!spriteExt.extractToImages(cleanedImage, frameImages, boxes, opts)) {
+    if (!SpriteDetector::detectToImages(cleanedImage, frameImages, boxes, opts)) {
         return false;
     }
 
@@ -362,17 +359,13 @@ void ProjectController::removeAtlasBackgroundAndRefreshAsync(int alphaThreshold,
             return result;
         }
 
-        SpriteExtractor spriteExt;
-        spriteExt.setSmartCropEnabled(smartCrop);
-        spriteExt.setOverlapThreshold(overlapThreshold);
-
-        SpriteSheetOptions opts;
+        SpriteDetectionOptions opts;
         opts.alphaThreshold = actualAlpha;
         opts.verticalTolerance = verticalTolerance;
         opts.smartCrop = smartCrop;
         opts.overlapThreshold = overlapThreshold;
 
-        if (!spriteExt.extractToImages(cleaned, result.frameImages, result.boxes, opts)) {
+        if (!SpriteDetector::detectToImages(cleaned, result.frameImages, result.boxes, opts)) {
             result.success = false;
             result.errorMessage = QObject::tr("Failed to segment frames after background removal.");
             return result;

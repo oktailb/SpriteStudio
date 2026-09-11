@@ -110,13 +110,6 @@ void MainWindow::zoomSliderChanged(int val)
     }
 }
 
-void MainWindow::on_framesList_clicked(const QModelIndex &index)
-{
-    if (!index.isValid() || !m_atlasController) return;
-    int row = index.row();
-    m_atlasController->setSelectedBoxIndices({row});
-}
-
 void MainWindow::onMergeFrames(int sourceRow, int targetRow)
 {
     if (!m_document) return;
@@ -129,6 +122,13 @@ void MainWindow::onMergeFrames(int sourceRow, int targetRow)
 
 void MainWindow::on_framesList_customContextMenuRequested(const QPoint &pos)
 {
+    QModelIndex clickedIdx = ui->framesList->indexAt(pos);
+    if (clickedIdx.isValid() && ui->framesList->selectionModel()) {
+        if (!ui->framesList->selectionModel()->isSelected(clickedIdx)) {
+            ui->framesList->selectionModel()->select(clickedIdx, QItemSelectionModel::ClearAndSelect);
+        }
+    }
+
     QMenu menu(this);
 
     QAction *createAnimAction = menu.addAction(tr("Create animation from selection"));
@@ -141,9 +141,19 @@ void MainWindow::on_framesList_customContextMenuRequested(const QPoint &pos)
 
     menu.addSeparator();
 
-    QAction *deleteFramesAction = menu.addAction(tr("Delete Selected Frames"));
+    QAction *deleteFramesAction = menu.addAction(tr("Delete Selected Frames\tDel"));
     deleteFramesAction->setEnabled(m_document && !m_document->selectedFrameIndices().isEmpty());
     connect(deleteFramesAction, &QAction::triggered, this, &MainWindow::deleteSelectedFrame);
+
+    QAction *eraseFramesAction = menu.addAction(tr("Erase Pixels && Delete Frames\tShift+Del"));
+    eraseFramesAction->setEnabled(m_document && !m_document->selectedFrameIndices().isEmpty());
+    connect(eraseFramesAction, &QAction::triggered, this, [this]() {
+        if (m_atlasController) {
+            m_atlasController->eraseSelectedSlicesPixels();
+        }
+    });
+
+    menu.addSeparator();
 
     QAction *invertAction = menu.addAction(tr("Invert Selection"));
     invertAction->setEnabled(m_document && m_document->frameCount() > 0);

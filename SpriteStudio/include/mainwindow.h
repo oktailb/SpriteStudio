@@ -125,7 +125,6 @@ private slots:
     void zoomSliderChanged(int val);
 
     // Frame list
-    void on_framesList_clicked(const QModelIndex &index);
     void onMergeFrames(int sourceRow, int targetRow);
     void on_framesList_customContextMenuRequested(const QPoint &pos);
     void deleteSelectedFrame();
@@ -170,6 +169,7 @@ private:
     QLabel *zoomLabel = nullptr;
     QSlider *zoomSlider = nullptr;
     QProgressBar *progressBar = nullptr;
+    bool m_isSyncingSelection = false;
 };
 
 #endif // MAINWINDOW_H

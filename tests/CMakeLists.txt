@@ -10,9 +10,13 @@ add_executable(test_extractors
     ${CMAKE_SOURCE_DIR}/SpriteStudio/src/extractor/gifextractor.cpp
     ${CMAKE_SOURCE_DIR}/SpriteStudio/src/extractor/jsonextractor.cpp
     ${CMAKE_SOURCE_DIR}/SpriteStudio/src/extractor/godotextractor.cpp
+    ${CMAKE_SOURCE_DIR}/SpriteStudio/src/image/spritedetector.cpp
+    ${CMAKE_SOURCE_DIR}/SpriteStudio/src/config/appconfig.cpp
 
     ${CMAKE_SOURCE_DIR}/SpriteStudio/include/model/spritedocument.h
     ${CMAKE_SOURCE_DIR}/SpriteStudio/include/packer/atlaspacker.h
+    ${CMAKE_SOURCE_DIR}/SpriteStudio/include/image/spritedetector.h
+    ${CMAKE_SOURCE_DIR}/SpriteStudio/include/config/appconfig.h
     ${CMAKE_SOURCE_DIR}/SpriteStudio/include/extractor/extractor.h
     ${CMAKE_SOURCE_DIR}/SpriteStudio/include/extractor/extractorregistry.h
     ${CMAKE_SOURCE_DIR}/SpriteStudio/include/extractor/spriteextractor.h
@@ -67,12 +71,14 @@ add_executable(test_controllers
     ${CMAKE_SOURCE_DIR}/SpriteStudio/src/extractor/godotextractor.cpp
     ${CMAKE_SOURCE_DIR}/SpriteStudio/src/extractor/extractorregistry.cpp
     ${CMAKE_SOURCE_DIR}/SpriteStudio/src/extractor.cpp
+    ${CMAKE_SOURCE_DIR}/SpriteStudio/src/image/spritedetector.cpp
 
     ${CMAKE_SOURCE_DIR}/SpriteStudio/include/controller/projectcontroller.h
     ${CMAKE_SOURCE_DIR}/SpriteStudio/include/controller/animationcontroller.h
     ${CMAKE_SOURCE_DIR}/SpriteStudio/include/controller/atlasviewcontroller.h
     ${CMAKE_SOURCE_DIR}/SpriteStudio/include/model/spritedocument.h
     ${CMAKE_SOURCE_DIR}/SpriteStudio/include/packer/atlaspacker.h
+    ${CMAKE_SOURCE_DIR}/SpriteStudio/include/image/spritedetector.h
     ${CMAKE_SOURCE_DIR}/SpriteStudio/include/animation/animationplayer.h
     ${CMAKE_SOURCE_DIR}/SpriteStudio/include/commands/commands.h
     ${CMAKE_SOURCE_DIR}/SpriteStudio/include/atlasboxitem.h

@@ -44,6 +44,7 @@ struct AnimationConfig
     int defaultFps = 12;
     int minFps = 1;
     int maxFps = 60;
+    bool autoPlayOnSelection = true;
 };
 
 /**

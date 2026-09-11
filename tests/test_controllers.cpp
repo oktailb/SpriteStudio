@@ -42,6 +42,7 @@ private slots:
     void testAnimationControllerReverseAnimation();
     void testAnimationControllerRemoveAnimation();
     void testAnimationControllerCurrentSelection();
+    void testAnimationControllerAutoPlay();
 
     // AtlasViewController tests
     void testAtlasViewControllerToolMode();
@@ -50,9 +51,11 @@ private slots:
     void testAtlasViewControllerSelection();
     void testAtlasViewControllerNudge();
     void testAtlasViewControllerTrimAndMerge();
+    void testAtlasViewControllerErasePixels();
     void testAtlasViewControllerMarqueeSelection();
     void testAtlasViewControllerContextMenuSignals();
     void testControllerCrossSyncNoRecursion();
+    void testAtlasViewControllerMultiSelectAndDelete();
 
 private:
     QString m_sampleDir;
@@ -525,6 +528,35 @@ void TestControllers::testAnimationControllerCurrentSelection()
     QVERIFY(!animCtrl.hasCurrentAnimation());
 }
 
+void TestControllers::testAnimationControllerAutoPlay()
+{
+    SpriteDocument doc;
+    QImage img(48, 48, QImage::Format_ARGB32);
+    doc.setAtlas(img);
+    doc.addSlice(QRect(0, 0, 16, 16));
+    doc.addSlice(QRect(16, 0, 16, 16));
+    doc.addSlice(QRect(32, 0, 16, 16));
+
+    AnimationController animCtrl(&doc);
+
+    // Auto-play default should be true
+    QVERIFY(AppConfig::instance().animation().autoPlayOnSelection);
+
+    // 1. Selecting 2 frames automatically starts playback
+    animCtrl.updateCurrentAnimation({0, 1});
+    QVERIFY(animCtrl.isPlaying());
+
+    // 2. Selecting 1 frame pauses playback
+    animCtrl.updateCurrentAnimation({0});
+    QVERIFY(!animCtrl.isPlaying());
+
+    // 3. Starting manual play then changing selection preserves playback
+    animCtrl.play();
+    QVERIFY(animCtrl.isPlaying());
+    animCtrl.updateCurrentAnimation({1, 2});
+    QVERIFY(animCtrl.isPlaying());
+}
+
 // -----------------------------------------------------------------------------
 // AtlasViewController Tests
 // -----------------------------------------------------------------------------
@@ -689,6 +721,53 @@ void TestControllers::testAtlasViewControllerTrimAndMerge()
     QCOMPARE(doc.frameCount(), 2);
 }
 
+void TestControllers::testAtlasViewControllerErasePixels()
+{
+    QGraphicsView view;
+    SpriteDocument doc;
+    QImage atlas(100, 100, QImage::Format_ARGB32);
+    atlas.fill(Qt::white);
+
+    // Paint an opaque red rectangle at (10, 10, 20, 20)
+    QPainter p(&atlas);
+    p.fillRect(10, 10, 20, 20, Qt::red);
+    p.end();
+
+    doc.setAtlas(atlas);
+    doc.addSlice(QRect(10, 10, 20, 20)); // Frame 0
+
+    QUndoStack undoStack;
+    AtlasViewController atlasCtrl(&view, &doc, &undoStack);
+
+    // Select box 0 and erase its pixels
+    atlasCtrl.setSelectedBoxIndices({0});
+    atlasCtrl.eraseSelectedSlicesPixels();
+
+    // 1. Frame count is now 0
+    QCOMPARE(doc.frameCount(), 0);
+
+    // 2. Pixels inside the rect on atlas are now transparent
+    QRgb pixelInside = doc.atlas().pixel(15, 15);
+    QCOMPARE(qAlpha(pixelInside), 0);
+
+    // 3. Pixel outside the rect remains white
+    QRgb pixelOutside = doc.atlas().pixel(5, 5);
+    QCOMPARE(qAlpha(pixelOutside), 255);
+
+    // 4. Undo restores frame and original red pixels
+    undoStack.undo();
+    QCOMPARE(doc.frameCount(), 1);
+    QCOMPARE(doc.box(0).rect, QRect(10, 10, 20, 20));
+    QRgb restoredPixel = doc.atlas().pixel(15, 15);
+    QCOMPARE(qAlpha(restoredPixel), 255);
+    QCOMPARE(qRed(restoredPixel), 255);
+
+    // 5. Redo erases pixels again
+    undoStack.redo();
+    QCOMPARE(doc.frameCount(), 0);
+    QCOMPARE(qAlpha(doc.atlas().pixel(15, 15)), 0);
+}
+
 void TestControllers::testAtlasViewControllerMarqueeSelection()
 {
     QGraphicsView view;
@@ -792,6 +871,84 @@ void TestControllers::testAtlasViewControllerContextMenuSignals()
 
     QCOMPARE(spyAtlasMenu.count(), 1);
     QCOMPARE(spyAtlasMenu.takeFirst().at(0).toPoint(), QPoint(80, 80));
+}
+
+void TestControllers::testAtlasViewControllerMultiSelectAndDelete()
+{
+    QGraphicsView view;
+    SpriteDocument doc;
+    QUndoStack undoStack;
+
+    QImage atlas(100, 100, QImage::Format_ARGB32);
+    atlas.fill(Qt::white);
+    // Draw distinct colors in 5 regions
+    for (int i = 0; i < 5; ++i) {
+        QRect r(i * 20, 0, 15, 15);
+        for (int y = r.top(); y <= r.bottom(); ++y) {
+            QRgb *line = reinterpret_cast<QRgb*>(atlas.scanLine(y));
+            for (int x = r.left(); x <= r.right(); ++x) {
+                line[x] = qRgba(50 * (i + 1), 0, 0, 255);
+            }
+        }
+    }
+    doc.setAtlas(atlas);
+
+    for (int i = 0; i < 5; ++i) {
+        doc.addSlice(QRect(i * 20, 0, 15, 15));
+    }
+    QCOMPARE(doc.frameCount(), 5);
+
+    AtlasViewController atlasCtrl(&view, &doc, &undoStack);
+
+    // 1. Multi-selection does not collapse
+    atlasCtrl.setSelectedBoxIndices({1, 3});
+    QCOMPARE(atlasCtrl.selectedBoxIndices(), (QList<int>{1, 3}));
+    QCOMPARE(doc.selectedFrameIndices(), (QList<int>{1, 3}));
+
+    // 2. Delete selected slices (slices 1 and 3)
+    QSignalSpy framesChangedSpy(&doc, &SpriteDocument::framesChanged);
+    atlasCtrl.deleteSelectedSlices();
+
+    QCOMPARE(doc.frameCount(), 3);
+    QVERIFY(framesChangedSpy.count() >= 1);
+    // Remaining boxes should be original 0, 2, 4 (now at 0, 1, 2)
+    QCOMPARE(doc.box(0).rect, QRect(0, 0, 15, 15));
+    QCOMPARE(doc.box(1).rect, QRect(40, 0, 15, 15));
+    QCOMPARE(doc.box(2).rect, QRect(80, 0, 15, 15));
+
+    // 3. Undo restores all 5 frames
+    undoStack.undo();
+    QCOMPARE(doc.frameCount(), 5);
+    QCOMPARE(doc.box(1).rect, QRect(20, 0, 15, 15));
+    QCOMPARE(doc.box(3).rect, QRect(60, 0, 15, 15));
+
+    // 4. Redo deletes them again
+    undoStack.redo();
+    QCOMPARE(doc.frameCount(), 3);
+
+    // 5. Erase pixels for slices 0 and 2 (which correspond to original 0 and 4)
+    atlasCtrl.setSelectedBoxIndices({0, 2});
+    QCOMPARE(atlasCtrl.selectedBoxIndices(), (QList<int>{0, 2}));
+
+    QSignalSpy atlasChangedSpy(&doc, &SpriteDocument::atlasChanged);
+    atlasCtrl.eraseSelectedSlicesPixels();
+
+    // Now only 1 frame remains (original 2, which was at index 1)
+    QCOMPARE(doc.frameCount(), 1);
+    QCOMPARE(doc.box(0).rect, QRect(40, 0, 15, 15));
+    QVERIFY(atlasChangedSpy.count() >= 1);
+
+    // Verify erased pixels are transparent
+    QCOMPARE(qAlpha(doc.atlas().pixel(5, 5)), 0);
+    QCOMPARE(qAlpha(doc.atlas().pixel(85, 5)), 0);
+    // Non-erased slice still has opaque pixels
+    QCOMPARE(qAlpha(doc.atlas().pixel(45, 5)), 255);
+
+    // 6. Undo restores both pixels and frames
+    undoStack.undo();
+    QCOMPARE(doc.frameCount(), 3);
+    QCOMPARE(qAlpha(doc.atlas().pixel(5, 5)), 255);
+    QCOMPARE(qAlpha(doc.atlas().pixel(85, 5)), 255);
 }
 
 #include <QApplication>

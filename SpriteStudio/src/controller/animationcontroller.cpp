@@ -299,8 +299,20 @@ void AnimationController::updateCurrentAnimation(const QList<int> &selectedIndic
     if (selectedIndices.isEmpty()) {
         removeCurrentAnimation();
     } else {
+        bool wasPlaying = isPlaying();
         m_document->setAnimation(QStringLiteral("current"), selectedIndices, fps(), true);
         selectAnimation(QStringLiteral("current"));
+
+        bool autoPlay = AppConfig::instance().animation().autoPlayOnSelection;
+        if (selectedIndices.size() >= 2) {
+            if (autoPlay || wasPlaying) {
+                play();
+            }
+        } else {
+            if (autoPlay) {
+                pause();
+            }
+        }
     }
 }
 

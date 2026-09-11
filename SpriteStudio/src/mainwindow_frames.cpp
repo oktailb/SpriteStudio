@@ -4,6 +4,7 @@
 
 void MainWindow::populateFrameList(const QList<QPixmap> &frameList, const QList<SpriteBox> &boxList)
 {
+    m_isSyncingSelection = true;
     frameModel->clear();
     frameModel->setColumnCount(1);
 
@@ -35,8 +36,39 @@ void MainWindow::populateFrameList(const QList<QPixmap> &frameList, const QList<
         }
     }
 
+    // Re-apply selection to ui->framesList if document has active selections
+    if (m_document && ui->framesList->selectionModel()) {
+        QItemSelection sel;
+        for (int row : m_document->selectedFrameIndices()) {
+            QModelIndex mIdx = frameModel->index(row, 0);
+            if (mIdx.isValid()) {
+                sel.select(mIdx, mIdx);
+            }
+        }
+        ui->framesList->selectionModel()->select(sel, QItemSelectionModel::ClearAndSelect);
+    }
+    m_isSyncingSelection = false;
+
     if (progressBar) progressBar->setValue(0);
     if (statusLabel) statusLabel->setText(tr("_ready"));
+}
+
+void MainWindow::refreshFrameListDisplay()
+{
+    if (!frameModel || !m_document) return;
+    int count = qMin(frameModel->rowCount(), m_document->frameCount());
+    for (int i = 0; i < count; ++i) {
+        QStandardItem *item = frameModel->item(i);
+        if (!item) continue;
+        bool isSel = m_document->box(i).selected;
+        QString text = QString("Frame %1%2").arg(i + 1).arg(isSel ? " ✓" : "");
+        item->setData(text, Qt::DisplayRole);
+        if (isSel) {
+            item->setBackground(QBrush(QColor(200, 230, 255)));
+        } else {
+            item->setData(QVariant(), Qt::BackgroundRole);
+        }
+    }
 }
 
 void MainWindow::syncFromDocument()

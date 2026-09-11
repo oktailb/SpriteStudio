@@ -48,6 +48,7 @@ set (${PROJECT_NAME}_SRC
     src/aboutdialog.cpp
     src/atlasboxitem.cpp
     src/config/appconfig.cpp
+    src/image/spritedetector.cpp
     src/version.h.in
     src/haiku.PackageInfo.in
     ${CMAKE_CURRENT_BINARY_DIR}/generated/version.h
@@ -68,6 +69,7 @@ set (${PROJECT_NAME}_INCLUDE
     include/packer/atlaspacker.h
     include/animation/animationplayer.h
     include/commands/commands.h
+    include/image/spritedetector.h
     include/atlasboxitem.h
     include/extractor/extractor.h
     include/extractor/extractorregistry.h

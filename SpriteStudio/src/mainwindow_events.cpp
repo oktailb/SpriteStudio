@@ -5,6 +5,10 @@
 #include <QDragMoveEvent>
 #include <QMimeData>
 
+#include <QLineEdit>
+#include <QTextEdit>
+#include <QAbstractSpinBox>
+
 void MainWindow::wheelEvent(QWheelEvent *event)
 {
     QMainWindow::wheelEvent(event);
@@ -12,8 +16,38 @@ void MainWindow::wheelEvent(QWheelEvent *event)
 
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {
+    const int key = event->key();
+
+    // Universal Spacebar shortcut to Toggle Play / Pause anywhere in the app
+    if (key == Qt::Key_Space) {
+        QWidget *focused = focusWidget();
+        if (!qobject_cast<QLineEdit*>(focused) &&
+            !qobject_cast<QTextEdit*>(focused) &&
+            !qobject_cast<QAbstractSpinBox*>(focused)) {
+            if (m_animationController) {
+                m_animationController->togglePlayPause();
+                event->accept();
+                return;
+            }
+        }
+    }
+
     if (m_atlasController && m_document && !m_document->selectedFrameIndices().isEmpty()) {
-        int key = event->key();
+        // Shift + Delete: Erase pixels from atlas & delete slice
+        if ((key == Qt::Key_Delete || key == Qt::Key_Backspace) && (event->modifiers() & Qt::ShiftModifier)) {
+            m_atlasController->eraseSelectedSlicesPixels();
+            event->accept();
+            return;
+        }
+
+        // Delete without Shift: Delete slice only (non-destructive)
+        if (key == Qt::Key_Delete || key == Qt::Key_Backspace) {
+            m_atlasController->deleteSelectedSlices();
+            event->accept();
+            return;
+        }
+
+        // Arrow keys: Nudge selected boxes
         if (key == Qt::Key_Left || key == Qt::Key_Right || key == Qt::Key_Up || key == Qt::Key_Down) {
             const AtlasConfig &cfg = AppConfig::instance().atlas();
             int step = (event->modifiers() & Qt::ShiftModifier) ? cfg.nudgeStepLarge : cfg.nudgeStepSmall;
@@ -34,6 +68,23 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 
 bool MainWindow::eventFilter(QObject *watched, QEvent *event)
 {
+    if (watched == ui->framesList || watched == ui->framesList->viewport()) {
+        if (event->type() == QEvent::KeyPress) {
+            QKeyEvent *kEvent = static_cast<QKeyEvent *>(event);
+            int key = kEvent->key();
+            if (key == Qt::Key_Delete || key == Qt::Key_Backspace) {
+                if (m_atlasController && m_document && !m_document->selectedFrameIndices().isEmpty()) {
+                    if (kEvent->modifiers() & Qt::ShiftModifier) {
+                        m_atlasController->eraseSelectedSlicesPixels();
+                    } else {
+                        m_atlasController->deleteSelectedSlices();
+                    }
+                    return true;
+                }
+            }
+        }
+    }
+
     if (watched == ui->framesList->viewport()) {
         if (event->type() == QEvent::DragMove) {
             QDragMoveEvent *dmEvent = static_cast<QDragMoveEvent *>(event);

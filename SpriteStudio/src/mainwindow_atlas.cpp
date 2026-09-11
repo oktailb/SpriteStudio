@@ -59,9 +59,14 @@ void MainWindow::onBoxContextMenuRequested(int index, const QPoint &screenPos)
 
     menu.addSeparator();
 
-    QAction *deleteAction = menu.addAction(tr("Delete Slice / Supprimer"));
+    QAction *deleteAction = menu.addAction(tr("Delete Slice (Delete) / Supprimer la boîte"));
     connect(deleteAction, &QAction::triggered, this, [this]() {
         if (m_atlasController) m_atlasController->deleteSelectedSlices();
+    });
+
+    QAction *eraseAction = menu.addAction(tr("Erase Pixels from Atlas (Shift+Delete) / Effacer les pixels"));
+    connect(eraseAction, &QAction::triggered, this, [this]() {
+        if (m_atlasController) m_atlasController->eraseSelectedSlicesPixels();
     });
 
     menu.addSeparator();
@@ -99,10 +104,16 @@ void MainWindow::onAtlasContextMenuRequested(const QPoint &pos)
 
     menu.addSeparator();
 
-    QAction *deleteFramesAction = menu.addAction(tr("Delete Selected Frames"));
+    QAction *deleteFramesAction = menu.addAction(tr("Delete Selected Frames (Delete)"));
     deleteFramesAction->setEnabled(m_document && !m_document->selectedFrameIndices().isEmpty());
     connect(deleteFramesAction, &QAction::triggered, this, [this]() {
         if (m_atlasController) m_atlasController->deleteSelectedSlices();
+    });
+
+    QAction *eraseFramesAction = menu.addAction(tr("Erase Pixels from Atlas (Shift+Delete)"));
+    eraseFramesAction->setEnabled(m_document && !m_document->selectedFrameIndices().isEmpty());
+    connect(eraseFramesAction, &QAction::triggered, this, [this]() {
+        if (m_atlasController) m_atlasController->eraseSelectedSlicesPixels();
     });
 
     QAction *invertAction = menu.addAction(tr("Invert Selection"));

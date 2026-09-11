@@ -32,6 +32,32 @@ private:
 };
 
 /**
+ * @brief Command to erase pixel data from the atlas inside selected bounding boxes and delete the frames.
+ */
+class EraseAtlasPixelsCommand : public QUndoCommand
+{
+public:
+    EraseAtlasPixelsCommand(SpriteDocument *doc, const QList<int> &indices, QUndoCommand *parent = nullptr);
+
+    void undo() override;
+    void redo() override;
+
+private:
+    struct FrameBackup {
+        int       originalIndex;
+        QImage    image;
+        SpriteBox box;
+    };
+
+    SpriteDocument*                 m_doc;
+    QList<int>                      m_indicesToDelete;
+    QList<FrameBackup>              m_deletedFrames;
+    QMap<QString, SpriteAnimation>  m_animationsBackup;
+    QImage                          m_atlasBefore;
+    QImage                          m_atlasAfter;
+};
+
+/**
  * @brief Command to merge one frame onto another with full undo capability.
  */
 class MergeFramesCommand : public QUndoCommand

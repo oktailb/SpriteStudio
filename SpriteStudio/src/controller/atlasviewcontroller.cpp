@@ -97,12 +97,18 @@ void AtlasViewController::adjustZoomToWindow()
 
 void AtlasViewController::setAtlasImage(const QImage &image)
 {
-    clearAtlas();
-
     if (image.isNull()) {
+        clearAtlas();
         return;
     }
 
+    if (m_atlasPixmapItem && m_scene->sceneRect() == image.rect()) {
+        m_atlasPixmapItem->setPixmap(QPixmap::fromImage(image));
+        syncAtlasBoxes();
+        return;
+    }
+
+    clearAtlas();
     m_atlasPixmapItem = m_scene->addPixmap(QPixmap::fromImage(image));
     m_scene->setSceneRect(image.rect());
 
@@ -299,6 +305,20 @@ void AtlasViewController::deleteSelectedSlices()
         m_undoStack->push(new DeleteFramesCommand(m_document, selected));
     } else {
         m_document->removeFrames(selected);
+    }
+}
+
+void AtlasViewController::eraseSelectedSlicesPixels()
+{
+    if (!m_document) return;
+    QList<int> selected = selectedBoxIndices();
+    if (selected.isEmpty()) return;
+
+    if (m_undoStack) {
+        m_undoStack->push(new EraseAtlasPixelsCommand(m_document, selected));
+    } else {
+        EraseAtlasPixelsCommand cmd(m_document, selected);
+        cmd.redo();
     }
 }
 

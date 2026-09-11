@@ -89,8 +89,9 @@ void MainWindow::setupControllers()
 
     // Connect AtlasViewController
     connect(m_atlasController.get(), &AtlasViewController::selectionChanged, this, [this](const QList<int> &indices) {
+        if (m_isSyncingSelection) return;
+        m_isSyncingSelection = true;
         // Sync frame list selection
-        ui->framesList->blockSignals(true);
         QItemSelection selection;
         for (int row : indices) {
             QModelIndex mIndex = frameModel->index(row, 0);
@@ -99,7 +100,8 @@ void MainWindow::setupControllers()
             }
         }
         ui->framesList->selectionModel()->select(selection, QItemSelectionModel::ClearAndSelect);
-        ui->framesList->blockSignals(false);
+        refreshFrameListDisplay();
+        m_isSyncingSelection = false;
 
         // Update transient current animation
         m_animationController->updateCurrentAnimation(indices);
@@ -149,6 +151,13 @@ void MainWindow::setupControllers()
     });
 
     // Connect Document frame updates to UI model
+    connect(m_document, &SpriteDocument::framesChanged, this, [this]() {
+        populateFrameList(m_document->frames(), m_document->boxes());
+        if (m_animationController) {
+            m_animationController->updateCurrentAnimation(m_document->selectedFrameIndices());
+        }
+    });
+
     connect(m_document, &SpriteDocument::frameUpdated, this, [this](int index) {
         if (frameModel && index >= 0 && index < frameModel->rowCount()) {
             QStandardItem *it = frameModel->item(index);
@@ -194,10 +203,30 @@ void MainWindow::setupUIConnections()
     ui->framesList->setViewMode(QListView::IconMode);
     ui->framesList->setSelectionMode(QAbstractItemView::ExtendedSelection);
     ui->framesList->setItemDelegate(listDelegate);
+    ui->framesList->installEventFilter(this);
     ui->framesList->viewport()->installEventFilter(this);
     ui->framesList->setContextMenuPolicy(Qt::CustomContextMenu);
 
-    connect(ui->framesList, &QListView::clicked, this, &MainWindow::on_framesList_clicked);
+    connect(ui->framesList->selectionModel(), &QItemSelectionModel::selectionChanged,
+            this, [this]() {
+        if (m_isSyncingSelection || !m_atlasController || !m_document) return;
+        m_isSyncingSelection = true;
+        QModelIndexList selectedRows = ui->framesList->selectionModel()->selectedRows();
+        QList<int> indices;
+        indices.reserve(selectedRows.size());
+        for (const QModelIndex &idx : selectedRows) {
+            indices.append(idx.row());
+        }
+        std::sort(indices.begin(), indices.end());
+        if (m_atlasController->selectedBoxIndices() != indices) {
+            m_atlasController->setSelectedBoxIndices(indices);
+        }
+        refreshFrameListDisplay();
+        if (m_animationController) {
+            m_animationController->updateCurrentAnimation(indices);
+        }
+        m_isSyncingSelection = false;
+    });
     connect(frameModel, &ArrangementModel::mergeRequested, this, &MainWindow::onMergeFrames);
     connect(ui->framesList, &QListView::customContextMenuRequested,
             this, &MainWindow::on_framesList_customContextMenuRequested);
@@ -272,6 +301,14 @@ void MainWindow::setupShortcuts()
     // Delete shortcut
     QShortcut *deleteShortcut = new QShortcut(QKeySequence::Delete, this);
     connect(deleteShortcut, &QShortcut::activated, this, &MainWindow::deleteSelectedFrame);
+
+    // Erase pixels and delete frames shortcut
+    QShortcut *eraseShortcut = new QShortcut(QKeySequence(Qt::SHIFT | Qt::Key_Delete), this);
+    connect(eraseShortcut, &QShortcut::activated, this, [this]() {
+        if (m_atlasController) {
+            m_atlasController->eraseSelectedSlicesPixels();
+        }
+    });
 }
 
 void MainWindow::processFile(const QString &fileName)

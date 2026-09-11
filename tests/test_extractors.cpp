@@ -14,6 +14,7 @@
 #include "extractor/gifextractor.h"
 #include "extractor/jsonextractor.h"
 #include "extractor/godotextractor.h"
+#include "image/spritedetector.h"
 
 class TestExtractors : public QObject
 {
@@ -31,6 +32,7 @@ private slots:
     void testErrorHandlingCorruptedData();
     void testExtractToImagesEquivalence();
     void testExtractPerformance();
+    void testSpriteDetectorBasics();
 
 private:
     QString m_sampleDir;
@@ -336,6 +338,36 @@ void TestExtractors::testExtractPerformance()
     qDebug() << "Extracted 64 components on 512x512 in" << elapsedMs << "ms";
     // With direct scanline access, 512x512 extraction finishes well under 500ms
     QVERIFY2(elapsedMs < 500, qPrintable(QString("Extraction took too long: %1 ms").arg(elapsedMs)));
+}
+
+void TestExtractors::testSpriteDetectorBasics()
+{
+    QImage testImg(80, 80, QImage::Format_ARGB32);
+    testImg.fill(Qt::transparent);
+
+    QPainter p(&testImg);
+    p.fillRect(5, 5, 20, 20, Qt::yellow);
+    p.fillRect(45, 45, 15, 15, Qt::cyan);
+    p.end();
+
+    QList<QImage> frames;
+    QList<SpriteBox> boxes;
+    SpriteDetectionOptions opts;
+    opts.minSliceSize = 3;
+
+    bool ok = SpriteDetector::detectToImages(testImg, frames, boxes, opts);
+    QVERIFY(ok);
+    QCOMPARE(boxes.size(), 2);
+    QCOMPARE(frames.size(), 2);
+    QCOMPARE(boxes[0].rect, QRect(5, 5, 20, 20));
+    QCOMPARE(boxes[1].rect, QRect(45, 45, 15, 15));
+
+    // Test detectBoxes alone
+    QList<SpriteBox> boxesOnly;
+    bool boxesOk = SpriteDetector::detectBoxes(testImg, boxesOnly, opts);
+    QVERIFY(boxesOk);
+    QCOMPARE(boxesOnly.size(), 2);
+    QCOMPARE(boxesOnly[0].rect, QRect(5, 5, 20, 20));
 }
 
 #include <QGuiApplication>
