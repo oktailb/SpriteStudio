@@ -13,6 +13,7 @@
 #include "animation/animationplayer.h"
 #include "config/appconfig.h"
 #include "commands/commands.h"
+#include "atlasboxitem.h"
 
 class TestControllers : public QObject
 {
@@ -59,6 +60,9 @@ private slots:
     void testAtlasViewControllerMultiSelectAndDelete();
     void testAtlasViewControllerMouseCenteredZoom();
     void testI18nKeyTranslations();
+    void testAtlasBoxItemHandleCosmeticSize();
+    void testAtlasViewControllerGroupDrag();
+    void testAtlasViewControllerContinuousSlice();
 
 private:
     QString m_sampleDir;
@@ -1068,6 +1072,137 @@ void TestControllers::testI18nKeyTranslations()
     QCOMPARE(untranslated, QStringLiteral("KEY_UNKNOWN_FEATURE"));
     QVERIFY(untranslated.startsWith(QStringLiteral("KEY_")));
 #endif
+}
+
+void TestControllers::testAtlasBoxItemHandleCosmeticSize()
+{
+    // Test on micro-sprite (16x16) and normal sprite (64x64)
+    QGraphicsScene scene;
+    QGraphicsView view(&scene);
+    view.show();
+
+    AtlasBoxItem item16(0, QRect(0, 0, 16, 16), QRect(0, 0, 256, 256));
+    scene.addItem(&item16);
+    item16.setSelectedBox(true);
+
+    // 1. Test at 1x zoom (scale = 1.0)
+    view.resetTransform();
+    double size1x = item16.currentHandleSize();
+    // 16 * 0.35 = 5.6, so size is capped to 5.6 to prevent overlapping handles on small sprites
+    QVERIFY(size1x <= 5.6);
+    QVERIFY(size1x >= 1.0);
+
+    // 2. Test at 4x zoom (scale = 4.0)
+    view.scale(4.0, 4.0);
+    double size4x = item16.currentHandleSize();
+    // In scene coords, size4x should be 8.0 / 4.0 = 2.0
+    QCOMPARE(size4x, 2.0);
+
+    // 3. Test at 16x zoom (scale = 16.0)
+    view.resetTransform();
+    view.scale(16.0, 16.0);
+    double size16x = item16.currentHandleSize();
+    // In scene coords, size16x should be 8.0 / 16.0 = 0.5
+    QCOMPARE(size16x, 0.5);
+
+    // 4. Test boundingRect and shape at 16x
+    QRectF br = item16.boundingRect();
+    QVERIFY(br.contains(item16.boxRect()));
+    QPainterPath sp = item16.shape();
+    QVERIFY(!sp.isEmpty());
+}
+
+void TestControllers::testAtlasViewControllerGroupDrag()
+{
+    QGraphicsView view;
+    SpriteDocument doc;
+    QUndoStack undoStack;
+    AtlasViewController controller(&view, &doc, &undoStack);
+
+    QImage atlas(200, 200, QImage::Format_ARGB32);
+    atlas.fill(Qt::white);
+    doc.setAtlas(atlas);
+
+    // Add 3 frames
+    doc.addSlice(QRect(10, 10, 20, 20));
+    doc.addSlice(QRect(40, 10, 20, 20));
+    doc.addSlice(QRect(70, 10, 20, 20));
+    QCOMPARE(doc.frameCount(), 3);
+
+    // Select all 3 frames
+    controller.setSelectedBoxIndices({0, 1, 2});
+    QCOMPARE(controller.selectedBoxIndices().size(), 3);
+
+    // Move group by (15, 25)
+    controller.moveSelectedBoxes(15, 25);
+
+    QCOMPARE(doc.box(0).rect, QRect(25, 35, 20, 20));
+    QCOMPARE(doc.box(1).rect, QRect(55, 35, 20, 20));
+    QCOMPARE(doc.box(2).rect, QRect(85, 35, 20, 20));
+
+    // Test Undo
+    QVERIFY(undoStack.canUndo());
+    undoStack.undo();
+
+    QCOMPARE(doc.box(0).rect, QRect(10, 10, 20, 20));
+    QCOMPARE(doc.box(1).rect, QRect(40, 10, 20, 20));
+    QCOMPARE(doc.box(2).rect, QRect(70, 10, 20, 20));
+
+    // Test Redo
+    QVERIFY(undoStack.canRedo());
+    undoStack.redo();
+
+    QCOMPARE(doc.box(0).rect, QRect(25, 35, 20, 20));
+    QCOMPARE(doc.box(1).rect, QRect(55, 35, 20, 20));
+    QCOMPARE(doc.box(2).rect, QRect(85, 35, 20, 20));
+
+    // Test Boundary Clamping: try to move beyond atlas width (200)
+    controller.moveSelectedBoxes(500, 0);
+    QVERIFY(doc.box(2).rect.right() <= atlas.rect().right());
+    QVERIFY(doc.box(0).rect.left() >= atlas.rect().left());
+}
+
+void TestControllers::testAtlasViewControllerContinuousSlice()
+{
+    QGraphicsView view;
+    view.resize(400, 400);
+    view.show();
+
+    SpriteDocument doc;
+    QUndoStack undoStack;
+    AtlasViewController controller(&view, &doc, &undoStack);
+
+    QImage atlas(200, 200, QImage::Format_ARGB32);
+    atlas.fill(Qt::white);
+    doc.setAtlas(atlas);
+
+    // Set ToolAddSlice mode
+    controller.setToolMode(AtlasViewController::ToolAddSlice);
+    QCOMPARE(controller.toolMode(), AtlasViewController::ToolAddSlice);
+
+    // 1. Draw without Shift -> auto-switches to ToolSelect
+    QPoint p1 = view.mapFromScene(QPointF(20, 20));
+    QPoint p2 = view.mapFromScene(QPointF(80, 80));
+
+    QTest::mousePress(view.viewport(), Qt::LeftButton, Qt::NoModifier, p1);
+    QTest::mouseMove(view.viewport(), p2);
+    QTest::mouseRelease(view.viewport(), Qt::LeftButton, Qt::NoModifier, p2);
+
+    QCOMPARE(doc.frameCount(), 1);
+    QCOMPARE(controller.toolMode(), AtlasViewController::ToolSelect);
+
+    // 2. Draw WITH Shift -> remains in ToolAddSlice mode for rapid chaining
+    controller.setToolMode(AtlasViewController::ToolAddSlice);
+
+    QPoint p3 = view.mapFromScene(QPointF(100, 100));
+    QPoint p4 = view.mapFromScene(QPointF(160, 160));
+
+    QTest::mousePress(view.viewport(), Qt::LeftButton, Qt::ShiftModifier, p3);
+    QTest::mouseMove(view.viewport(), p4);
+    QTest::mouseRelease(view.viewport(), Qt::LeftButton, Qt::ShiftModifier, p4);
+
+    QCOMPARE(doc.frameCount(), 2);
+    QCOMPARE(controller.toolMode(), AtlasViewController::ToolAddSlice);
 }
 
 #include <QApplication>

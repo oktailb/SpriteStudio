@@ -78,6 +78,7 @@ public:
     void deleteSelectedSlices();
     void eraseSelectedSlicesPixels();
     void nudgeSelectedBoxes(int dx, int dy);
+    void moveSelectedBoxes(int dx, int dy);
 
     // Context Menu & Views
     void fitSelectedFramesInView(int padding = -1);
@@ -97,6 +98,8 @@ private slots:
     void onBoxItemSelected(int index, bool selected, Qt::KeyboardModifiers modifiers);
     void onBoxItemGeometryChanged(int index, const QRect &newRect, const QRect &oldRect);
     void onBoxContextMenu(int index, const QPoint &screenPos);
+    void onBoxItemInteractiveMoved(int index, const QPoint &delta);
+    void onBoxItemInteractiveMoveFinished(int index, const QPoint &totalDelta);
 
 private:
     QList<int> findFramesInSelectionRect(const QRectF &rect);

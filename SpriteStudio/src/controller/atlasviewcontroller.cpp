@@ -186,6 +186,10 @@ void AtlasViewController::syncAtlasBoxes()
                 this, &AtlasViewController::onBoxItemGeometryChanged);
         connect(boxItem, &AtlasBoxItem::boxContextMenuRequested,
                 this, &AtlasViewController::onBoxContextMenu);
+        connect(boxItem, &AtlasBoxItem::boxInteractiveMoved,
+                this, &AtlasViewController::onBoxItemInteractiveMoved);
+        connect(boxItem, &AtlasBoxItem::boxInteractiveMoveFinished,
+                this, &AtlasViewController::onBoxItemInteractiveMoveFinished);
     }
 
     updateBoxSelectionVisuals(m_document->selectedFrameIndices());
@@ -354,30 +358,55 @@ void AtlasViewController::eraseSelectedSlicesPixels()
 
 void AtlasViewController::nudgeSelectedBoxes(int dx, int dy)
 {
-    if (!m_document) return;
+    moveSelectedBoxes(dx, dy);
+}
+
+void AtlasViewController::moveSelectedBoxes(int dx, int dy)
+{
+    if (!m_document || (dx == 0 && dy == 0)) return;
     QList<int> selected = selectedBoxIndices();
     if (selected.isEmpty()) return;
 
     QRect atlasBounds = m_document->atlas().rect();
 
-    if (m_undoStack) {
-        m_undoStack->beginMacro(tr("Nudge Slices"));
+    // Determine max allowable delta that keeps all selected boxes inside atlas bounds
+    int minDx = -999999, maxDx = 999999;
+    int minDy = -999999, maxDy = 999999;
+
+    if (!atlasBounds.isEmpty()) {
+        for (int idx : selected) {
+            if (idx >= 0 && idx < m_document->frameCount()) {
+                QRect r = m_document->box(idx).rect;
+                minDx = std::max(minDx, atlasBounds.left() - r.left());
+                maxDx = std::min(maxDx, atlasBounds.right() - r.right());
+                minDy = std::max(minDy, atlasBounds.top() - r.top());
+                maxDy = std::min(maxDy, atlasBounds.bottom() - r.bottom());
+            }
+        }
     }
 
-    for (int idx : selected) {
-        if (idx >= 0 && idx < m_document->frameCount()) {
-            QRect oldRect = m_document->box(idx).rect;
-            QRect newRect = oldRect.translated(dx, dy);
+    int clampedDx = std::clamp(dx, minDx, maxDx);
+    int clampedDy = std::clamp(dy, minDy, maxDy);
 
-            // Clamp inside atlas bounds
-            if (!atlasBounds.isEmpty()) {
-                if (newRect.left() < atlasBounds.left()) newRect.moveLeft(atlasBounds.left());
-                if (newRect.top() < atlasBounds.top()) newRect.moveTop(atlasBounds.top());
-                if (newRect.right() > atlasBounds.right()) newRect.moveRight(atlasBounds.right());
-                if (newRect.bottom() > atlasBounds.bottom()) newRect.moveBottom(atlasBounds.bottom());
-            }
+    if (clampedDx == 0 && clampedDy == 0) return;
 
-            if (newRect != oldRect) {
+    if (selected.size() == 1) {
+        int idx = selected.first();
+        QRect oldRect = m_document->box(idx).rect;
+        QRect newRect = oldRect.translated(clampedDx, clampedDy);
+        if (m_undoStack) {
+            m_undoStack->push(new ChangeBoxRectCommand(m_document, idx, oldRect, newRect));
+        } else {
+            m_document->updateBoxRect(idx, newRect);
+        }
+    } else {
+        if (m_undoStack) {
+            m_undoStack->beginMacro(tr("Move %1 Slices").arg(selected.size()));
+        }
+        for (int idx : selected) {
+            if (idx >= 0 && idx < m_document->frameCount()) {
+                QRect oldRect = m_document->box(idx).rect;
+                QRect newRect = oldRect.translated(clampedDx, clampedDy);
                 if (m_undoStack) {
                     m_undoStack->push(new ChangeBoxRectCommand(m_document, idx, oldRect, newRect));
                 } else {
@@ -385,10 +414,9 @@ void AtlasViewController::nudgeSelectedBoxes(int dx, int dy)
                 }
             }
         }
-    }
-
-    if (m_undoStack) {
-        m_undoStack->endMacro();
+        if (m_undoStack) {
+            m_undoStack->endMacro();
+        }
     }
 }
 
@@ -468,6 +496,63 @@ void AtlasViewController::onBoxContextMenu(int index, const QPoint &screenPos)
     }
 
     emit boxContextMenuRequested(index, screenPos);
+}
+
+void AtlasViewController::onBoxItemInteractiveMoved(int index, const QPoint &delta)
+{
+    if (!m_document || m_document->isEmpty()) return;
+
+    QList<int> selected = selectedBoxIndices();
+    if (!selected.contains(index)) {
+        selected = { index };
+    }
+
+    QRect atlasBounds = m_document->atlas().rect();
+
+    int minDx = -999999, maxDx = 999999;
+    int minDy = -999999, maxDy = 999999;
+
+    if (!atlasBounds.isEmpty()) {
+        for (int idx : selected) {
+            if (idx >= 0 && idx < m_document->frameCount()) {
+                QRect r = m_document->box(idx).rect;
+                minDx = std::max(minDx, atlasBounds.left() - r.left());
+                maxDx = std::min(maxDx, atlasBounds.right() - r.right());
+                minDy = std::max(minDy, atlasBounds.top() - r.top());
+                maxDy = std::min(maxDy, atlasBounds.bottom() - r.bottom());
+            }
+        }
+    }
+
+    int clampedDx = std::clamp(delta.x(), minDx, maxDx);
+    int clampedDy = std::clamp(delta.y(), minDy, maxDy);
+
+    for (int idx : selected) {
+        if (idx >= 0 && idx < m_boxItems.size() && m_boxItems[idx]) {
+            QRect orig = m_document->box(idx).rect;
+            m_boxItems[idx]->setBoxRect(orig.translated(clampedDx, clampedDy));
+        }
+    }
+}
+
+void AtlasViewController::onBoxItemInteractiveMoveFinished(int index, const QPoint &totalDelta)
+{
+    if (!m_document || m_document->isEmpty()) return;
+
+    QList<int> selected = selectedBoxIndices();
+    if (!selected.contains(index)) {
+        selected = { index };
+    }
+
+    // Reset visual positions of items back to document rects first
+    for (int idx : selected) {
+        if (idx >= 0 && idx < m_boxItems.size() && m_boxItems[idx]) {
+            m_boxItems[idx]->setBoxRect(m_document->box(idx).rect);
+        }
+    }
+
+    // Commit movement for the selection
+    moveSelectedBoxes(totalDelta.x(), totalDelta.y());
 }
 
 void AtlasViewController::startMarqueeSelection(const QPointF &scenePos, Qt::KeyboardModifiers modifiers)
@@ -684,8 +769,10 @@ bool AtlasViewController::eventFilter(QObject *watched, QEvent *event)
                             if (newIndex >= 0) {
                                 setSelectedBoxIndices({newIndex});
                             }
-                            // Auto-switch to ToolSelect for immediate manipulation
-                            setToolMode(ToolSelect);
+                            // Auto-switch to ToolSelect for immediate manipulation UNLESS Shift is held
+                            if (!(mouseEvent->modifiers() & Qt::ShiftModifier)) {
+                                setToolMode(ToolSelect);
+                            }
                         }
                         return true;
                     }

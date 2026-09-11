@@ -50,10 +50,15 @@ public:
     QPainterPath shape() const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
 
+    // Geometry helpers
+    double currentHandleSize() const;
+
 signals:
     void boxSelected(int index, bool selected, Qt::KeyboardModifiers modifiers);
     void boxGeometryChanged(int index, const QRect &newRect, const QRect &oldRect);
     void boxContextMenuRequested(int index, const QPoint &screenPos);
+    void boxInteractiveMoved(int index, const QPoint &delta);
+    void boxInteractiveMoveFinished(int index, const QPoint &totalDelta);
 
 protected:
     void hoverMoveEvent(QGraphicsSceneHoverEvent *event) override;

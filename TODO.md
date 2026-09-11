@@ -10,7 +10,7 @@ L'objectif est d'élever l'application d'un simple outil de découpe technique a
 | ID | Chantier | Priorité | Complexité | Statut |
 |---|---|---|---|---|
 | **M0** | [Assainissement Architectural & Dette Technique (Audit Critique)](#m0--assainissement-architectural--dette-technique-audit-critique) | **Haute** | Haute | 🟢 Clôturé & Validé (73 tests CTest 100% — Multiplateforme) |
-| **M1** | [Édition Interactive des Bounding Boxes (Atlas Slicing)](#m1--édition-interactive-des-bounding-boxes-atlas-slicing) | **Haute** | Moyenne | 🟢 ~95% - Déblocages clavier/UX validés |
+| **M1** | [Édition Interactive des Bounding Boxes (Atlas Slicing)](#m1--édition-interactive-des-bounding-boxes-atlas-slicing) | **Haute** | Moyenne | 🟢 Clôturé & Validé (100% — Poignées, Group Drag, Shift Slice) |
 | **M2** | [Gestionnaire Complet d'Animations & Timeline](#m2--gestionnaire-complet-danimations--timeline) | **Haute** | Moyenne | 📝 Planifié |
 | **M3** | [Points d'Ancrage & Pivots (Origins & Offsets)](#m3--points-dancrage--pivots-origins--offsets) | **Moyenne** | Faible | 📝 Planifié |
 | **M4** | [Outil d'Édition de Pixels (Pixel Art Retouching)](#m4--outil-dédition-de-pixels-pixel-art-retouching) | **Moyenne** | Haute | 📝 Planifié |
@@ -184,19 +184,20 @@ L'utilisateur doit pouvoir ajuster visuellement et manuellement les boîtes de d
 4. **Intégration Undo / Redo :**
    - Chaque déplacement, redimensionnement ou création doit passer par `QUndoCommand` pour permettre l'annulation (`Ctrl+Z`).
 
-### 📊 Point d'Étape & Bilan de Conformité (Avancement : ~95%)
+### 📊 Point d'Étape & Bilan de Clôture (Statut : 🟢 100% — Validé sous CTest)
 
 | Spécification M1 | Statut | Composant / Fichier | Diagnostic & Observations |
 |---|:---:|---|---|
-| **Poignées de redimensionnement (8 Handles)** | ✅ Fait | `atlasboxitem.h` / `.cpp` | 8 poignées fonctionnelles avec curseurs directionnels. |
-| **Déplacement souris (Drag & Drop)** | ✅ Fait | `atlasboxitem.cpp` | Fonctionne avec contrainte aux bornes de l'atlas. |
-| **Déplacement clavier (Flèches, Shift)** | ✅ **RÉSOLU** | `mainwindow.cpp` / `mainwindow_events.cpp` | Priorisation établie : le stepping de l'animation cède le pas dès qu'une boîte est sélectionnée pour permettre le déplacement fin au pixel. |
-| **Création manuelle (Outil Add Slice)** | ✅ **RÉSOLU** | `mainwindow_events.cpp` | Rebasculement automatique sur `ToolSelect` et sélection de la nouvelle tranche dès libération de la souris. |
-| **Génération instantanée de la frame** | ✅ Fait | `spritedocument.cpp`, `mainwindow_atlas.cpp` | La frame est créée directement dans `SpriteDocument` avec notification par signaux. |
-| **Trim to Pixels (Shrink to Alpha)** | ✅ Fait | `spritedocument.cpp`, `mainwindow_atlas.cpp` | Calcul de boîte englobante opaque opérationnel (mono et multi-sélection). |
-| **Merge Slices (Fusion)** | ✅ Fait | `mainwindow_atlas.cpp`, `commands.cpp` | Opérationnel via clic droit (si ≥ 2 boîtes). Utilise `MergeFramesCommand`. |
-| **Suppression (Touche Suppr)** | ✅ **RÉSOLU** | `mainwindow.cpp` | Raccourci `Delete` globalisé sur `MainWindow` pour supprimer la boîte active directement depuis l'atlas. |
-| **Intégration Undo / Redo** | ✅ Fait | `commands.h` / `commands.cpp` | Toutes les modifications géométriques, fusions et suppressions passent par `QUndoStack`. |
+| **Poignées de redimensionnement (8 Handles)** | ✅ **RÉSOLU & VALIDÉ** | `atlasboxitem.h` / `.cpp` | 8 poignées cosmétiques à dimension stable à l'écran, sans chevauchement ni explosion visuelle à fort zoom (x4, x8, x16) pour le pixel art. |
+| **Déplacement souris (Drag & Drop)** | ✅ **RÉSOLU & VALIDÉ** | `atlasboxitem.cpp`, `atlasviewcontroller.cpp` | Déplacement fluide mono et multi-sélection (group drag) synchronisé en temps réel avec contrainte aux bornes de l'atlas et commande/macro Undo unique. |
+| **Déplacement clavier (Flèches, Shift)** | ✅ **RÉSOLU & VALIDÉ** | `mainwindow.cpp` / `mainwindow_events.cpp` | Priorisation établie : le stepping de l'animation cède le pas dès qu'une boîte est sélectionnée pour permettre le déplacement fin au pixel. |
+| **Création manuelle (Outil Add Slice)** | ✅ **RÉSOLU & VALIDÉ** | `atlasviewcontroller.cpp` | Rebasculement automatique sur `ToolSelect`, ou maintien de l'outil pour découpes rapides enchaînées si la touche `Shift` est maintenue. |
+| **Génération instantanée de la frame** | ✅ **RÉSOLU & VALIDÉ** | `spritedocument.cpp`, `mainwindow_atlas.cpp` | La frame est créée directement dans `SpriteDocument` avec notification par signaux. |
+| **Trim to Pixels (Shrink to Alpha)** | ✅ **RÉSOLU & VALIDÉ** | `spritedocument.cpp`, `mainwindow_atlas.cpp` | Calcul de boîte englobante opaque opérationnel (mono et multi-sélection). |
+| **Merge Slices (Fusion)** | ✅ **RÉSOLU & VALIDÉ** | `mainwindow_atlas.cpp`, `commands.cpp` | Opérationnel via clic droit (si ≥ 2 boîtes). Utilise `MergeFramesCommand`. |
+| **Suppression (Touche Suppr / Shift+Suppr)** | ✅ **RÉSOLU & VALIDÉ** | `mainwindow_events.cpp`, `commands.cpp` | `Suppr` pour suppression de la boîte/frame, `Shift+Suppr` pour effacement destructif de pixels sur l'atlas avec Undo. |
+| **Badge d'index de frame** | ✅ **RÉSOLU & VALIDÉ** | `atlasboxitem.cpp` | Tracé cosmétique local isolé dans le repère de la vue, éliminant tout débordement de police textuelle à fort zoom. |
+| **Intégration Undo / Redo** | ✅ **RÉSOLU & VALIDÉ** | `commands.h` / `commands.cpp` | Toutes les modifications géométriques (mono et groupe), créations, fusions et suppressions passent par `QUndoStack`. |
 
 ---
 
@@ -424,8 +425,8 @@ Les planches de sprites récupérées sur le Web (rips d'émulateurs, archives) 
 
 ## 📅 Ordre de Déploiement Recommandé
 
-1. **Étape 0 — Stabilisation & Clôture de M1 (M1-Fix)** :
-   Corriger immédiatement les conflits de raccourcis (flèches et touche Suppr), le workflow du mode Slice et le bug visuel des poignées avant d'entamer de nouveaux chantiers.
+1. **Étape 0 — Stabilisation & Clôture de M1 (M1-Fix) — ✅ TERMINÉ & VALIDÉ (100%)** :
+   Poignées cosmétiques anti-chevauchement à fort zoom pixel art, déplacement synchronisé de multi-sélection (group drag), badges d'index sans débordement et découpe continue avec Shift validés par tests unitaires automatisés.
 2. **Étape 1 — Sauvegarde & Projet Natif (M5)** :
    Sécuriser le travail de l'utilisateur dès le départ en lui permettant de sauvegarder et recharger son document complet (`.sps`), évitant toute perte de données lors des crashs ou fermetures.
 3. **Étape 2 — Séquençage & Multi-Animations (M2)** :

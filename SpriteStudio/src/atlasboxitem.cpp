@@ -46,10 +46,29 @@ void AtlasBoxItem::setSelectedBox(bool sel)
     }
 }
 
+double AtlasBoxItem::currentHandleSize() const
+{
+    double scale = 1.0;
+    if (scene() && !scene()->views().isEmpty()) {
+        scale = scene()->views().first()->transform().m11();
+    }
+    const double baseScreenSize = AppConfig::instance().visuals().handleSize;
+    double sceneSize = (scale > 0.0) ? (baseScreenSize / scale) : baseScreenSize;
+
+    // Ensure handle never occupies more than 35% of the box dimension on micro-sprites
+    if (m_rect.width() > 0 && m_rect.height() > 0) {
+        double maxByBox = std::min(m_rect.width(), m_rect.height()) * 0.35;
+        if (maxByBox > 0.0) {
+            sceneSize = std::min(sceneSize, maxByBox);
+        }
+    }
+    return std::max(sceneSize, 0.1);
+}
+
 QRectF AtlasBoxItem::boundingRect() const
 {
-    // Margin for handles and border from AppConfig
-    const double margin = AppConfig::instance().visuals().handleMargin;
+    double hs = currentHandleSize();
+    double margin = std::max(hs / 2.0 + 2.0, AppConfig::instance().visuals().handleMargin);
     return m_rect.adjusted(-margin, -margin, margin, margin);
 }
 
@@ -58,7 +77,7 @@ QPainterPath AtlasBoxItem::shape() const
     QPainterPath path;
     path.addRect(m_rect);
     if (m_selected) {
-        const double handleSize = AppConfig::instance().visuals().handleSize;
+        const double handleSize = currentHandleSize();
         for (int h = TopLeft; h <= Left; ++h) {
             path.addRect(getHandleRect(static_cast<Handle>(h), handleSize));
         }
@@ -169,12 +188,7 @@ void AtlasBoxItem::updateCursor(Handle handle)
 void AtlasBoxItem::hoverMoveEvent(QGraphicsSceneHoverEvent *event)
 {
     m_hovered = true;
-    double scale = 1.0;
-    if (scene() && !scene()->views().isEmpty()) {
-        scale = scene()->views().first()->transform().m11();
-    }
-    double handleSize = (scale > 0.0) ? std::max(6.0 / scale, 6.0) : 8.0;
-
+    double handleSize = currentHandleSize();
     Handle h = handleAt(event->pos(), handleSize);
     updateCursor(h);
     update();
@@ -191,12 +205,7 @@ void AtlasBoxItem::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
 void AtlasBoxItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton) {
-        double scale = 1.0;
-        if (scene() && !scene()->views().isEmpty()) {
-            scale = scene()->views().first()->transform().m11();
-        }
-        double handleSize = (scale > 0.0) ? std::max(6.0 / scale, 6.0) : 8.0;
-
+        double handleSize = currentHandleSize();
         m_activeHandle = handleAt(event->pos(), handleSize);
         m_pressScenePos = event->scenePos();
         m_initialRect = m_rect;
@@ -238,7 +247,16 @@ void AtlasBoxItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
                 newRect.moveBottom(m_atlasBounds.bottom());
             }
         }
-        break;
+        prepareGeometryChange();
+        m_rect = newRect;
+        m_hasMoved = true;
+        update();
+
+        QPoint intDelta(static_cast<int>(std::round(m_rect.left() - m_initialRect.left())),
+                        static_cast<int>(std::round(m_rect.top() - m_initialRect.top())));
+        emit boxInteractiveMoved(m_index, intDelta);
+        event->accept();
+        return;
     }
     case TopLeft: {
         double newLeft = std::min(m_initialRect.right() - minSize, m_initialRect.left() + delta.x());
@@ -342,6 +360,18 @@ void AtlasBoxItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 void AtlasBoxItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton && m_activeHandle != None) {
+        if (m_activeHandle == Move) {
+            if (m_hasMoved) {
+                QPoint intTotalDelta(static_cast<int>(std::round(m_rect.left() - m_initialRect.left())),
+                                     static_cast<int>(std::round(m_rect.top() - m_initialRect.top())));
+                emit boxInteractiveMoveFinished(m_index, intTotalDelta);
+            }
+            m_activeHandle = None;
+            m_hasMoved = false;
+            event->accept();
+            return;
+        }
+
         if (m_hasMoved) {
             QRect oldRect = m_initialRect.toRect();
             QRect newRect = m_rect.toRect();
@@ -373,14 +403,6 @@ void AtlasBoxItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *opti
 
     const VisualConfig &vis = AppConfig::instance().visuals();
 
-    // Compute cosmetic handle size based on view zoom
-    double scale = 1.0;
-    if (scene() && !scene()->views().isEmpty()) {
-        scale = scene()->views().first()->transform().m11();
-    }
-    double baseHandle = vis.handleSize;
-    double handleSize = (scale > 0.0) ? std::max((baseHandle * 0.75) / scale, baseHandle * 0.75) : baseHandle;
-
     // 1. Fill
     if (m_selected) {
         painter->fillRect(m_rect, vis.selectedBoxFillColor);
@@ -406,22 +428,34 @@ void AtlasBoxItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *opti
     // 3. Index Badge in top-left corner
     QString labelText = QString::number(m_index + 1);
     QFont badgeFont("Arial", 8, QFont::Bold);
-    painter->setFont(badgeFont);
-
     QFontMetrics fm(badgeFont);
     int textW = fm.horizontalAdvance(labelText);
     int textH = fm.height();
-    double badgeW = (textW + 6.0) / (scale > 0.0 ? scale : 1.0);
-    double badgeH = (textH + 2.0) / (scale > 0.0 ? scale : 1.0);
+    double screenBadgeW = textW + 6.0;
+    double screenBadgeH = textH + 2.0;
 
-    QRectF badgeRect(m_rect.left(), m_rect.top(), badgeW, badgeH);
+    double scale = 1.0;
+    if (scene() && !scene()->views().isEmpty()) {
+        scale = scene()->views().first()->transform().m11();
+    }
+
+    painter->save();
+    painter->translate(m_rect.left(), m_rect.top());
+    if (scale > 0.0) {
+        painter->scale(1.0 / scale, 1.0 / scale);
+    }
+
+    QRectF badgeRect(0, 0, screenBadgeW, screenBadgeH);
     painter->fillRect(badgeRect, m_selected ? vis.selectedBoxColor : QColor(0, 50, 90, 200));
 
+    painter->setFont(badgeFont);
     painter->setPen(m_selected ? Qt::black : Qt::white);
     painter->drawText(badgeRect, Qt::AlignCenter, labelText);
+    painter->restore();
 
     // 4. Resize Handles (only when selected)
     if (m_selected) {
+        double handleSize = currentHandleSize();
         QPen handlePen(QColor(40, 40, 40));
         handlePen.setCosmetic(true);
         handlePen.setWidth(1);
