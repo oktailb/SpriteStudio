@@ -16,6 +16,7 @@ L'objectif est d'élever l'application d'un simple outil de découpe technique a
 | **M4** | [Outil d'Édition de Pixels (Pixel Art Retouching)](#m4--outil-dédition-de-pixels-pixel-art-retouching) | **Moyenne** | Haute | 📝 Planifié |
 | **M5** | [Format de Projet Natif (`.sps` - Sprite Studio Project)](#m5--format-de-projet-natif-sps---sprite-studio-project) | **Haute** | Faible | 📝 Planifié |
 | **M6** | [Algorithme d'Empaquetage Avancé (MaxRects Bin-Packing)](#m6--algorithme-dempaquetage-avancé-maxrects-bin-packing) | **Basse** | Moyenne | 📝 Planifié |
+| **M7** | [Suppression Avancée de Fond & Segmentation Robuste (JPEG Bruités, Anti-Halo)](#m7--suppression-avancée-darrière-plan--segmentation-robuste-planches-jpeg-bruit-anti-halo) | **Moyenne** | Moyenne | 📝 Notes & Pistes Techniques |
 
 ---
 
@@ -291,6 +292,77 @@ L'exportation actuelle vers Godot ou TexturePacker utilise un placement en grill
 
 ---
 
+## M7 : Suppression Avancée d'Arrière-Plan & Segmentation Robuste (Planches JPEG, Bruit, Anti-Halo)
+
+### Contexte & Problématique Observée (Exemple : Planche Street Fighter / Ryu)
+Les planches de sprites récupérées sur le Web (rips d'émulateurs, archives) sont très fréquemment stockées au format **JPEG** :
+- Absence totale de couche alpha native ($\alpha = 255$ partout).
+- Compression à perte (DCT $8\times 8$ et sous-échantillonnage chromatique YUV 4:2:0).
+- Fond aplat uniforme en théorie (souvent vert `#3b7b0a`, cyan ou magenta), mais fortement altéré et bruité en pratique autour des personnages.
+- Sprites agencés de façon extrêmement compacte (espacement de 1 à 2 pixels seulement entre deux frames consécutives).
+- Présence d'éléments parasites non graphiques : annotations textuelles de rippers ("Ryu ripped by..."), flèches explicatives, encadrés de texte, notes d'animation.
+- Poses variées avec cavités corporelles complexes (jambes écartées lors des sauts, bras repliés) et effets spéciaux d'énergie (Hadouken, auras) dont les dégradés semi-transparents ont été fusionnés avec la couleur du fond.
+
+---
+
+### ⚠️ Inventaire des Problèmes et Risques d'Échec
+
+1. **Artefacts de Compression JPEG & Bruit de Contour (Ringing / Mosquito Noise) :**
+   - Aux abords des silhouettes à fort contraste (kimono blanc, cheveux noirs, bandeau rouge sur fond vert), la transformée en cosinus discrète (DCT) produit des ondulations de teinte. Le vert de fond fluctue localement de $\pm 15$ à $\pm 30$ en valeurs RVB.
+   - **Conséquence :** Un seuil de tolérance trop bas laisse un "nuage de moustiques" de pixels verts flottant autour des sprites. Un seuil trop élevé commence à grignoter les pixels clairs ou colorés du personnage.
+
+2. **Halo Résiduel & Frange de Transition (Color Spill / Green Fringe) :**
+   - En raison de l'interpolation bilinéaire et du sous-échantillonnage chroma (4:2:0), les pixels à la frontière exacte du sprite sont un mélange optique de la couleur du trait du sprite et de la couleur du fond vert.
+   - **Conséquence :** Une fois le fond supprimé au seuil strict, chaque sprite conserve un liseré verdâtre disgracieux (*green halo*) qui gâche le rendu dès qu'on place le sprite sur un fond sombre ou dans un moteur de jeu.
+
+3. **Sur-fusion des Sprites Resserrés (Over-merging) :**
+   - Entre deux frames d'animation très proches (ex: un coup de pied qui frôle la pose suivante à 1 pixel d'écart), le moindre pixel de bruit résiduel non éliminé sert de "pont" conducteur pour le flood-fill.
+   - **Conséquence :** Deux ou trois frames distinctes se retrouvent agglutinées en une seule boîte englobante géante.
+
+4. **Le Dilemme des Cavités Internes Closes (Holes & Enclosed Background Islands) :**
+   - Les trous d'arrière-plan situés à l'intérieur du corps (triangle entre les jambes écartées lors d'un saut, espace sous l'aisselle, boucle d'un bras replié) posent un dilemme algorithmique :
+     - *Inondation depuis l'extérieur (Flood-fill pur) :* Elle isole parfaitement la silhouette externe sans toucher au sprite, mais laisse tous les trous intérieurs remplis de vert opaque.
+     - *Substitution globale de couleur (Color Replacement global) :* Elle vide correctement les trous intérieurs, mais risque de percer des trous dans le sprite si le personnage porte un vêtement ou un accessoire de teinte voisine du fond (ex: Blanka, gants, liserés).
+
+5. **Pollution par les Micro-Composantes Textuelles (Stray Text & Credits) :**
+   - Les crédits de ripping et flèches disséminés entre les rangées de sprites sont découpés en dizaines de micro-boîtes parasites ($2\times 3$ px, $5\times 5$ px), polluant la liste des frames et faussant les calculs de cadence ou d'alignement.
+
+6. **Dégradation des Effets Semi-Transparents (Hadouken, Projectiles, Auras) :**
+   - Les flammes et boules d'énergie bleues avec transparence d'origine ont été aplaties sur le vert lors de l'enregistrement JPEG, créant des pixels cyan/verts hybrides impossibles à isoler par un seuil binaire.
+
+---
+
+### 💡 Pistes Techniques & Solutions Envisagées
+
+1. **Détection Colorimétrique Évoluée (Espace Perceptuel CIELAB / $\Delta E$) :**
+   - Abandonner la simple distance Manhattan RVB ($|R_1-R_2| + |G_1-G_2| + |B_1-B_2|$) au profit de la distance euclidienne $\Delta E$ dans l'espace **CIELAB** ou en décomposition **YCbCr**.
+   - En séparant la luminance ($Y/L$) de la chrominance ($Cb, Cr / a, b$), on peut appliquer une tolérance étroite sur la teinte du fond tout en autorisant les variations de luminosité induites par les blocs JPEG.
+   - **Échantillonnage statistique :** Échantillonner les 4 coins et le périmètre extérieur pour calculer la médiane de la couleur de fond ainsi que son écart-type ($\sigma$), permettant de définir un seuil adaptatif automatique.
+
+2. **Algorithme Hybride en 2 Passes (Silhouette Externe + Cavités Validées) :**
+   - **Passe 1 (Masquage Extérieur) :** Flood-fill depuis les bords de l'image pour marquer tout l'arrière-plan externe continu sans jamais pénétrer dans le sprite.
+   - **Passe 2 (Cavités Internes) :** Pour les îlots internes non connectés à l'extérieur :
+     - Calculer la compacité et la proximité colorimétrique avec le fond extérieur.
+     - Remplacer par la transparence uniquement si la couleur moyenne de l'îlot concorde avec le fond à $\Delta E < \text{seuil}$, ou proposer un mode interactif "clic pour déboucher la cavité".
+
+3. **Traitement Anti-Halo / Dé-frangeage (Color Despill & Alpha Matte) :**
+   - **Algorithme de Green Despill :** Sur les pixels de contour (bordure de transition de 1 pixel), calculer la proportion de vert parasite et la soustraire en ajustant la composante alpha (technique similaire au chromakey vidéo professionnel).
+   - **Érosion morphologique optionnelle :** Permettre un rognage d'un demi-pixel ou 1 pixel sur le masque alpha pour éradiquer les franges bruitées tenaces.
+
+4. **Filtrage Intelligent des Parasites & Débruitage Géométrique (Pruning) :**
+   - **Seuils dimensionnels minimaux :** Ignorer automatiquement lors de la segmentation toutes les composantes connexes dont $\text{largeur} < \text{seuilMin}$ OU $\text{hauteur} < \text{seuilMin}$ (ex. $< 8$ px) ou surface $< 32\text{ px}^2$.
+   - **Outil "Zone d'Exclusion / Masque Rectangulaire" :** Permettre à l'utilisateur de tracer un ou plusieurs rectangles rouges "Ignorer cette zone" sur l'atlas (ex. par-dessus le bloc de texte de crédits) avant de lancer la détection automatique.
+
+5. **Désagglomération par Profils de Projection (Histogram Slicing / Watershed) :**
+   - Calculer les histogrammes de projection de densité de pixels opaques selon les axes horizontaux (lignes) et verticaux (colonnes).
+   - Détecter les "cols" et vallées étroites où deux sprites ne se touchent que par 1 ou 2 pixels aberrants pour couper automatiquement le lien et séparer les boîtes englobantes.
+
+6. **Pipette Manuelle & Prévisualisation en Direct (Live Overlay) :**
+   - Ajouter un outil pipette dans la barre d'outils pour sélectionner manuellement la couleur de fond sur l'atlas en cas de couleur non majoritaire.
+   - Prévisualisation instantanée par damier de transparence ou masque binaire dynamique avec curseur de tolérance en direct avant d'appliquer définitivement la transformation sur le document.
+
+---
+
 ## 📅 Ordre de Déploiement Recommandé
 
 1. **Étape 0 — Stabilisation & Clôture de M1 (M1-Fix)** :
@@ -307,3 +379,5 @@ L'exportation actuelle vers Godot ou TexturePacker utilise un placement en grill
    Offrir l'atelier de retouche pixel art autonome directement au cœur du workflow.
 7. **Étape 6 — Optimisation du Packing (M6)** :
    Perfectionner le rendement de l'atlas PNG final pour la production avec MaxRects.
+8. **Étape 7 — Suppression Avancée de Fond & Débruitage Robuste (M7)** :
+   Doter SpriteStudio d'un moteur de segmentation tolérant au bruit JPEG, anti-halo (*despill*), filtrage de textes parasites et désagglomération pour les planches de sprites complexes.
