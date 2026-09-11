@@ -18,7 +18,7 @@ DeleteFramesCommand::DeleteFramesCommand(SpriteDocument *doc, const QList<int> &
         if (idx >= 0 && idx < m_doc->frameCount()) {
             FrameBackup fb;
             fb.originalIndex = idx;
-            fb.pixmap = m_doc->frame(idx);
+            fb.image = m_doc->frame(idx).toImage();
             fb.box = m_doc->box(idx);
             m_deletedFrames.append(fb);
         }
@@ -36,7 +36,7 @@ void DeleteFramesCommand::undo()
 {
     // Reinsert deleted frames in ascending order
     for (const FrameBackup &fb : m_deletedFrames) {
-        m_doc->insertFrame(fb.originalIndex, fb.pixmap, fb.box);
+        m_doc->insertFrame(fb.originalIndex, QPixmap::fromImage(fb.image), fb.box);
     }
 
     // Restore exact animations state
@@ -55,9 +55,9 @@ MergeFramesCommand::MergeFramesCommand(SpriteDocument *doc, int sourceIndex, int
 {
     setText(QObject::tr("Merge Frame %1 into %2").arg(sourceIndex + 1).arg(targetIndex + 1));
 
-    m_sourcePixmap = m_doc->frame(sourceIndex);
+    m_sourceImage = m_doc->frame(sourceIndex).toImage();
     m_sourceBox = m_doc->box(sourceIndex);
-    m_targetOriginalPixmap = m_doc->frame(targetIndex);
+    m_targetOriginalImage = m_doc->frame(targetIndex).toImage();
     m_targetOriginalBox = m_doc->box(targetIndex);
     m_animationsBackup = m_doc->animations();
 }
@@ -77,11 +77,11 @@ void MergeFramesCommand::undo()
 
     // Reinsert both original frames
     if (m_sourceIndex <= m_targetIndex) {
-        m_doc->insertFrame(m_sourceIndex, m_sourcePixmap, m_sourceBox);
-        m_doc->insertFrame(m_targetIndex, m_targetOriginalPixmap, m_targetOriginalBox);
+        m_doc->insertFrame(m_sourceIndex, QPixmap::fromImage(m_sourceImage), m_sourceBox);
+        m_doc->insertFrame(m_targetIndex, QPixmap::fromImage(m_targetOriginalImage), m_targetOriginalBox);
     } else {
-        m_doc->insertFrame(m_targetIndex, m_targetOriginalPixmap, m_targetOriginalBox);
-        m_doc->insertFrame(m_sourceIndex, m_sourcePixmap, m_sourceBox);
+        m_doc->insertFrame(m_targetIndex, QPixmap::fromImage(m_targetOriginalImage), m_targetOriginalBox);
+        m_doc->insertFrame(m_sourceIndex, QPixmap::fromImage(m_sourceImage), m_sourceBox);
     }
 
     // Restore animations

@@ -1,9 +1,9 @@
 #include "extractor/spriteextractor.h"
 #include <QDebug>
-#include <QStack>
 #include <QFileInfo>
 #include <QDir>
 #include <algorithm>
+#include <vector>
 
 SpriteExtractor::SpriteExtractor(QObject *parent)
     : Extractor(parent)
@@ -85,7 +85,10 @@ bool SpriteExtractor::extractFromImage(const QImage &image, SpriteDocument &outD
     return extractFromImage(image, outDoc, opts);
 }
 
-bool SpriteExtractor::extractFromImage(const QImage &sourceImage, SpriteDocument &outDoc, const SpriteSheetOptions &options)
+bool SpriteExtractor::extractToImages(const QImage &sourceImage,
+                                     QList<QImage> &outFrames,
+                                     QList<SpriteBox> &outBoxes,
+                                     const SpriteSheetOptions &options)
 {
     setStatusMessage(tr("Segmenting sprite frames..."));
     setProgress(15);
@@ -97,44 +100,89 @@ bool SpriteExtractor::extractFromImage(const QImage &sourceImage, SpriteDocument
 
     const int w = image.width();
     const int h = image.height();
+    if (w <= 0 || h <= 0) {
+        outFrames.clear();
+        outBoxes.clear();
+        return false;
+    }
+
     const int ALPHA_THRESHOLD = options.alphaThreshold;
     const int verticalTolerance = options.verticalTolerance;
 
-    // 1) Flood-fill component identification
-    QVector<int> componentIdAtPixel(w * h, -1);
+    // Fast direct scanline pointers
+    std::vector<const QRgb*> scanLines(h);
+    for (int y = 0; y < h; ++y) {
+        scanLines[y] = reinterpret_cast<const QRgb*>(image.constScanLine(y));
+    }
+
+    // 1) Flood-fill component identification with contiguous 1D array & fast stack
+    std::vector<int> componentIdAtPixel(static_cast<size_t>(w * h), -1);
     QList<QRect> componentRects;
 
+    struct Point2D { int x; int y; };
+    std::vector<Point2D> stack;
+    stack.reserve(8192);
+
     for (int y = 0; y < h; ++y) {
+        const QRgb *lineY = scanLines[y];
+        const int y_w = y * w;
         for (int x = 0; x < w; ++x) {
-            int idx = y * w + x;
-            if (componentIdAtPixel[idx] >= 0 || qAlpha(image.pixel(x, y)) <= ALPHA_THRESHOLD)
+            int idx = y_w + x;
+            if (componentIdAtPixel[idx] >= 0 || qAlpha(lineY[x]) <= ALPHA_THRESHOLD)
                 continue;
 
-            const int componentId = componentRects.size();
+            const int componentId = static_cast<int>(componentRects.size());
             int minX = w, minY = h, maxX = -1, maxY = -1;
 
-            QStack<QPoint> stack;
-            stack.push(QPoint(x, y));
+            stack.clear();
+            stack.push_back({x, y});
             componentIdAtPixel[idx] = componentId;
 
-            while (!stack.isEmpty()) {
-                QPoint p = stack.pop();
-                int cx = p.x(), cy = p.y();
-                minX = qMin(minX, cx);
-                minY = qMin(minY, cy);
-                maxX = qMax(maxX, cx);
-                maxY = qMax(maxY, cy);
+            while (!stack.empty()) {
+                Point2D p = stack.back();
+                stack.pop_back();
+                int cx = p.x, cy = p.y;
+                if (cx < minX) minX = cx;
+                if (cy < minY) minY = cy;
+                if (cx > maxX) maxX = cx;
+                if (cy > maxY) maxY = cy;
 
-                const int dx[] = {0, 0, 1, -1};
-                const int dy[] = {1, -1, 0, 0};
-                for (int i = 0; i < 4; ++i) {
-                    int nx = cx + dx[i], ny = cy + dy[i];
-                    if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
+                // 4-neighborhood with boundary checks
+                // Up
+                if (cy > 0) {
+                    int ny = cy - 1, nx = cx;
                     int nidx = ny * w + nx;
-                    if (componentIdAtPixel[nidx] >= 0 || qAlpha(image.pixel(nx, ny)) <= ALPHA_THRESHOLD)
-                        continue;
-                    componentIdAtPixel[nidx] = componentId;
-                    stack.push(QPoint(nx, ny));
+                    if (componentIdAtPixel[nidx] < 0 && qAlpha(scanLines[ny][nx]) > ALPHA_THRESHOLD) {
+                        componentIdAtPixel[nidx] = componentId;
+                        stack.push_back({nx, ny});
+                    }
+                }
+                // Down
+                if (cy + 1 < h) {
+                    int ny = cy + 1, nx = cx;
+                    int nidx = ny * w + nx;
+                    if (componentIdAtPixel[nidx] < 0 && qAlpha(scanLines[ny][nx]) > ALPHA_THRESHOLD) {
+                        componentIdAtPixel[nidx] = componentId;
+                        stack.push_back({nx, ny});
+                    }
+                }
+                // Left
+                if (cx > 0) {
+                    int ny = cy, nx = cx - 1;
+                    int nidx = ny * w + nx;
+                    if (componentIdAtPixel[nidx] < 0 && qAlpha(scanLines[ny][nx]) > ALPHA_THRESHOLD) {
+                        componentIdAtPixel[nidx] = componentId;
+                        stack.push_back({nx, ny});
+                    }
+                }
+                // Right
+                if (cx + 1 < w) {
+                    int ny = cy, nx = cx + 1;
+                    int nidx = ny * w + nx;
+                    if (componentIdAtPixel[nidx] < 0 && qAlpha(scanLines[ny][nx]) > ALPHA_THRESHOLD) {
+                        componentIdAtPixel[nidx] = componentId;
+                        stack.push_back({nx, ny});
+                    }
                 }
             }
 
@@ -145,8 +193,8 @@ bool SpriteExtractor::extractFromImage(const QImage &sourceImage, SpriteDocument
     }
 
     if (componentRects.isEmpty()) {
-        outDoc.setAtlas(image);
-        outDoc.setFrames({}, {});
+        outFrames.clear();
+        outBoxes.clear();
         setProgress(100);
         emit extractionFinished(0);
         return true;
@@ -181,26 +229,25 @@ bool SpriteExtractor::extractFromImage(const QImage &sourceImage, SpriteDocument
               });
 
     // 4) Map component -> slice index
-    QVector<int> componentIdToBoxIndex(componentRects.size(), -1);
+    std::vector<int> componentIdToBoxIndex(componentRects.size(), -1);
     for (int i = 0; i < masterComponentIds.size(); ++i) {
         componentIdToBoxIndex[masterComponentIds[i]] = i;
     }
 
     // 5) Build pixel ownership
-    QVector<int> pixelOwner(w * h, -1);
-    for (int y = 0; y < h; ++y) {
-        for (int x = 0; x < w; ++x) {
-            int c = componentIdAtPixel[y * w + x];
-            if (c >= 0)
-                pixelOwner[y * w + x] = componentIdToBoxIndex[c];
+    std::vector<int> pixelOwner(static_cast<size_t>(w * h), -1);
+    for (int idx = 0; idx < w * h; ++idx) {
+        int c = componentIdAtPixel[idx];
+        if (c >= 0) {
+            pixelOwner[idx] = componentIdToBoxIndex[c];
         }
     }
 
-    // 6) Build bounding boxes & extract frames
-    QList<SpriteBox> boxes;
-    QList<QPixmap> frames;
-    boxes.reserve(masterComponentIds.size());
-    frames.reserve(masterComponentIds.size());
+    // 6) Build bounding boxes & extract frames via direct scanline memory
+    outBoxes.clear();
+    outFrames.clear();
+    outBoxes.reserve(masterComponentIds.size());
+    outFrames.reserve(masterComponentIds.size());
 
     for (int i = 0; i < masterComponentIds.size(); ++i) {
         SpriteBox box;
@@ -208,27 +255,52 @@ bool SpriteExtractor::extractFromImage(const QImage &sourceImage, SpriteDocument
         box.index = i;
         box.selected = false;
         box.groupId = -1;
-        boxes.append(box);
+        outBoxes.append(box);
 
         QImage frame = image.copy(box.rect);
-        for (int ly = 0; ly < frame.height(); ++ly) {
-            for (int lx = 0; lx < frame.width(); ++lx) {
-                int gx = box.rect.x() + lx;
-                int gy = box.rect.y() + ly;
-                if (pixelOwner[gy * w + gx] != i) {
-                    frame.setPixel(lx, ly, 0); // transparent
+        const int fw = frame.width();
+        const int fh = frame.height();
+        const int bx = box.rect.x();
+        const int by = box.rect.y();
+
+        for (int ly = 0; ly < fh; ++ly) {
+            QRgb *frameLine = reinterpret_cast<QRgb*>(frame.scanLine(ly));
+            const int gy_w = (by + ly) * w;
+            for (int lx = 0; lx < fw; ++lx) {
+                if (pixelOwner[gy_w + (bx + lx)] != i) {
+                    frameLine[lx] = 0; // transparent
                 }
             }
         }
-        frames.append(QPixmap::fromImage(frame));
+        outFrames.append(frame);
     }
 
-    // 7) Populate document directly
-    outDoc.setAtlas(image);
-    outDoc.setFrames(frames, boxes);
-
     setProgress(100);
-    setStatusMessage(tr("Extracted %1 frames").arg(frames.size()));
-    emit extractionFinished(frames.size());
+    setStatusMessage(tr("Extracted %1 frames").arg(outFrames.size()));
+    emit extractionFinished(outFrames.size());
+    return true;
+}
+
+bool SpriteExtractor::extractFromImage(const QImage &sourceImage, SpriteDocument &outDoc, const SpriteSheetOptions &options)
+{
+    QList<QImage> frameImages;
+    QList<SpriteBox> boxes;
+
+    if (!extractToImages(sourceImage, frameImages, boxes, options)) {
+        return false;
+    }
+
+    QList<QPixmap> frames;
+    frames.reserve(frameImages.size());
+    for (const QImage &img : frameImages) {
+        frames.append(QPixmap::fromImage(img));
+    }
+
+    QImage atlasImg = (sourceImage.format() == QImage::Format_ARGB32)
+        ? sourceImage
+        : sourceImage.convertToFormat(QImage::Format_ARGB32);
+
+    outDoc.setAtlas(atlasImg);
+    outDoc.setFrames(frames, boxes);
     return true;
 }

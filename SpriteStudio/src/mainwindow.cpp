@@ -39,6 +39,10 @@ MainWindow::~MainWindow()
 
 void MainWindow::setupControllers()
 {
+    if (m_undoStack) {
+        m_undoStack->setUndoLimit(AppConfig::instance().project().undoLimit);
+    }
+
     m_projectController = std::make_unique<ProjectController>(m_document, m_undoStack, this);
     m_atlasController = std::make_unique<AtlasViewController>(ui->graphicsViewLayers, m_document, m_undoStack, this);
     m_animationController = std::make_unique<AnimationController>(m_document, m_undoStack, m_player,
@@ -73,6 +77,14 @@ void MainWindow::setupControllers()
         m_atlasController->setAtlasImage(m_document->atlas());
         populateFrameList(m_document->frames(), m_document->boxes());
         m_animationController->syncAnimationList();
+    });
+
+    connect(m_projectController.get(), &ProjectController::processingStarted, this, [this]() {
+        QApplication::setOverrideCursor(Qt::WaitCursor);
+    });
+
+    connect(m_projectController.get(), &ProjectController::processingFinished, this, [this]() {
+        QApplication::restoreOverrideCursor();
     });
 
     // Connect AtlasViewController
@@ -265,7 +277,7 @@ void MainWindow::setupShortcuts()
 void MainWindow::processFile(const QString &fileName)
 {
     if (m_projectController) {
-        m_projectController->openFile(fileName);
+        m_projectController->openFileAsync(fileName);
     }
 }
 

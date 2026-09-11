@@ -35,6 +35,10 @@ public:
     // Segmentation engine on arbitrary image
     bool extractFromImage(const QImage &image, SpriteDocument &outDoc, const SpriteSheetOptions &options = SpriteSheetOptions());
     bool extractFromImage(const QImage &image, SpriteDocument &outDoc, int alphaThreshold, int verticalTolerance);
+    bool extractToImages(const QImage &sourceImage,
+                         QList<QImage> &outFrames,
+                         QList<SpriteBox> &outBoxes,
+                         const SpriteSheetOptions &options = SpriteSheetOptions());
 
     // Options configuration
     void setOptions(const SpriteSheetOptions &options) { m_options = options; }

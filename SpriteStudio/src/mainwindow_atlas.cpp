@@ -124,7 +124,7 @@ void MainWindow::onAtlasContextMenuRequested(const QPoint &pos)
 void MainWindow::removeAtlasBackgroundAndRefresh()
 {
     if (m_projectController) {
-        m_projectController->removeAtlasBackgroundAndRefresh(
+        m_projectController->removeAtlasBackgroundAndRefreshAsync(
             ui->alphaThreshold ? ui->alphaThreshold->value() : 10,
             ui->verticalTolerance ? ui->verticalTolerance->value() : 5,
             ui->enableSmartCropCheckbox ? ui->enableSmartCropCheckbox->isChecked() : false,

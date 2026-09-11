@@ -11,6 +11,7 @@
 #include "controller/atlasviewcontroller.h"
 #include "animation/animationplayer.h"
 #include "config/appconfig.h"
+#include "commands/commands.h"
 
 class TestControllers : public QObject
 {
@@ -31,6 +32,9 @@ private slots:
     void testProjectControllerOpenNonExistent();
     void testProjectControllerRecentFiles();
     void testProjectControllerBackgroundRemoval();
+    void testProjectControllerOpenAsync();
+    void testProjectControllerRemoveBgAsync();
+    void testUndoStackLimitAndImageStorage();
 
     // AnimationController tests
     void testAnimationControllerPlayback();
@@ -298,6 +302,96 @@ void TestControllers::testProjectControllerBackgroundRemoval()
     QVERIFY(ok);
     QCOMPARE(spyBg.count(), 1);
     QCOMPARE(doc.frameCount(), 2);
+}
+
+void TestControllers::testProjectControllerOpenAsync()
+{
+    QString pngPath = m_sampleDir + QStringLiteral("/ryu.png");
+    QVERIFY(QFile::exists(pngPath));
+
+    SpriteDocument doc;
+    QUndoStack undoStack;
+    ProjectController controller(&doc, &undoStack);
+
+    QSignalSpy spyStarted(&controller, &ProjectController::processingStarted);
+    QSignalSpy spyLoaded(&controller, &ProjectController::fileLoaded);
+    QSignalSpy spyFinished(&controller, &ProjectController::processingFinished);
+    QSignalSpy spyError(&controller, &ProjectController::fileLoadError);
+
+    controller.openFileAsync(pngPath);
+
+    // Wait for the async worker thread and main-thread finish
+    QVERIFY(spyLoaded.wait(5000));
+    QCOMPARE(spyStarted.count(), 1);
+    QCOMPARE(spyLoaded.count(), 1);
+    QCOMPARE(spyFinished.count(), 1);
+    QCOMPARE(spyError.count(), 0);
+    QCOMPARE(controller.currentFilePath(), pngPath);
+    QVERIFY(!doc.atlas().isNull());
+    QVERIFY(doc.frameCount() > 0);
+}
+
+void TestControllers::testProjectControllerRemoveBgAsync()
+{
+    SpriteDocument doc;
+    QImage testImg(60, 60, QImage::Format_ARGB32);
+    testImg.fill(qRgb(255, 0, 0));
+    QPainter p(&testImg);
+    p.fillRect(5, 5, 10, 10, QColor(0, 0, 255));
+    p.fillRect(35, 35, 10, 10, QColor(0, 255, 0));
+    p.end();
+
+    doc.setAtlas(testImg);
+    ProjectController controller(&doc);
+
+    QSignalSpy spyStarted(&controller, &ProjectController::processingStarted);
+    QSignalSpy spyBg(&controller, &ProjectController::backgroundRemoved);
+    QSignalSpy spyFinished(&controller, &ProjectController::processingFinished);
+
+    controller.removeAtlasBackgroundAndRefreshAsync(10, 5, false, 0.5);
+
+    QVERIFY(spyBg.wait(5000));
+    QCOMPARE(spyStarted.count(), 1);
+    QCOMPARE(spyBg.count(), 1);
+    QCOMPARE(spyFinished.count(), 1);
+    QCOMPARE(doc.frameCount(), 2);
+    // Background pixel (0,0) must now be transparent
+    QCOMPARE(qAlpha(doc.atlas().pixel(0, 0)), 0);
+}
+
+void TestControllers::testUndoStackLimitAndImageStorage()
+{
+    SpriteDocument doc;
+    QImage atlas(100, 100, QImage::Format_ARGB32);
+    atlas.fill(Qt::white);
+    doc.setAtlas(atlas);
+
+    // Verify AppConfig undoLimit default is 50
+    QCOMPARE(AppConfig::instance().project().undoLimit, 50);
+
+    QUndoStack undoStack;
+    undoStack.setUndoLimit(AppConfig::instance().project().undoLimit);
+    QCOMPARE(undoStack.undoLimit(), 50);
+
+    // Populate initial slices
+    for (int i = 0; i < 65; ++i) {
+        doc.addSlice(QRect(0, 0, 5, 5));
+    }
+
+    // Push 60 commands into undoStack to verify limit capping at 50
+    for (int i = 0; i < 60; ++i) {
+        undoStack.push(new DeleteFramesCommand(&doc, {doc.frameCount() - 1}));
+    }
+
+    // QUndoStack::count() reflects current history size capped by undoLimit
+    QCOMPARE(undoStack.count(), 50);
+
+    // Test undoing and redoing without texture or memory issues
+    QVERIFY(undoStack.canUndo());
+    undoStack.undo();
+    QCOMPARE(undoStack.count(), 50);
+    undoStack.redo();
+    QCOMPARE(undoStack.count(), 50);
 }
 
 // -----------------------------------------------------------------------------

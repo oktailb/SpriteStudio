@@ -143,6 +143,7 @@ bool AppConfig::load(const QString &filePath)
         m_project.maxRecentFiles = projObj.value(QStringLiteral("max_recent_files")).toInt(m_project.maxRecentFiles);
         m_project.backgroundRemovalTolerance = projObj.value(QStringLiteral("background_removal_tolerance")).toInt(m_project.backgroundRemovalTolerance);
         m_project.backgroundMinAlpha = projObj.value(QStringLiteral("background_min_alpha")).toInt(m_project.backgroundMinAlpha);
+        m_project.undoLimit = projObj.value(QStringLiteral("undo_limit")).toInt(m_project.undoLimit);
     }
 
     emit configChanged();
@@ -199,6 +200,7 @@ bool AppConfig::save(const QString &filePath) const
     projObj[QStringLiteral("max_recent_files")] = m_project.maxRecentFiles;
     projObj[QStringLiteral("background_removal_tolerance")] = m_project.backgroundRemovalTolerance;
     projObj[QStringLiteral("background_min_alpha")] = m_project.backgroundMinAlpha;
+    projObj[QStringLiteral("undo_limit")] = m_project.undoLimit;
     root[QStringLiteral("project")] = projObj;
 
     QFile file(path);

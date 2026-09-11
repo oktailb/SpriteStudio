@@ -5,10 +5,23 @@
 #include <QString>
 #include <QStringList>
 #include <QImage>
+#include <QFutureWatcher>
 #include "extractor/export.h"
+#include "model/spritedocument.h"
 
 class SpriteDocument;
 class QUndoStack;
+
+struct AsyncExtractionResult {
+    enum JobType { JobOpen, JobRemoveBackground };
+    JobType type = JobOpen;
+    QImage atlas;
+    QList<QImage> frameImages;
+    QList<SpriteBox> boxes;
+    QString filePath;
+    bool success = false;
+    QString errorMessage;
+};
 
 /**
  * @brief Controller managing project lifecycle, I/O operations, recent files, and image processing.
@@ -24,7 +37,11 @@ public:
     QString currentFilePath() const;
     void setCurrentFilePath(const QString &filePath);
 
+    bool isProcessing() const { return m_isProcessing; }
+
     bool openFile(const QString &filePath, QString *errorMsg = nullptr);
+    void openFileAsync(const QString &filePath);
+
     bool save(const QString &filePath, QString *errorMsg = nullptr);
     bool exportData(const QString &filePath, const ExportOptions &options = ExportOptions{}, QString *errorMsg = nullptr);
 
@@ -48,6 +65,11 @@ public:
                                          bool smartCrop = false,
                                          double overlapThreshold = 0.5);
 
+    void removeAtlasBackgroundAndRefreshAsync(int alphaThreshold = 10,
+                                             int verticalTolerance = 5,
+                                             bool smartCrop = false,
+                                             double overlapThreshold = 0.5);
+
 signals:
     void fileLoaded(const QString &filePath);
     void fileLoadError(const QString &filePath, const QString &errorMessage);
@@ -56,11 +78,18 @@ signals:
     void statusMessage(const QString &message);
     void progressChanged(int percent);
     void backgroundRemoved();
+    void processingStarted();
+    void processingFinished();
+
+private slots:
+    void onAsyncJobFinished();
 
 private:
     SpriteDocument *m_document;
     QUndoStack *m_undoStack;
     QString m_currentFilePath;
+    QFutureWatcher<AsyncExtractionResult> m_watcher;
+    bool m_isProcessing = false;
 };
 
 #endif // PROJECTCONTROLLER_H

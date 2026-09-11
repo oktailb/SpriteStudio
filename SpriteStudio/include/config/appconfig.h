@@ -54,6 +54,7 @@ struct ProjectConfig
     int maxRecentFiles = 10;
     int backgroundRemovalTolerance = 10;
     int backgroundMinAlpha = 10;
+    int undoLimit = 50;
 };
 
 /**

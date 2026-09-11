@@ -21,7 +21,7 @@ public:
 private:
     struct FrameBackup {
         int       originalIndex;
-        QPixmap   pixmap;
+        QImage    image;
         SpriteBox box;
     };
 
@@ -46,9 +46,9 @@ private:
     SpriteDocument*                 m_doc;
     int                             m_sourceIndex;
     int                             m_targetIndex;
-    QPixmap                         m_sourcePixmap;
+    QImage                          m_sourceImage;
     SpriteBox                       m_sourceBox;
-    QPixmap                         m_targetOriginalPixmap;
+    QImage                          m_targetOriginalImage;
     SpriteBox                       m_targetOriginalBox;
     QMap<QString, SpriteAnimation>  m_animationsBackup;
 };

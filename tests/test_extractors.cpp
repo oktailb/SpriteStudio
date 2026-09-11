@@ -3,6 +3,8 @@
 #include <QTemporaryDir>
 #include <QFileInfo>
 #include <QImage>
+#include <QPainter>
+#include <QElapsedTimer>
 #include <QDebug>
 
 #include "model/spritedocument.h"
@@ -27,6 +29,8 @@ private slots:
     void testGifExtractorRead();
     void testErrorHandlingNonExistentFile();
     void testErrorHandlingCorruptedData();
+    void testExtractToImagesEquivalence();
+    void testExtractPerformance();
 
 private:
     QString m_sampleDir;
@@ -257,6 +261,81 @@ void TestExtractors::testErrorHandlingCorruptedData()
     QVERIFY(!ok);
     QVERIFY(err.isError());
     QCOMPARE(err.code, ExtractorError::ParsingFailed);
+}
+
+void TestExtractors::testExtractToImagesEquivalence()
+{
+    // Create a 100x100 ARGB32 image with 3 separate opaque squares
+    QImage testImg(100, 100, QImage::Format_ARGB32);
+    testImg.fill(Qt::transparent);
+
+    QPainter p(&testImg);
+    p.fillRect(10, 10, 15, 15, Qt::red);
+    p.fillRect(40, 10, 20, 20, Qt::green);
+    p.fillRect(20, 60, 25, 25, Qt::blue);
+    p.end();
+
+    SpriteExtractor extractor;
+    QList<QImage> outFrames;
+    QList<SpriteBox> outBoxes;
+    SpriteSheetOptions opts;
+
+    bool ok = extractor.extractToImages(testImg, outFrames, outBoxes, opts);
+    QVERIFY(ok);
+    QCOMPARE(outBoxes.size(), 3);
+    QCOMPARE(outFrames.size(), 3);
+
+    // Verify box rects
+    QCOMPARE(outBoxes[0].rect, QRect(10, 10, 15, 15));
+    QCOMPARE(outBoxes[1].rect, QRect(40, 10, 20, 20));
+    QCOMPARE(outBoxes[2].rect, QRect(20, 60, 25, 25));
+
+    // Verify frame image sizes
+    for (int i = 0; i < 3; ++i) {
+        QCOMPARE(outFrames[i].size(), outBoxes[i].rect.size());
+    }
+
+    // Compare with extractFromImage into SpriteDocument
+    SpriteDocument doc;
+    bool docOk = extractor.extractFromImage(testImg, doc, opts);
+    QVERIFY(docOk);
+    QCOMPARE(doc.frameCount(), 3);
+    for (int i = 0; i < 3; ++i) {
+        QCOMPARE(doc.box(i).rect, outBoxes[i].rect);
+        QCOMPARE(doc.frame(i).size(), outFrames[i].size());
+    }
+}
+
+void TestExtractors::testExtractPerformance()
+{
+    // Construct a synthetic 512x512 image containing an 8x8 grid of sprites (64 sprites)
+    QImage largeImg(512, 512, QImage::Format_ARGB32);
+    largeImg.fill(Qt::transparent);
+
+    QPainter p(&largeImg);
+    for (int gy = 0; gy < 8; ++gy) {
+        for (int gx = 0; gx < 8; ++gx) {
+            p.fillRect(gx * 64 + 10, gy * 64 + 10, 40, 40, QColor(gx * 30, gy * 30, 150));
+        }
+    }
+    p.end();
+
+    SpriteExtractor extractor;
+    QList<QImage> outFrames;
+    QList<SpriteBox> outBoxes;
+
+    QElapsedTimer timer;
+    timer.start();
+
+    bool ok = extractor.extractToImages(largeImg, outFrames, outBoxes);
+    qint64 elapsedMs = timer.elapsed();
+
+    QVERIFY(ok);
+    QCOMPARE(outBoxes.size(), 64);
+    QCOMPARE(outFrames.size(), 64);
+    qDebug() << "Extracted 64 components on 512x512 in" << elapsedMs << "ms";
+    // With direct scanline access, 512x512 extraction finishes well under 500ms
+    QVERIFY2(elapsedMs < 500, qPrintable(QString("Extraction took too long: %1 ms").arg(elapsedMs)));
 }
 
 #include <QGuiApplication>

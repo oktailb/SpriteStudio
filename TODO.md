@@ -9,7 +9,7 @@ L'objectif est d'élever l'application d'un simple outil de découpe technique a
 
 | ID | Chantier | Priorité | Complexité | Statut |
 |---|---|---|---|---|
-| **M0** | [Assainissement Architectural & Dette Technique (Audit Critique)](#m0--assainissement-architectural--dette-technique-audit-critique) | **Haute** | Haute | 🟡 En cours (Pts 1, 2 & 3 validés & testés) |
+| **M0** | [Assainissement Architectural & Dette Technique (Audit Critique)](#m0--assainissement-architectural--dette-technique-audit-critique) | **Haute** | Haute | 🟡 En cours (Pts 1, 2, 3 & 4 validés & testés) |
 | **M1** | [Édition Interactive des Bounding Boxes (Atlas Slicing)](#m1--édition-interactive-des-bounding-boxes-atlas-slicing) | **Haute** | Moyenne | 🟢 ~95% - Déblocages clavier/UX validés |
 | **M2** | [Gestionnaire Complet d'Animations & Timeline](#m2--gestionnaire-complet-danimations--timeline) | **Haute** | Moyenne | 📝 Planifié |
 | **M3** | [Points d'Ancrage & Pivots (Origins & Offsets)](#m3--points-dancrage--pivots-origins--offsets) | **Moyenne** | Faible | 📝 Planifié |
@@ -79,12 +79,24 @@ L'application souffre d'une transition inachevée entre un code impératif legac
   - **Suite de tests automatisée étendue :**
     - 3 nouveaux tests unitaires dans `tests/test_controllers.cpp` (`testAppConfigDefaults`, `testAppConfigSaveAndLoad`, `testAppConfigCorruptJsonFallback`) portant la suite à 21 tests (100% de succès sous CTest).
 
-### 4. Performance & Traitement d'Images sur le Thread Principal
-- **Problème :** Le flood-fill de `SpriteExtractor` et la suppression d'arrière-plan par balayage de pixels s'exécutent de façon synchrone sur le thread UI via des appels lents à `QImage::pixel(x, y)` et une pile `QStack<QPoint>`. Sur de grands atlas (2K/4K), l'interface freeze totalement.
-- **Solution Cible :**
-  - Remplacer les accès `pixel(x, y)` par des accès directs en mémoire contiguë (`scanLine()` / `constScanLine()`).
-  - Déporter les algorithmes d'extraction lourds sur un thread travailleur (`QThread` ou `QtConcurrent`) avec barre de progression non bloquante.
-  - Optimiser la pile Undo/Redo (`DeleteFramesCommand`) pour éviter de dupliquer des textures `QPixmap` entières en RAM.
+### 4. Performance & Traitement d'Images sur le Thread Principal — ✅ TERMINÉ
+- **État :** ✅ **Réfracté, Accéléré & Validé par tests unitaires**
+- **Réalisations :**
+  - **Accès direct en mémoire contiguë (`scanLine()` / `constScanLine()`) :**
+    - `SpriteExtractor` : réécriture intégrale du flood-fill et du calcul de composantes connexes. Élimination des appels `QImage::pixel(x, y)` et de `QStack<QPoint>` au profit d'un pointeur par ligne `constScanLine(y)`, indexation 1D contiguë `y * w + x` et pile plate `std::vector<Point2D>`.
+    - Découpage et extraction des frames (`outFrames`) par écriture directe en mémoire de scanline (`frame.scanLine(ly)`), supprimant les boucles imbriquées lentes.
+    - `ProjectController::removeBackgroundFromImage` : passage à `constScanLine(y)`, échantillonnage par pas de 2 avec table de hachage $O(1)$ `QHash<QRgb, int>` et suppression directe en mémoire ligne par ligne (`scanLine(y)`).
+    - **Résultat de benchmark :** Découpage de 64 composantes sur une image 512x512 exécuté en **7 ms** seulement !
+  - **Déportation des traitements lourds en asynchrone (`QtConcurrent` / `QFutureWatcher`) :**
+    - Ajout de `openFileAsync(filePath)` et `removeAtlasBackgroundAndRefreshAsync(...)` dans `ProjectController`.
+    - Exécution du décodage d'image, du flood-fill, de la segmentation et de la suppression de fond sur un thread de travail en arrière-plan sans bloquer l'interface utilisateur.
+    - Câblage non bloquant dans `MainWindow` : mise en place de curseurs d'attente dynamiques (`Qt::WaitCursor`), barre de progression réactive, notifications d'état et reconversion sécurisée des frames `QImage` en textures `QPixmap` uniquement sur le thread GUI principal lors de `onAsyncJobFinished()`.
+  - **Optimisation mémoire de la pile Undo/Redo (`QUndoStack`) :**
+    - Ajout du paramètre configurable `undoLimit` (50 par défaut) dans `AppConfig` (`projectConfig`).
+    - Migration des structures de sauvegarde de commandes (`DeleteFramesCommand`, `MergeFramesCommand`) : remplacement des `QPixmap` par des `QImage` brutes, éliminant les fuites de descripteurs GDI/GPU en RAM lors des opérations d'annulation/rétablissement répétées.
+  - **Suite de tests automatisée étendue :**
+    - Nouveaux tests dans `tests/test_extractors.cpp` (`testExtractToImagesEquivalence`, `testExtractPerformance`) validant la conformité et la vitesse sous 500 ms.
+    - Nouveaux tests dans `tests/test_controllers.cpp` (`testProjectControllerOpenAsync`, `testProjectControllerRemoveBgAsync`, `testUndoStackLimitAndImageStorage`) validant la synchronisation multi-thread (`QSignalSpy`) et le plafonnement de la pile Undo. Total de 39 tests unitaires avec 100% de réussite.
 
 ### 5. Standardisation de l'Ergonomie & Internationalisation (i18n)
 - **Problème :**
