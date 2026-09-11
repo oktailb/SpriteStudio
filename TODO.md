@@ -217,12 +217,18 @@ Dans l'interface actuelle, le bloc de droite `animationArea` combine :
 ### Limites Identifiées & Axes d'Évolution de `animationList`
 1. **Affichage textuel brut des frames :**  
    La colonne `Frames` affiche une chaîne de texte séparée par des virgules (`1, 2, 3, 4, 5...`), ce qui devient illisible dès qu'une animation dépasse une dizaine de frames et n'offre aucune interaction visuelle.
+   La posibilité de re-ordoner/sequencer les frames manque.
 2. **Ambiguïté entre sélection temporaire et animation sauvegardée :**  
    L'item `"current"` cohabite avec les animations réelles du projet (`idle`, `walk`), ce qui peut prêter à confusion. Il faut rendre cette distinction évidente (ex. statut visuel distinct, icône dédiée, ou bouton explicite "Créer une animation depuis la sélection").
 3. **Contrôles d'actions manquants :**  
-   L'ajout d'une animation dépend actuellement d'une sélection puis d'une commande indirecte ; il manque une barre d'outils compacte au-dessus ou en pied de `animationList` avec boutons d'action visibles : `+ Nouveau`, `- Supprimer`, `Dupliquer`, `Renommer`.
+   L'ajout d'une animation dépend actuellement d'une sélection puis d'une commande indirecte (menu contextuel) ; il manque une barre d'outils compacte au-dessus ou en pied de `animationList` avec boutons d'action visibles : `+ Nouveau`, `- Supprimer`, `Dupliquer`, `Renommer`.
 4. **Clarification de la zone `DataTiming` (`sliderFrom` / `timeFrom`) :**  
    Remplacer les champs `QTimeEdit` (peu adaptés aux frames de jeux vidéo) par un véritable curseur de scrubbing image par image (`Frame X / Total`, curseur de tête de lecture) connecté au player.
+5. **Évolution du player :** 
+   - Ajouter un slider pour la durée de lecture de l'animation qui recalcule le FPS en fonction du nombre de frames.
+   - Clarifier le bouton existant pour inverser le sens de lecture.
+   - Zoomer correctement l'animation en cours
+   - Permettre d'editer facilement la position de chaque frame (offset/point fixe) -> cf M3
 
 ### Spécifications Fonctionnelles Cibles
 1. **Évolution du widget `animationList` :**
@@ -302,16 +308,20 @@ Sprite Studio doit intégrer un mini-éditeur de pixels intégré dédié à la 
 
 ---
 
-## M5 : Format de Projet Natif (`.sps` - Sprite Studio Project)
+## M5 : Format de Projet Natif (`.ssp` - Sprite Studio Project)
 
 ### Contexte & Objectif
 Actuellement, si un utilisateur découpe 50 frames, crée 4 animations, règle des FPS et retire le fond, toutes ces métadonnées de montage sont perdues à la fermeture de l'application s'il n'a pas exporté dans un format compatible. De plus, les formats d'export finaux (comme Godot) ne conservent pas forcément toute la disposition d'origine.  
-Un format de sauvegarde de session de travail (`.sps`) est indispensable.
+Un format de sauvegarde de session de travail (`.ssp`) est indispensable.
 
 ### Spécifications Fonctionnelles
-1. **Structure du Fichier `.sps` :**
+1. **Structure du Fichier `.ssp` :**
    - Format JSON clair et lisible.
-   - Contenu sauvegardé :
+   - Contenu sauvegardé sous format ZIP (meme principe que docx, oasis, openxml, etc.) contenant:
+     - images de référence (optionnel, sinon cherchées dans le même dossier que le fichier .sps)
+     - le fichier .json (obligatoire)
+     - Git embarqué pour versioning (libgit).
+   - Les données sauvegardées dans le json sont:
      - Chemin ou données relatives de l'image source / atlas.
      - Liste complète des Bounding Boxes (rectangles, indices, groupes, pivots).
      - Dictionnaire de toutes les animations créées (noms, séquences, FPS, modes de boucle).
@@ -322,10 +332,12 @@ Un format de sauvegarde de session de travail (`.sps`) est indispensable.
    - `Fichier -> Ouvrir Projet...` (`Ctrl+O`).
    - `Fichier -> Enregistrer Projet` (`Ctrl+S`).
    - `Fichier -> Enregistrer Sous...` (`Ctrl+Shift+S`).
-   - Détection automatique à l'ouverture : si l'extension est `.sps`, ouvrir directement le projet.
-   - Historique *Fichiers Récents* étendu aux projets `.sps`.
+   - `Fichier -> Exporter ...` (`Ctrl+E`).
+   - `Fichier -> Exporter Sous...` (`Ctrl+Shift+E`).
+   - Détection automatique à l'ouverture : si l'extension est `.ssp`, ouvrir directement le projet.
+   - Historique *Projets Récents* peuplé avec les derniers projets `.ssp` ouverts.
 3. **Avertissement de modifications non enregistrées :**
-   - Indicateur `*` dans la barre de titre (`Sprite Studio - MonProjet.sps *`).
+   - Indicateur `*` dans la barre de titre (`Sprite Studio - MonProjet.ssp *`).
    - Dialogue de confirmation à la fermeture de l'application si le projet a été modifié.
 
 ### Fichiers & Composants Cibles
