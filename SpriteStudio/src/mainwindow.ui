@@ -81,7 +81,7 @@
            <item>
             <widget class="QToolButton" name="btnToolSelect">
              <property name="text">
-              <string>Select &amp; Edit</string>
+              <string>KEY_TOOL_SELECT</string>
              </property>
              <property name="checkable">
               <bool>true</bool>
@@ -93,14 +93,14 @@
               <bool>true</bool>
              </property>
              <property name="toolTip">
-              <string>Select, move and resize slices</string>
+              <string>KEY_TOOLTIP_TOOL_SELECT</string>
              </property>
             </widget>
            </item>
            <item>
             <widget class="QToolButton" name="btnToolAddSlice">
              <property name="text">
-              <string>+ Add Slice</string>
+              <string>KEY_TOOL_ADD_SLICE</string>
              </property>
              <property name="checkable">
               <bool>true</bool>
@@ -109,27 +109,27 @@
               <bool>true</bool>
              </property>
              <property name="toolTip">
-              <string>Click and drag on the atlas to draw a new slice</string>
+              <string>KEY_TOOLTIP_TOOL_ADD_SLICE</string>
              </property>
             </widget>
            </item>
            <item>
             <widget class="QPushButton" name="btnTrimSlice">
              <property name="text">
-              <string>Trim to Pixels</string>
+              <string>KEY_TOOL_TRIM</string>
              </property>
              <property name="toolTip">
-              <string>Shrink selected slice to opaque pixels</string>
+              <string>KEY_TOOLTIP_TOOL_TRIM</string>
              </property>
             </widget>
            </item>
            <item>
             <widget class="QPushButton" name="btnRemoveBg">
              <property name="text">
-              <string>Remove BG</string>
+              <string>KEY_TOOL_REMOVE_BG</string>
              </property>
              <property name="toolTip">
-              <string>Automatically remove background color and extract sprites</string>
+              <string>KEY_TOOLTIP_TOOL_REMOVE_BG</string>
              </property>
             </widget>
            </item>
@@ -625,17 +625,17 @@
           </property>
           <column>
            <property name="text">
-            <string>Name</string>
+            <string>KEY_ANIM_COL_NAME</string>
            </property>
           </column>
           <column>
            <property name="text">
-            <string>FPS</string>
+            <string>KEY_ANIM_COL_FPS</string>
            </property>
           </column>
           <column>
            <property name="text">
-            <string>Frames</string>
+            <string>KEY_ANIM_COL_FRAMES</string>
            </property>
           </column>
          </widget>
@@ -657,7 +657,7 @@
    </property>
    <widget class="QMenu" name="menuFile">
     <property name="title">
-     <string>File</string>
+     <string>KEY_MENU_FILE</string>
     </property>
     <addaction name="separator"/>
     <addaction name="separator"/>
@@ -668,7 +668,7 @@
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
-     <string>Help</string>
+     <string>KEY_MENU_HELP</string>
     </property>
     <addaction name="actionAbout"/>
    </widget>
@@ -678,42 +678,42 @@
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionLicence">
    <property name="text">
-    <string>Licence</string>
+    <string>KEY_ACTION_LICENCE</string>
    </property>
   </action>
   <action name="actionAbout">
    <property name="text">
-    <string>About</string>
+    <string>KEY_ACTION_ABOUT</string>
    </property>
   </action>
   <action name="actionStart">
    <property name="text">
-    <string>Start</string>
+    <string>KEY_ACTION_START</string>
    </property>
   </action>
   <action name="actionStop">
    <property name="text">
-    <string>Stop</string>
+    <string>KEY_ACTION_STOP</string>
    </property>
   </action>
   <action name="actionOpen">
    <property name="text">
-    <string>Open</string>
+    <string>KEY_ACTION_OPEN</string>
    </property>
   </action>
   <action name="actionSave">
    <property name="text">
-    <string>Save</string>
+    <string>KEY_ACTION_SAVE</string>
    </property>
   </action>
   <action name="actionExport">
    <property name="text">
-    <string>Export</string>
+    <string>KEY_ACTION_EXPORT</string>
    </property>
   </action>
   <action name="actionExit">
    <property name="text">
-    <string>Exit</string>
+    <string>KEY_ACTION_EXIT</string>
    </property>
   </action>
  </widget>

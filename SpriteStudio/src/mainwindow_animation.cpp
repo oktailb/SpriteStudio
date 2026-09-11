@@ -28,7 +28,7 @@ void MainWindow::on_animationList_customContextMenuRequested(const QPoint &pos)
 {
     QMenu menu(this);
 
-    QAction *createAnimAction = menu.addAction(tr("Create animation from selection"));
+    QAction *createAnimAction = menu.addAction(tr("KEY_CTX_CREATE_ANIM"));
     createAnimAction->setEnabled(m_document && !m_document->selectedFrameIndices().isEmpty());
     connect(createAnimAction, &QAction::triggered, this, [this]() {
         if (m_animationController && m_document) {
@@ -36,12 +36,12 @@ void MainWindow::on_animationList_customContextMenuRequested(const QPoint &pos)
         }
     });
 
-    QAction *reverseAction = menu.addAction(tr("Reverse Animation"));
+    QAction *reverseAction = menu.addAction(tr("KEY_CTX_REVERSE_ANIM"));
     connect(reverseAction, &QAction::triggered, this, [this]() {
         if (m_animationController) m_animationController->reverseAnimationOrder();
     });
 
-    QAction *deleteAction = menu.addAction(tr("Delete Animation"));
+    QAction *deleteAction = menu.addAction(tr("KEY_CTX_DELETE_ANIM"));
     connect(deleteAction, &QAction::triggered, this, [this]() {
         if (m_animationController) m_animationController->removeSelectedAnimation();
     });

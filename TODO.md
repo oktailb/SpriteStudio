@@ -9,7 +9,7 @@ L'objectif est d'élever l'application d'un simple outil de découpe technique a
 
 | ID | Chantier | Priorité | Complexité | Statut |
 |---|---|---|---|---|
-| **M0** | [Assainissement Architectural & Dette Technique (Audit Critique)](#m0--assainissement-architectural--dette-technique-audit-critique) | **Haute** | Haute | 🟡 En cours (Pts 1, 2, 3 & 4 validés & testés) |
+| **M0** | [Assainissement Architectural & Dette Technique (Audit Critique)](#m0--assainissement-architectural--dette-technique-audit-critique) | **Haute** | Haute | 🟢 Validé (Pts 1, 2, 3, 4 & 5 validés & testés — 45 tests CTest 100%) |
 | **M1** | [Édition Interactive des Bounding Boxes (Atlas Slicing)](#m1--édition-interactive-des-bounding-boxes-atlas-slicing) | **Haute** | Moyenne | 🟢 ~95% - Déblocages clavier/UX validés |
 | **M2** | [Gestionnaire Complet d'Animations & Timeline](#m2--gestionnaire-complet-danimations--timeline) | **Haute** | Moyenne | 📝 Planifié |
 | **M3** | [Points d'Ancrage & Pivots (Origins & Offsets)](#m3--points-dancrage--pivots-origins--offsets) | **Moyenne** | Faible | 📝 Planifié |
@@ -106,18 +106,33 @@ L'application souffre d'une transition inachevée entre un code impératif legac
     - **Raccourci universel `Espace`** : la barre d'espace bascule `Play / Pause` depuis n'importe où dans la fenêtre principale sans conflit avec les champs textuels.
   - **Suite de tests automatisée étendue :**
     - Nouveaux tests dans `tests/test_extractors.cpp` (`testExtractToImagesEquivalence`, `testExtractPerformance`, `testSpriteDetectorBasics`).
-    - Nouveaux tests dans `tests/test_controllers.cpp` (`testProjectControllerOpenAsync`, `testProjectControllerRemoveBgAsync`, `testUndoStackLimitAndImageStorage`, `testAnimationControllerAutoPlay`, `testAtlasViewControllerErasePixels`).
-    - Total de **42 tests unitaires individuels** sous CTest avec **100% de réussite**.
+    - Nouveaux tests dans `tests/test_controllers.cpp` (`testProjectControllerOpenAsync`, `testProjectControllerRemoveBgAsync`, `testUndoStackLimitAndImageStorage`, `testAnimationControllerAutoPlay`, `testAtlasViewControllerErasePixels`, `testAtlasViewControllerMultiSelectAndDelete`).
+    - Total de **43 tests unitaires individuels** sous CTest avec **100% de réussite**.
 
-### 5. Standardisation de l'Ergonomie & Internationalisation (i18n)
-- **Problème :**
-  - Le zoom molette utilise un `resetTransform()` brutal qui recentre la vue au lieu de zoomer sous le pointeur de la souris.
-  - L'i18n est chaotique : clés opaques avec underscores (`tr("_file_error")`), libellés bilingues codés en dur (`tr("Trim to Pixels / Ajuster aux pixels")`), mélange anglais/français dans l'interface.
-  - Boutons d'outils textuels bruts sans icônes vectorielles cohérentes avec le reste de l'UI.
-- **Solution Cible :**
-  - Implémenter un zoom interactif centré sur la position de la souris dans le viewport.
-  - Normaliser toutes les chaînes en anglais propre et déléguer la traduction au système standard Qt Linguist (`.ts`).
-  - Intégrer un jeu d'icônes homogène pour la barre d'outils de slicing.
+### 5. Standardisation de l'Ergonomie & Internationalisation (i18n) — ✅ TERMINÉ
+- **État :** ✅ **Réfracté, Standardisé & Validé par tests unitaires**
+- **Réalisations :**
+  - **Zoom interactif centré sur la souris (`zoomAt`) :**
+    - Suppression intégrale de `resetTransform()` qui réinitialisait la position de la vue au centre à chaque coup de molette.
+    - Implémentation de `AtlasViewController::zoomAt(viewportPos, step)` : calcul précis du point de scène sous le pointeur (`mapToScene`), mise à l'échelle continue et compensation immédiate des barres de défilement (`horizontalScrollBar`, `verticalScrollBar`).
+    - Déplacement et zoom parfaitement fluides, stabilité au pixel près validée par test unitaire automatisé (`diff = QPointF(0, 0)`).
+  - **Standardisation stricte de l'internationalisation sous le format `KEY_...` :**
+    - Remplacement de tous les libellés codés en dur, des chaînes bilingues (`Trim to Pixels / Ajuster aux pixels`) et des anciennes clés à underscores (`_file_error`) par une nomenclature claire en majuscules :
+      - Menus & Actions : `KEY_MENU_FILE`, `KEY_ACTION_OPEN`, `KEY_ACTION_SAVE`, `KEY_ACTION_EXPORT`, `KEY_ACTION_EXIT`, `KEY_ACTION_UNDO`, `KEY_ACTION_REDO`, `KEY_ACTION_REMOVE_BG`...
+      - Outils de slicing : `KEY_TOOL_SELECT`, `KEY_TOOL_ADD_SLICE`, `KEY_TOOL_TRIM`, `KEY_TOOL_REMOVE_BG` et leurs infobulles `KEY_TOOLTIP_...`.
+      - Menus contextuels atlas & animation : `KEY_CTX_CREATE_ANIM`, `KEY_CTX_REVERSE_ANIM`, `KEY_CTX_DELETE_ANIM`, `KEY_CTX_TRIM_SLICE`, `KEY_CTX_MERGE_SLICES`, `KEY_CTX_DELETE_FRAMES`, `KEY_CTX_ERASE_PIXELS`, `KEY_CTX_REMOVE_BG`, `KEY_CTX_INVERT_SEL`.
+      - Messages & dialogues : `KEY_DIALOG_OPEN_TITLE`, `KEY_DIALOG_ABOUT_TITLE`, `KEY_MSG_LOAD_ERROR`, `KEY_MSG_SAVE_ERROR`, `KEY_STATUS_READY`, `KEY_LABEL_TIMING`...
+    - **Visibilité immédiate des manques :** Si une traduction est omise dans les fichiers `.ts`/`.qm`, la clé brute `KEY_...` s'affiche directement dans l'interface graphique, rendant toute régression ou oubli immédiatement détectable visuellement.
+    - Synchronisation et traduction intégrale (100%) des catalogues linguistiques `sprite_studio_fr_FR.ts`, `sprite_studio_en_US.ts` et `sprite_studio_ja_JA.ts`.
+    - Fallback automatique dans `main.cpp` vers la langue anglaise `sprite_studio_en_US` si la locale système de l'utilisateur n'est pas prise en charge.
+  - **Intégration d'icônes modernes sur la barre d'outils de découpe :**
+    - Ajout de 4 icônes PNG nettes 24x24 (`icons/tool_select.png`, `icons/tool_slice.png`, `icons/tool_trim.png`, `icons/tool_remove_bg.png`) compilées dans le fichier de ressource `images` (`:/drawer/...`).
+    - Présentation visuelle soignée avec icônes aux côtés du texte (`Qt::ToolButtonTextBesideIcon`).
+  - **Perspectives ergonomiques (Listes des Sprites et Animations) :**
+    - Les chantiers d'ergonomie avancée sur les listes (redimensionnement dynamique des vignettes par curseur/Ctrl+Molette, badges animés, timeline filmstrip et drag-and-drop fluide) sont consignés pour le chantier d'enrichissement de l'animation **M2**.
+  - **Suite de tests automatisée étendue :**
+    - Deux nouveaux tests unitaires dans `tests/test_controllers.cpp` : `testAtlasViewControllerMouseCenteredZoom` (vérification de la stabilité de la position sous le curseur) et `testI18nKeyTranslations` (vérification du chargement et du comportement des dictionnaires FR, EN et du fallback sur les clés non traduites).
+    - Suite de tests globale portée à **45 tests unitaires individuels** sous CTest avec **100% de succès**.
 
 ### 6. DevOps, Tests Automatisés & Qualité
 - **Problème :** Couverture de test à 0%. Aucun test unitaire automatique pour les algorithmes critiques (`computeTrimmedRect`, `AtlasPacker`, commandes Undo/Redo). Aucune intégration continue (CI).

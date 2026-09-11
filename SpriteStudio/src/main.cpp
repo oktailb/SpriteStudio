@@ -10,17 +10,27 @@ int main(int argc, char *argv[])
 
   QString locale = QLocale::system().name();
   QTranslator translator;
+  bool loaded = false;
 
   if (translator.load("sprite_studio_" + locale, QLibraryInfo::path(QLibraryInfo::TranslationsPath))) {
-      qDebug() << "Loaded from system translations";
-    } else if (translator.load("sprite_studio_" + locale, a.applicationDirPath() + "/i18n")) {
-      qDebug() << "Loaded from app dir";
-    } else if (translator.load("sprite_studio_" + locale, ":/i18n/")) {
-      qDebug() << "Loaded from embeed resource";
-    } else {
-      qDebug() << "Failed to load translation for " << locale;
-    }
-  a.installTranslator(&translator);
+      loaded = true;
+  } else if (translator.load("sprite_studio_" + locale, a.applicationDirPath() + "/i18n")) {
+      loaded = true;
+  } else if (translator.load("sprite_studio_" + locale, ":/i18n/")) {
+      loaded = true;
+  }
+
+  // Fallback to English catalog if system translation was not found
+  if (!loaded) {
+      if (translator.load("sprite_studio_en_US", ":/i18n/") ||
+          translator.load("sprite_studio_en_US", a.applicationDirPath() + "/i18n")) {
+          loaded = true;
+      }
+  }
+
+  if (loaded) {
+      a.installTranslator(&translator);
+  }
 
   MainWindow w;
 

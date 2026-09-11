@@ -107,6 +107,10 @@ qt6_add_resources(${PROJECT_NAME} "images"
     stop.png
     plus.png
     minus.png
+    icons/tool_select.png
+    icons/tool_slice.png
+    icons/tool_trim.png
+    icons/tool_remove_bg.png
 )
 
 qt6_add_resources(${PROJECT_NAME} "text"

@@ -29,6 +29,9 @@ AtlasViewController::AtlasViewController(QGraphicsView *view,
     }
 
     if (m_document) {
+        if (!m_document->atlas().isNull()) {
+            setAtlasImage(m_document->atlas());
+        }
         connect(m_document, &SpriteDocument::atlasChanged, this, [this]() {
             setAtlasImage(m_document->atlas());
         });
@@ -59,14 +62,41 @@ void AtlasViewController::setZoomFactor(double factor)
 {
     const AtlasConfig &cfg = AppConfig::instance().atlas();
     double clamped = std::clamp(factor, cfg.zoomMin, cfg.zoomMax);
+    if (m_zoomFactor == clamped) return;
+
+    double scaleDelta = clamped / m_zoomFactor;
     m_zoomFactor = clamped;
 
     if (m_view) {
-        m_view->resetTransform();
-        m_view->scale(clamped, clamped);
+        m_view->setTransformationAnchor(QGraphicsView::AnchorViewCenter);
+        m_view->scale(scaleDelta, scaleDelta);
     }
 
     emit zoomChanged(clamped);
+}
+
+void AtlasViewController::zoomAt(const QPointF &viewportPos, double factor)
+{
+    if (!m_view || factor <= 0.0) return;
+
+    const AtlasConfig &cfg = AppConfig::instance().atlas();
+    double targetZoom = std::clamp(m_zoomFactor * factor, cfg.zoomMin, cfg.zoomMax);
+    double scaleDelta = targetZoom / m_zoomFactor;
+    if (qFuzzyCompare(scaleDelta, 1.0)) return;
+
+    QPointF scenePointBefore = m_view->mapToScene(viewportPos.toPoint());
+
+    m_view->setTransformationAnchor(QGraphicsView::NoAnchor);
+    m_view->scale(scaleDelta, scaleDelta);
+    m_zoomFactor = targetZoom;
+
+    QPointF newViewportPoint = m_view->mapFromScene(scenePointBefore);
+    QPointF deltaViewport = newViewportPoint - viewportPos;
+
+    m_view->horizontalScrollBar()->setValue(m_view->horizontalScrollBar()->value() + qRound(deltaViewport.x()));
+    m_view->verticalScrollBar()->setValue(m_view->verticalScrollBar()->value() + qRound(deltaViewport.y()));
+
+    emit zoomChanged(m_zoomFactor);
 }
 
 void AtlasViewController::zoomIn(double step)
@@ -537,10 +567,12 @@ bool AtlasViewController::eventFilter(QObject *watched, QEvent *event)
         // --- Wheel Zoom ---
         if (event->type() == QEvent::Wheel) {
             QWheelEvent *wheelEvent = static_cast<QWheelEvent*>(event);
+            const AtlasConfig &cfg = AppConfig::instance().atlas();
+            double step = cfg.zoomStep;
             if (wheelEvent->angleDelta().y() > 0) {
-                zoomIn(1.15);
+                zoomAt(wheelEvent->position(), step);
             } else if (wheelEvent->angleDelta().y() < 0) {
-                zoomOut(1.15);
+                zoomAt(wheelEvent->position(), 1.0 / step);
             }
             return true;
         }

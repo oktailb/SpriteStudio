@@ -36,7 +36,7 @@ void MainWindow::onBoxContextMenuRequested(int index, const QPoint &screenPos)
 
     QMenu menu(this);
 
-    QAction *createAnimAction = menu.addAction(tr("Create animation from selection"));
+    QAction *createAnimAction = menu.addAction(tr("KEY_CTX_CREATE_ANIM"));
     createAnimAction->setEnabled(!currentSel.isEmpty());
     connect(createAnimAction, &QAction::triggered, this, [this, currentSel]() {
         if (m_animationController) {
@@ -46,12 +46,12 @@ void MainWindow::onBoxContextMenuRequested(int index, const QPoint &screenPos)
 
     menu.addSeparator();
 
-    QAction *trimAction = menu.addAction(tr("Trim to Pixels / Ajuster aux pixels"));
+    QAction *trimAction = menu.addAction(tr("KEY_CTX_TRIM_SLICE"));
     connect(trimAction, &QAction::triggered, this, [this]() {
         if (m_atlasController) m_atlasController->trimSelectedSlice(ui->alphaThreshold ? ui->alphaThreshold->value() : 1);
     });
 
-    QAction *mergeAction = menu.addAction(tr("Merge Slices / Fusionner les boîtes"));
+    QAction *mergeAction = menu.addAction(tr("KEY_CTX_MERGE_SLICES"));
     mergeAction->setEnabled(currentSel.size() >= 2);
     connect(mergeAction, &QAction::triggered, this, [this]() {
         if (m_atlasController) m_atlasController->mergeSelectedSlices();
@@ -59,19 +59,19 @@ void MainWindow::onBoxContextMenuRequested(int index, const QPoint &screenPos)
 
     menu.addSeparator();
 
-    QAction *deleteAction = menu.addAction(tr("Delete Slice (Delete) / Supprimer la boîte"));
+    QAction *deleteAction = menu.addAction(tr("KEY_CTX_DELETE_FRAMES") + "\tDel");
     connect(deleteAction, &QAction::triggered, this, [this]() {
         if (m_atlasController) m_atlasController->deleteSelectedSlices();
     });
 
-    QAction *eraseAction = menu.addAction(tr("Erase Pixels from Atlas (Shift+Delete) / Effacer les pixels"));
+    QAction *eraseAction = menu.addAction(tr("KEY_CTX_ERASE_PIXELS") + "\tShift+Del");
     connect(eraseAction, &QAction::triggered, this, [this]() {
         if (m_atlasController) m_atlasController->eraseSelectedSlicesPixels();
     });
 
     menu.addSeparator();
 
-    QAction *removeBgAction = menu.addAction(tr("Auto Remove Background / Supprimer l'arrière-plan"));
+    QAction *removeBgAction = menu.addAction(tr("KEY_CTX_REMOVE_BG"));
     removeBgAction->setEnabled(m_document && !m_document->atlas().isNull());
     connect(removeBgAction, &QAction::triggered, this, &MainWindow::removeAtlasBackgroundAndRefresh);
 
@@ -82,7 +82,7 @@ void MainWindow::onAtlasContextMenuRequested(const QPoint &pos)
 {
     QMenu menu(this);
 
-    QAction *createAnimAction = menu.addAction(tr("Create animation from selection"));
+    QAction *createAnimAction = menu.addAction(tr("KEY_CTX_CREATE_ANIM"));
     createAnimAction->setEnabled(m_document && !m_document->selectedFrameIndices().isEmpty());
     connect(createAnimAction, &QAction::triggered, this, [this]() {
         if (m_animationController && m_document) {
@@ -90,13 +90,13 @@ void MainWindow::onAtlasContextMenuRequested(const QPoint &pos)
         }
     });
 
-    QAction *trimAction = menu.addAction(tr("Trim to Pixels"));
+    QAction *trimAction = menu.addAction(tr("KEY_CTX_TRIM_SLICE"));
     trimAction->setEnabled(m_document && !m_document->selectedFrameIndices().isEmpty());
     connect(trimAction, &QAction::triggered, this, [this]() {
         if (m_atlasController) m_atlasController->trimSelectedSlice(ui->alphaThreshold ? ui->alphaThreshold->value() : 1);
     });
 
-    QAction *mergeSlicesAction = menu.addAction(tr("Merge Slices"));
+    QAction *mergeSlicesAction = menu.addAction(tr("KEY_CTX_MERGE_SLICES"));
     mergeSlicesAction->setEnabled(m_document && m_document->selectedFrameIndices().size() >= 2);
     connect(mergeSlicesAction, &QAction::triggered, this, [this]() {
         if (m_atlasController) m_atlasController->mergeSelectedSlices();
@@ -104,25 +104,25 @@ void MainWindow::onAtlasContextMenuRequested(const QPoint &pos)
 
     menu.addSeparator();
 
-    QAction *deleteFramesAction = menu.addAction(tr("Delete Selected Frames (Delete)"));
+    QAction *deleteFramesAction = menu.addAction(tr("KEY_CTX_DELETE_FRAMES") + "\tDel");
     deleteFramesAction->setEnabled(m_document && !m_document->selectedFrameIndices().isEmpty());
     connect(deleteFramesAction, &QAction::triggered, this, [this]() {
         if (m_atlasController) m_atlasController->deleteSelectedSlices();
     });
 
-    QAction *eraseFramesAction = menu.addAction(tr("Erase Pixels from Atlas (Shift+Delete)"));
+    QAction *eraseFramesAction = menu.addAction(tr("KEY_CTX_ERASE_PIXELS") + "\tShift+Del");
     eraseFramesAction->setEnabled(m_document && !m_document->selectedFrameIndices().isEmpty());
     connect(eraseFramesAction, &QAction::triggered, this, [this]() {
         if (m_atlasController) m_atlasController->eraseSelectedSlicesPixels();
     });
 
-    QAction *invertAction = menu.addAction(tr("Invert Selection"));
+    QAction *invertAction = menu.addAction(tr("KEY_CTX_INVERT_SEL"));
     invertAction->setEnabled(m_document && m_document->frameCount() > 0);
     connect(invertAction, &QAction::triggered, this, &MainWindow::invertSelection);
 
     menu.addSeparator();
 
-    QAction *removeBgAction = menu.addAction(tr("Auto Remove Background / Supprimer l'arrière-plan"));
+    QAction *removeBgAction = menu.addAction(tr("KEY_CTX_REMOVE_BG"));
     removeBgAction->setEnabled(m_document && !m_document->atlas().isNull());
     connect(removeBgAction, &QAction::triggered, this, &MainWindow::removeAtlasBackgroundAndRefresh);
 

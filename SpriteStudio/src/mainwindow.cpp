@@ -58,7 +58,7 @@ void MainWindow::setupControllers()
     });
 
     connect(m_projectController.get(), &ProjectController::fileLoadError, this, [this](const QString &/*path*/, const QString &err) {
-        QMessageBox::critical(this, tr("Load Error"), err);
+        QMessageBox::critical(this, tr("KEY_MSG_LOAD_ERROR"), err);
     });
 
     connect(m_projectController.get(), &ProjectController::statusMessage, this, [this](const QString &msg) {
@@ -174,7 +174,7 @@ void MainWindow::setupUIConnections()
 {
     // Status Bar widgets
     statusLabel = new QLabel(this);
-    statusLabel->setText(tr("_ready_to_start"));
+    statusLabel->setText(tr("KEY_STATUS_READY_TO_START"));
     ui->statusBar->addPermanentWidget(statusLabel, 1);
 
     zoomSlider = new QSlider(Qt::Horizontal, this);
@@ -192,7 +192,7 @@ void MainWindow::setupUIConnections()
     progressBar->setRange(0, 100);
     progressBar->setValue(0);
     progressBar->setTextVisible(true);
-    progressBar->setFormat(tr("_progress") + " %p%");
+    progressBar->setFormat(tr("KEY_STATUS_PROGRESS") + " %p%");
     progressBar->setMinimumWidth(300);
     ui->statusBar->addPermanentWidget(progressBar);
 
@@ -232,6 +232,13 @@ void MainWindow::setupUIConnections()
             this, &MainWindow::on_framesList_customContextMenuRequested);
 
     // Slice tool buttons
+    ui->btnToolSelect->setIcon(QIcon(":/drawer/icons/tool_select.png"));
+    ui->btnToolSelect->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    ui->btnToolAddSlice->setIcon(QIcon(":/drawer/icons/tool_slice.png"));
+    ui->btnToolAddSlice->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    ui->btnTrimSlice->setIcon(QIcon(":/drawer/icons/tool_trim.png"));
+    ui->btnRemoveBg->setIcon(QIcon(":/drawer/icons/tool_remove_bg.png"));
+
     connect(ui->btnToolSelect, &QToolButton::clicked, this, &MainWindow::on_btnToolSelect_clicked);
     connect(ui->btnToolAddSlice, &QToolButton::clicked, this, &MainWindow::on_btnToolAddSlice_clicked);
     connect(ui->btnTrimSlice, &QPushButton::clicked, this, &MainWindow::on_btnTrimSlice_clicked);
@@ -243,25 +250,25 @@ void MainWindow::setupUIConnections()
             this, &MainWindow::on_animationList_customContextMenuRequested);
 
     // Initial timing label
-    ui->timingLabel->setText(" -> " + tr("_timing") + ": " +
+    ui->timingLabel->setText(" -> " + tr("KEY_LABEL_TIMING") + ": " +
                              QString::number(1000.0 / static_cast<double>(ui->fps->value()), 'g', 4) + "ms");
 }
 
 void MainWindow::setupShortcuts()
 {
     // Create Edit Menu for Undo/Redo
-    QMenu *editMenu = new QMenu(tr("&Edit"), this);
+    QMenu *editMenu = new QMenu(tr("KEY_MENU_EDIT"), this);
     menuBar()->insertMenu(ui->menuHelp->menuAction(), editMenu);
-    QAction *undoAction = m_undoStack->createUndoAction(this, tr("&Undo"));
+    QAction *undoAction = m_undoStack->createUndoAction(this, tr("KEY_ACTION_UNDO"));
     undoAction->setShortcut(QKeySequence::Undo);
     editMenu->addAction(undoAction);
 
-    QAction *redoAction = m_undoStack->createRedoAction(this, tr("&Redo"));
+    QAction *redoAction = m_undoStack->createRedoAction(this, tr("KEY_ACTION_REDO"));
     redoAction->setShortcut(QKeySequence::Redo);
     editMenu->addAction(redoAction);
 
     editMenu->addSeparator();
-    QAction *removeBgAction = editMenu->addAction(tr("Auto Remove &Background"));
+    QAction *removeBgAction = editMenu->addAction(tr("KEY_ACTION_REMOVE_BG"));
     removeBgAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_B));
     connect(removeBgAction, &QAction::triggered, this, &MainWindow::removeAtlasBackgroundAndRefresh);
 
@@ -272,7 +279,7 @@ void MainWindow::setupShortcuts()
     ui->actionExit->setShortcut(QKeySequence::Quit);
 
     // Recent Files Submenu
-    m_recentMenu = new QMenu(tr("Recent Files"), this);
+    m_recentMenu = new QMenu(tr("KEY_MENU_RECENT_FILES"), this);
     ui->menuFile->insertMenu(ui->actionSave, m_recentMenu);
 
     // Playback Space shortcut
@@ -325,7 +332,7 @@ void MainWindow::updateRecentFilesMenu()
 
     QStringList files = m_projectController->recentFiles();
     if (files.isEmpty()) {
-        QAction *emptyAction = m_recentMenu->addAction(tr("No Recent Files"));
+        QAction *emptyAction = m_recentMenu->addAction(tr("KEY_ACTION_NO_RECENT_FILES"));
         emptyAction->setEnabled(false);
     } else {
         for (int i = 0; i < files.size(); ++i) {
@@ -338,7 +345,7 @@ void MainWindow::updateRecentFilesMenu()
             });
         }
         m_recentMenu->addSeparator();
-        QAction *clearAction = m_recentMenu->addAction(tr("Clear Recent Files"));
+        QAction *clearAction = m_recentMenu->addAction(tr("KEY_ACTION_CLEAR_RECENT_FILES"));
         connect(clearAction, &QAction::triggered, this, [this]() {
             m_projectController->clearRecentFiles();
         });

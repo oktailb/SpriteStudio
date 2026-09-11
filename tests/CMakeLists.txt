@@ -100,6 +100,7 @@ target_include_directories(test_controllers PRIVATE
 
 target_compile_definitions(test_controllers PRIVATE
     SAMPLE_DIR="${CMAKE_SOURCE_DIR}/sample"
+    QM_DIR="${CMAKE_BINARY_DIR}/SpriteStudio"
 )
 
 target_link_libraries(test_controllers PRIVATE

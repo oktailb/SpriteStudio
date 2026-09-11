@@ -4,6 +4,7 @@
 #include <QGraphicsView>
 #include <QUndoStack>
 #include <QContextMenuEvent>
+#include <QTranslator>
 
 #include "model/spritedocument.h"
 #include "controller/projectcontroller.h"
@@ -56,6 +57,8 @@ private slots:
     void testAtlasViewControllerContextMenuSignals();
     void testControllerCrossSyncNoRecursion();
     void testAtlasViewControllerMultiSelectAndDelete();
+    void testAtlasViewControllerMouseCenteredZoom();
+    void testI18nKeyTranslations();
 
 private:
     QString m_sampleDir;
@@ -949,6 +952,122 @@ void TestControllers::testAtlasViewControllerMultiSelectAndDelete()
     QCOMPARE(doc.frameCount(), 3);
     QCOMPARE(qAlpha(doc.atlas().pixel(5, 5)), 255);
     QCOMPARE(qAlpha(doc.atlas().pixel(85, 5)), 255);
+}
+
+void TestControllers::testAtlasViewControllerMouseCenteredZoom()
+{
+    QGraphicsView view;
+    view.resize(800, 600);
+    view.show();
+    QCoreApplication::processEvents();
+
+    SpriteDocument doc;
+    QImage atlas(1000, 1000, QImage::Format_ARGB32_Premultiplied);
+    atlas.fill(Qt::white);
+    doc.setAtlas(atlas);
+
+    AtlasViewController atlasCtrl(&view, &doc);
+    atlasCtrl.setZoomFactor(1.0);
+    QCoreApplication::processEvents();
+
+    // Zoom centered on a specific viewport point (e.g., 300, 250)
+    QPointF mousePos(300.0, 250.0);
+    QPointF sceneBefore = view.mapToScene(mousePos.toPoint());
+
+    // Zoom in by factor 1.5
+    atlasCtrl.zoomAt(mousePos, 1.5);
+    QCOMPARE(atlasCtrl.zoomFactor(), 1.5);
+
+    QPointF sceneAfter = view.mapToScene(mousePos.toPoint());
+    qDebug() << "sceneBefore:" << sceneBefore << "sceneAfter:" << sceneAfter
+             << "diff:" << (sceneAfter - sceneBefore);
+    // The scene point mapped to the cursor must remain stationary (within 2 pixels tolerance)
+    QVERIFY(qAbs(sceneAfter.x() - sceneBefore.x()) <= 2.0);
+    QVERIFY(qAbs(sceneAfter.y() - sceneBefore.y()) <= 2.0);
+
+    // Zoom out by factor 0.8 at another point
+    QPointF mousePos2(150.0, 120.0);
+    QPointF sceneBefore2 = view.mapToScene(mousePos2.toPoint());
+    atlasCtrl.zoomAt(mousePos2, 0.8);
+    QPointF sceneAfter2 = view.mapToScene(mousePos2.toPoint());
+    QVERIFY(qAbs(sceneAfter2.x() - sceneBefore2.x()) <= 2.0);
+    QVERIFY(qAbs(sceneAfter2.y() - sceneBefore2.y()) <= 2.0);
+
+    // Check zoom limits with zoomAt
+    atlasCtrl.setZoomFactor(10.0);
+    atlasCtrl.zoomAt(mousePos, 1.5);
+    QCOMPARE(atlasCtrl.zoomFactor(), 10.0);
+
+    atlasCtrl.setZoomFactor(0.1);
+    atlasCtrl.zoomAt(mousePos, 0.5);
+    QCOMPARE(atlasCtrl.zoomFactor(), 0.1);
+}
+
+void TestControllers::testI18nKeyTranslations()
+{
+#ifdef QM_DIR
+    QString qmDir = QStringLiteral(QM_DIR);
+
+    // 1. Test French translation
+    {
+        QTranslator frTranslator;
+        bool loaded = frTranslator.load(QStringLiteral("sprite_studio_fr_FR.qm"), qmDir);
+        QVERIFY2(loaded, "Failed to load sprite_studio_fr_FR.qm from QM_DIR");
+
+        QCoreApplication::installTranslator(&frTranslator);
+
+        QCOMPARE(QCoreApplication::translate("MainWindow", "KEY_MENU_FILE"), QStringLiteral("Fichier"));
+        QCOMPARE(QCoreApplication::translate("MainWindow", "KEY_ACTION_OPEN"), QStringLiteral("&Ouvrir"));
+        QCOMPARE(QCoreApplication::translate("MainWindow", "KEY_ACTION_SAVE"), QStringLiteral("&Enregistrer"));
+        QCOMPARE(QCoreApplication::translate("MainWindow", "KEY_TOOL_SELECT"), QStringLiteral("Sélectionner"));
+        QCOMPARE(QCoreApplication::translate("MainWindow", "KEY_CTX_CREATE_ANIM"), QStringLiteral("Créer une animation depuis la sélection"));
+        QCOMPARE(QCoreApplication::translate("AboutDialog", "KEY_DIALOG_ABOUT_TITLE"), QStringLiteral("À propos"));
+
+        QCoreApplication::removeTranslator(&frTranslator);
+    }
+
+    // 2. Test English translation
+    {
+        QTranslator enTranslator;
+        bool loaded = enTranslator.load(QStringLiteral("sprite_studio_en_US.qm"), qmDir);
+        QVERIFY2(loaded, "Failed to load sprite_studio_en_US.qm from QM_DIR");
+
+        QCoreApplication::installTranslator(&enTranslator);
+
+        QCOMPARE(QCoreApplication::translate("MainWindow", "KEY_MENU_FILE"), QStringLiteral("File"));
+        QCOMPARE(QCoreApplication::translate("MainWindow", "KEY_ACTION_OPEN"), QStringLiteral("&Open"));
+        QCOMPARE(QCoreApplication::translate("MainWindow", "KEY_ACTION_SAVE"), QStringLiteral("&Save"));
+        QCOMPARE(QCoreApplication::translate("MainWindow", "KEY_TOOL_SELECT"), QStringLiteral("Select & Edit"));
+        QCOMPARE(QCoreApplication::translate("MainWindow", "KEY_CTX_CREATE_ANIM"), QStringLiteral("Create animation from selection"));
+        QCOMPARE(QCoreApplication::translate("AboutDialog", "KEY_DIALOG_ABOUT_TITLE"), QStringLiteral("About"));
+
+        QCoreApplication::removeTranslator(&enTranslator);
+    }
+
+    // 3. Test Japanese translation
+    {
+        QTranslator jaTranslator;
+        bool loaded = jaTranslator.load(QStringLiteral("sprite_studio_ja_JA.qm"), qmDir);
+        QVERIFY2(loaded, "Failed to load sprite_studio_ja_JA.qm from QM_DIR");
+
+        QCoreApplication::installTranslator(&jaTranslator);
+
+        QCOMPARE(QCoreApplication::translate("MainWindow", "KEY_MENU_FILE"), QStringLiteral("ファイル"));
+        QCOMPARE(QCoreApplication::translate("MainWindow", "KEY_ACTION_OPEN"), QStringLiteral("開く(&O)"));
+        QCOMPARE(QCoreApplication::translate("MainWindow", "KEY_ACTION_SAVE"), QStringLiteral("保存(&S)"));
+        QCOMPARE(QCoreApplication::translate("MainWindow", "KEY_TOOL_SELECT"), QStringLiteral("選択・編集"));
+        QCOMPARE(QCoreApplication::translate("MainWindow", "KEY_CTX_CREATE_ANIM"), QStringLiteral("選択範囲からアニメーションを作成する"));
+        QCOMPARE(QCoreApplication::translate("AboutDialog", "KEY_DIALOG_ABOUT_TITLE"), QStringLiteral("情報"));
+
+        QCoreApplication::removeTranslator(&jaTranslator);
+    }
+
+    // 4. Test Untranslated Key Fallback
+    // Missing keys must clearly show visually that they are keys and not final text
+    QString untranslated = QCoreApplication::translate("MainWindow", "KEY_UNKNOWN_FEATURE");
+    QCOMPARE(untranslated, QStringLiteral("KEY_UNKNOWN_FEATURE"));
+    QVERIFY(untranslated.startsWith(QStringLiteral("KEY_")));
+#endif
 }
 
 #include <QApplication>

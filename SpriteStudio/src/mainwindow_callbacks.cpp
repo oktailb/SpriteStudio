@@ -26,12 +26,12 @@ void MainWindow::on_actionLicence_triggered()
 {
     QString licenseText = readTextFile(":/text/license.txt");
     QDialog dialog;
-    dialog.setWindowTitle(tr("Licence"));
+    dialog.setWindowTitle(tr("KEY_DIALOG_LICENCE_TITLE"));
     dialog.setMinimumSize(600, 400);
     QTextEdit *textEdit = new QTextEdit(&dialog);
     textEdit->setPlainText(licenseText);
     textEdit->setReadOnly(true);
-    QPushButton *closeButton = new QPushButton(tr("Close"), &dialog);
+    QPushButton *closeButton = new QPushButton(tr("KEY_DIALOG_ABOUT_CLOSE"), &dialog);
     QObject::connect(closeButton, &QPushButton::clicked, &dialog, &QDialog::accept);
     QVBoxLayout *layout = new QVBoxLayout(&dialog);
     layout->addWidget(textEdit);
@@ -47,7 +47,7 @@ void MainWindow::on_actionAbout_triggered()
 
 void MainWindow::on_actionOpen_triggered()
 {
-    const QString title = tr("_open_file");
+    const QString title = tr("KEY_DIALOG_OPEN_TITLE");
     const QString formats = ExtractorRegistry::instance().openFilterString();
     QString fileName = QFileDialog::getOpenFileName(this, title, "", formats);
     if (!fileName.isEmpty()) {
@@ -58,7 +58,7 @@ void MainWindow::on_actionOpen_triggered()
 void MainWindow::on_actionSave_triggered()
 {
     if (!m_projectController || !m_document || m_document->isEmpty()) {
-        QMessageBox::warning(this, tr("Save"), tr("Nothing to save."));
+        QMessageBox::warning(this, tr("KEY_ACTION_SAVE"), tr("KEY_MSG_NOTHING_TO_SAVE"));
         return;
     }
 
@@ -70,14 +70,14 @@ void MainWindow::on_actionSave_triggered()
 
     QString errorMsg;
     if (!m_projectController->save(currentPath, &errorMsg)) {
-        QMessageBox::critical(this, tr("Save Error"), errorMsg);
+        QMessageBox::critical(this, tr("KEY_MSG_SAVE_ERROR"), errorMsg);
     }
 }
 
 void MainWindow::on_actionExport_triggered()
 {
     if (!m_projectController || !m_document || m_document->isEmpty()) {
-        QMessageBox::warning(this, tr("Export"), tr("Nothing to export."));
+        QMessageBox::warning(this, tr("KEY_ACTION_EXPORT"), tr("KEY_MSG_NOTHING_TO_EXPORT"));
         return;
     }
 
@@ -87,14 +87,14 @@ void MainWindow::on_actionExport_triggered()
 
     const QString filter = ExtractorRegistry::instance().saveFilterString();
     QString selectedFilter;
-    QString selectedFile = QFileDialog::getSaveFileName(this, tr("Export Atlas"), initialDir, filter, &selectedFilter);
+    QString selectedFile = QFileDialog::getSaveFileName(this, tr("KEY_DIALOG_EXPORT_TITLE"), initialDir, filter, &selectedFilter);
 
     if (selectedFile.isEmpty()) return;
 
     ExportOptions options;
     QString errorMsg;
     if (!m_projectController->exportData(selectedFile, options, &errorMsg)) {
-        QMessageBox::critical(this, tr("Export Error"), errorMsg);
+        QMessageBox::critical(this, tr("KEY_MSG_EXPORT_ERROR"), errorMsg);
     }
 }
 
@@ -131,7 +131,7 @@ void MainWindow::on_framesList_customContextMenuRequested(const QPoint &pos)
 
     QMenu menu(this);
 
-    QAction *createAnimAction = menu.addAction(tr("Create animation from selection"));
+    QAction *createAnimAction = menu.addAction(tr("KEY_CTX_CREATE_ANIM"));
     createAnimAction->setEnabled(m_document && !m_document->selectedFrameIndices().isEmpty());
     connect(createAnimAction, &QAction::triggered, this, [this]() {
         if (m_animationController && m_document) {
@@ -141,11 +141,11 @@ void MainWindow::on_framesList_customContextMenuRequested(const QPoint &pos)
 
     menu.addSeparator();
 
-    QAction *deleteFramesAction = menu.addAction(tr("Delete Selected Frames\tDel"));
+    QAction *deleteFramesAction = menu.addAction(tr("KEY_CTX_DELETE_FRAMES") + "\tDel");
     deleteFramesAction->setEnabled(m_document && !m_document->selectedFrameIndices().isEmpty());
     connect(deleteFramesAction, &QAction::triggered, this, &MainWindow::deleteSelectedFrame);
 
-    QAction *eraseFramesAction = menu.addAction(tr("Erase Pixels && Delete Frames\tShift+Del"));
+    QAction *eraseFramesAction = menu.addAction(tr("KEY_CTX_ERASE_PIXELS") + "\tShift+Del");
     eraseFramesAction->setEnabled(m_document && !m_document->selectedFrameIndices().isEmpty());
     connect(eraseFramesAction, &QAction::triggered, this, [this]() {
         if (m_atlasController) {
@@ -155,7 +155,7 @@ void MainWindow::on_framesList_customContextMenuRequested(const QPoint &pos)
 
     menu.addSeparator();
 
-    QAction *invertAction = menu.addAction(tr("Invert Selection"));
+    QAction *invertAction = menu.addAction(tr("KEY_CTX_INVERT_SEL"));
     invertAction->setEnabled(m_document && m_document->frameCount() > 0);
     connect(invertAction, &QAction::triggered, this, &MainWindow::invertSelection);
 

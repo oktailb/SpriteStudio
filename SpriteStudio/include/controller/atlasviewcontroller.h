@@ -46,6 +46,7 @@ public:
     void setZoomFactor(double factor);
     void zoomIn(double step = -1.0);
     void zoomOut(double step = -1.0);
+    void zoomAt(const QPointF &viewportPos, double factor);
     void fitInView();
     void adjustZoomToWindow();
 

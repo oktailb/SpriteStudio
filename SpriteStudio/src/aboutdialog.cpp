@@ -16,7 +16,7 @@ AboutDialog::AboutDialog(QWidget *parent)
   loadLicense();
 
   // Configuration de la fenêtre
-  setWindowTitle(tr("_about") + "Sprite Studio");
+  setWindowTitle(tr("KEY_DIALOG_ABOUT_TITLE") + " - Sprite Studio");
   setMinimumSize(500, 400);
   resize(600, 500);
 
@@ -74,24 +74,24 @@ void AboutDialog::setupUI()
   aboutText = new QTextEdit();
   aboutText->setReadOnly(true);
   aboutText->setStyleSheet("QTextEdit { background: transparent; border: none; }");
-  tabWidget->addTab(aboutText, tr("_about"));
+  tabWidget->addTab(aboutText, tr("KEY_DIALOG_ABOUT_TITLE"));
 
   // Onglet "Credits"
   creditsText = new QTextEdit();
   creditsText->setReadOnly(true);
   creditsText->setStyleSheet("QTextEdit { background: transparent; border: none; }");
-  tabWidget->addTab(creditsText, tr("_credits"));
+  tabWidget->addTab(creditsText, tr("KEY_DIALOG_ABOUT_CREDITS"));
 
   // Onglet "License"
   licenseText = new QTextEdit();
   licenseText->setReadOnly(true);
   licenseText->setStyleSheet("QTextEdit { background: transparent; border: none; }");
-  tabWidget->addTab(licenseText, tr("_licence"));
+  tabWidget->addTab(licenseText, tr("KEY_DIALOG_LICENCE_TITLE"));
 
   mainLayout->addWidget(tabWidget);
 
   // Bouton Fermer
-  closeButton = new QPushButton(tr("_close"));
+  closeButton = new QPushButton(tr("KEY_DIALOG_ABOUT_CLOSE"));
   closeButton->setStyleSheet(
       "QPushButton {"
       "    background: #3498db;"
@@ -151,7 +151,7 @@ void AboutDialog::loadApplicationInfo()
                           "<div style='text-align: center; margin: 20px;'>"
                           "<h2 style='color: #2c3e50;'>Sprite Studio</h2>"
                           "<p style='color: #7f8c8d; font-size: 14px;'>"
-                          + tr("_purpose") +
+                          + tr("KEY_ABOUT_PURPOSE") +
                           "</p>"
                           "<hr>"
                           "<div style='text-align: left; margin: 20px;'>"
@@ -162,15 +162,15 @@ void AboutDialog::loadApplicationInfo()
                           "<div style='text-align: left; margin: 20px;'>"
                           "<p><b>Version:</b> %1</p>"
                           "<p><b>Build:</b> %2</p>"
-                          "<p><b>" + tr("_build_with") + ": </b> Qt %3 %4 %5 %6</p>"
-                          "<p><b>" + tr("_platform") + ": </b> %7</p>"
+                          "<p><b>" + tr("KEY_ABOUT_BUILD_WITH") + ": </b> Qt %3 %4 %5 %6</p>"
+                          "<p><b>" + tr("KEY_ABOUT_PLATFORM") + ": </b> %7</p>"
                           "</div>"
                           "<div style='text-align: left; background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px;'>"
-                          "<h4 style='color: #2c3e50; margin-top: 0;'>" + tr("_git_info") + "</h4>"
-                          "<p style='margin: 5px 0;'><b>" + tr("_branch") + ": </b> %8</p>"
-                          "<p style='margin: 5px 0;'><b>" + tr("_commit") + ": </b> %9</p>"
-                          "<p style='margin: 5px 0;'><b>" + tr("_last_commit_date") + ": </b> %10</p>"
-                          "<p style='margin: 5px 0;'><b>" + tr("_last_author") + ": </b> %11</p>"
+                          "<h4 style='color: #2c3e50; margin-top: 0;'>" + tr("KEY_ABOUT_GIT_INFO") + "</h4>"
+                          "<p style='margin: 5px 0;'><b>" + tr("KEY_ABOUT_BRANCH") + ": </b> %8</p>"
+                          "<p style='margin: 5px 0;'><b>" + tr("KEY_ABOUT_COMMIT") + ": </b> %9</p>"
+                          "<p style='margin: 5px 0;'><b>" + tr("KEY_ABOUT_LAST_COMMIT_DATE") + ": </b> %10</p>"
+                          "<p style='margin: 5px 0;'><b>" + tr("KEY_ABOUT_LAST_AUTHOR") + ": </b> %11</p>"
                           "</div>"
                           "</div>"
                           )
@@ -193,7 +193,7 @@ void AboutDialog::loadCredits()
 {
   QString creditsHtml = QString(
                             "<div style='text-align: center;margin: 20px;'>"
-                            "<h3 style='color: #2c3e50;'>" + tr("_credits_and_greetings") + "</h3>"
+                            "<h3 style='color: #2c3e50;'>" + tr("KEY_ABOUT_CREDITS_AND_GREETINGS") + "</h3>"
                             "<hr>"
                             "<div style='text-align: left; margin: 20px;'>"
                             "<p><b>Tipeee:</b> https://en.tipeee.com/lecoq-vincent</p>"

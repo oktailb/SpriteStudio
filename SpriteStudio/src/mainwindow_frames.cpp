@@ -10,7 +10,7 @@ void MainWindow::populateFrameList(const QList<QPixmap> &frameList, const QList<
 
     int itemCount = qMin(frameList.size(), boxList.size());
     if (progressBar) progressBar->setValue(0);
-    if (statusLabel) statusLabel->setText(tr("_populating_frame_list"));
+    if (statusLabel) statusLabel->setText(tr("KEY_STATUS_POPULATING"));
 
     for (int i = 0; i < itemCount; ++i) {
         const QPixmap &pixmap = frameList.at(i);
@@ -20,7 +20,7 @@ void MainWindow::populateFrameList(const QList<QPixmap> &frameList, const QList<
         QPixmap thumbnail = pixmap.scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation);
         item->setData(thumbnail, Qt::DecorationRole);
 
-        QString displayText = QString("Frame %1").arg(i + 1);
+        QString displayText = tr("KEY_FRAME_LABEL").arg(i + 1);
         if (box.selected) {
             displayText += " ✓";
             item->setBackground(QBrush(QColor(200, 230, 255)));
@@ -50,7 +50,7 @@ void MainWindow::populateFrameList(const QList<QPixmap> &frameList, const QList<
     m_isSyncingSelection = false;
 
     if (progressBar) progressBar->setValue(0);
-    if (statusLabel) statusLabel->setText(tr("_ready"));
+    if (statusLabel) statusLabel->setText(tr("KEY_STATUS_READY"));
 }
 
 void MainWindow::refreshFrameListDisplay()
@@ -61,7 +61,8 @@ void MainWindow::refreshFrameListDisplay()
         QStandardItem *item = frameModel->item(i);
         if (!item) continue;
         bool isSel = m_document->box(i).selected;
-        QString text = QString("Frame %1%2").arg(i + 1).arg(isSel ? " ✓" : "");
+        QString base = tr("KEY_FRAME_LABEL").arg(i + 1);
+        QString text = QString("%1%2").arg(base).arg(isSel ? " ✓" : "");
         item->setData(text, Qt::DisplayRole);
         if (isSel) {
             item->setBackground(QBrush(QColor(200, 230, 255)));
