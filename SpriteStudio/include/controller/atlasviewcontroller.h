@@ -44,8 +44,8 @@ public:
     // Zoom and Pan
     double zoomFactor() const { return m_zoomFactor; }
     void setZoomFactor(double factor);
-    void zoomIn(double step = 1.15);
-    void zoomOut(double step = 1.15);
+    void zoomIn(double step = -1.0);
+    void zoomOut(double step = -1.0);
     void fitInView();
     void adjustZoomToWindow();
 
@@ -72,13 +72,13 @@ public:
     void endMarqueeSelection();
 
     // Slice Commands
-    void trimSelectedSlice(int alphaThreshold = 1);
+    void trimSelectedSlice(int alphaThreshold = -1);
     void mergeSelectedSlices();
     void deleteSelectedSlices();
     void nudgeSelectedBoxes(int dx, int dy);
 
     // Context Menu & Views
-    void fitSelectedFramesInView(int padding = 20);
+    void fitSelectedFramesInView(int padding = -1);
 
 signals:
     void selectionChanged(const QList<int> &selectedIndices);

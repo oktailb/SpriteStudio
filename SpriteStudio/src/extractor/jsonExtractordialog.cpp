@@ -27,7 +27,7 @@ void setupImageFormatComboBox(QComboBox *comboBox) {
 
 jsonExtractorDialog::jsonExtractorDialog(const SpriteDocument &doc, const QString &baseName, QWidget *parent)
     : QDialog(parent)
-    , ui(new Ui::jsonExtractorDialog)
+    , ui(std::make_unique<Ui::jsonExtractorDialog>())
     , m_baseName(baseName)
     , m_selectedStrategy(AtlasStrategy::ATLASSTRATEGY_ORIGINAL_ATLAS)
 {
@@ -105,7 +105,6 @@ jsonExtractorDialog::jsonExtractorDialog(const SpriteDocument &doc, const QStrin
 
 jsonExtractorDialog::~jsonExtractorDialog()
 {
-    delete ui;
 }
 
 ExportOptions jsonExtractorDialog::getOpts() const

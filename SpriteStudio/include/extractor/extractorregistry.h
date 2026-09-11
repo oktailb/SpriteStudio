@@ -5,6 +5,8 @@
 #include <QList>
 #include <QString>
 #include "extractor/extractor.h"
+#include <memory>
+#include <vector>
 
 /**
  * @brief Central registry managing built-in and dynamic Extractor plugins.
@@ -17,6 +19,7 @@ public:
     static ExtractorRegistry& instance();
     ~ExtractorRegistry() override;
 
+    void registerExtractor(std::unique_ptr<Extractor> extractor);
     void registerExtractor(Extractor *extractor, bool takeOwnership = true);
     void loadPlugins(const QString &dirPath);
 
@@ -36,9 +39,9 @@ private:
     ExtractorRegistry() = default;
     Q_DISABLE_COPY(ExtractorRegistry)
 
-    QList<Extractor*> m_extractors;
-    QList<Extractor*> m_ownedExtractors;
-    bool              m_initialized = false;
+    QList<Extractor*>                       m_extractors;
+    std::vector<std::unique_ptr<Extractor>> m_ownedExtractors;
+    bool                                    m_initialized = false;
 };
 
 #endif // EXTRACTORREGISTRY_H

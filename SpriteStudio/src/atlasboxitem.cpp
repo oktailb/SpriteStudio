@@ -1,4 +1,5 @@
 #include "atlasboxitem.h"
+#include "config/appconfig.h"
 #include <QPainter>
 #include <QGraphicsScene>
 #include <QGraphicsView>
@@ -47,8 +48,8 @@ void AtlasBoxItem::setSelectedBox(bool sel)
 
 QRectF AtlasBoxItem::boundingRect() const
 {
-    // Margin for handles and border
-    const double margin = 16.0;
+    // Margin for handles and border from AppConfig
+    const double margin = AppConfig::instance().visuals().handleMargin;
     return m_rect.adjusted(-margin, -margin, margin, margin);
 }
 
@@ -57,7 +58,7 @@ QPainterPath AtlasBoxItem::shape() const
     QPainterPath path;
     path.addRect(m_rect);
     if (m_selected) {
-        const double handleSize = 8.0;
+        const double handleSize = AppConfig::instance().visuals().handleSize;
         for (int h = TopLeft; h <= Left; ++h) {
             path.addRect(getHandleRect(static_cast<Handle>(h), handleSize));
         }
@@ -217,7 +218,7 @@ void AtlasBoxItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 
     QPointF delta = event->scenePos() - m_pressScenePos;
     QRectF newRect = m_initialRect;
-    const double minSize = 3.0;
+    const double minSize = static_cast<double>(AppConfig::instance().atlas().minSliceSize);
 
     switch (m_activeHandle) {
     case Move: {
@@ -319,7 +320,16 @@ void AtlasBoxItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
         break;
     }
 
-    if (newRect != m_rect) {
+    // Clamp resize to atlas bounds if available
+    if (!m_atlasBounds.isEmpty()) {
+        if (newRect.left() < m_atlasBounds.left()) newRect.setLeft(m_atlasBounds.left());
+        if (newRect.right() > m_atlasBounds.right()) newRect.setRight(m_atlasBounds.right());
+        if (newRect.top() < m_atlasBounds.top()) newRect.setTop(m_atlasBounds.top());
+        if (newRect.bottom() > m_atlasBounds.bottom()) newRect.setBottom(m_atlasBounds.bottom());
+    }
+
+    newRect = newRect.normalized();
+    if (newRect.width() >= minSize && newRect.height() >= minSize) {
         prepareGeometryChange();
         m_rect = newRect;
         m_hasMoved = true;
@@ -361,29 +371,32 @@ void AtlasBoxItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *opti
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing, false);
 
+    const VisualConfig &vis = AppConfig::instance().visuals();
+
     // Compute cosmetic handle size based on view zoom
     double scale = 1.0;
     if (scene() && !scene()->views().isEmpty()) {
         scale = scene()->views().first()->transform().m11();
     }
-    double handleSize = (scale > 0.0) ? std::max(6.0 / scale, 6.0) : 8.0;
+    double baseHandle = vis.handleSize;
+    double handleSize = (scale > 0.0) ? std::max((baseHandle * 0.75) / scale, baseHandle * 0.75) : baseHandle;
 
     // 1. Fill
     if (m_selected) {
-        painter->fillRect(m_rect, QColor(0, 160, 255, 60));
+        painter->fillRect(m_rect, vis.selectedBoxFillColor);
     } else if (m_hovered) {
-        painter->fillRect(m_rect, QColor(0, 180, 255, 30));
+        painter->fillRect(m_rect, vis.hoveredBoxFillColor);
     }
 
     // 2. Outline (cosmetic)
     QPen borderPen;
     borderPen.setCosmetic(true);
     if (m_selected) {
-        borderPen.setColor(QColor(255, 200, 0));
+        borderPen.setColor(vis.selectedBoxColor);
         borderPen.setWidth(2);
         borderPen.setStyle(Qt::SolidLine);
     } else {
-        borderPen.setColor(QColor(0, 180, 255, 180));
+        borderPen.setColor(vis.unselectedBoxColor);
         borderPen.setWidth(1);
         borderPen.setStyle(Qt::SolidLine);
     }
@@ -402,7 +415,7 @@ void AtlasBoxItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *opti
     double badgeH = (textH + 2.0) / (scale > 0.0 ? scale : 1.0);
 
     QRectF badgeRect(m_rect.left(), m_rect.top(), badgeW, badgeH);
-    painter->fillRect(badgeRect, m_selected ? QColor(255, 200, 0, 220) : QColor(0, 50, 90, 200));
+    painter->fillRect(badgeRect, m_selected ? vis.selectedBoxColor : QColor(0, 50, 90, 200));
 
     painter->setPen(m_selected ? Qt::black : Qt::white);
     painter->drawText(badgeRect, Qt::AlignCenter, labelText);

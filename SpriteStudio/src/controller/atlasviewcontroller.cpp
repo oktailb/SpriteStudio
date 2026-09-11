@@ -2,8 +2,10 @@
 #include "include/atlasboxitem.h"
 #include "include/model/spritedocument.h"
 #include "include/commands/commands.h"
+#include "include/config/appconfig.h"
 #include <QUndoStack>
 #include <QScrollBar>
+#include <QContextMenuEvent>
 #include <algorithm>
 #include <cmath>
 
@@ -41,21 +43,7 @@ AtlasViewController::AtlasViewController(QGraphicsView *view,
 
 AtlasViewController::~AtlasViewController()
 {
-    clearAtlasBoxes();
-    if (m_newSlicePreviewItem) {
-        if (m_newSlicePreviewItem->scene()) {
-            m_newSlicePreviewItem->scene()->removeItem(m_newSlicePreviewItem);
-        }
-        delete m_newSlicePreviewItem;
-        m_newSlicePreviewItem = nullptr;
-    }
-    if (m_selectionRectItem) {
-        if (m_selectionRectItem->scene()) {
-            m_selectionRectItem->scene()->removeItem(m_selectionRectItem);
-        }
-        delete m_selectionRectItem;
-        m_selectionRectItem = nullptr;
-    }
+    clearAtlas();
 }
 
 void AtlasViewController::setToolMode(SliceToolMode mode)
@@ -69,7 +57,8 @@ void AtlasViewController::setToolMode(SliceToolMode mode)
 
 void AtlasViewController::setZoomFactor(double factor)
 {
-    double clamped = std::clamp(factor, 0.1, 10.0);
+    const AtlasConfig &cfg = AppConfig::instance().atlas();
+    double clamped = std::clamp(factor, cfg.zoomMin, cfg.zoomMax);
     m_zoomFactor = clamped;
 
     if (m_view) {
@@ -82,11 +71,13 @@ void AtlasViewController::setZoomFactor(double factor)
 
 void AtlasViewController::zoomIn(double step)
 {
+    if (step <= 0.0) step = AppConfig::instance().atlas().zoomStep;
     setZoomFactor(m_zoomFactor * step);
 }
 
 void AtlasViewController::zoomOut(double step)
 {
+    if (step <= 0.0) step = AppConfig::instance().atlas().zoomStep;
     setZoomFactor(m_zoomFactor / step);
 }
 
@@ -106,13 +97,9 @@ void AtlasViewController::adjustZoomToWindow()
 
 void AtlasViewController::setAtlasImage(const QImage &image)
 {
-    clearAtlasBoxes();
-    m_scene->clear();
-    m_newSlicePreviewItem = nullptr;
-    m_selectionRectItem = nullptr;
+    clearAtlas();
 
     if (image.isNull()) {
-        m_atlasPixmapItem = nullptr;
         return;
     }
 
@@ -126,10 +113,22 @@ void AtlasViewController::setAtlasImage(const QImage &image)
 void AtlasViewController::clearAtlas()
 {
     clearAtlasBoxes();
+    if (m_newSlicePreviewItem) {
+        if (m_newSlicePreviewItem->scene()) {
+            m_newSlicePreviewItem->scene()->removeItem(m_newSlicePreviewItem);
+        }
+        delete m_newSlicePreviewItem;
+        m_newSlicePreviewItem = nullptr;
+    }
+    if (m_selectionRectItem) {
+        if (m_selectionRectItem->scene()) {
+            m_selectionRectItem->scene()->removeItem(m_selectionRectItem);
+        }
+        delete m_selectionRectItem;
+        m_selectionRectItem = nullptr;
+    }
     m_scene->clear();
     m_atlasPixmapItem = nullptr;
-    m_newSlicePreviewItem = nullptr;
-    m_selectionRectItem = nullptr;
 }
 
 void AtlasViewController::syncAtlasBoxes()
@@ -229,6 +228,9 @@ void AtlasViewController::updateBoxSelectionVisuals(const QList<int> &selectedIn
 void AtlasViewController::trimSelectedSlice(int alphaThreshold)
 {
     if (!m_document) return;
+    if (alphaThreshold < 0) {
+        alphaThreshold = AppConfig::instance().atlas().defaultAlphaThreshold;
+    }
     QList<int> selected = selectedBoxIndices();
     if (selected.isEmpty()) return;
 
@@ -343,6 +345,9 @@ void AtlasViewController::nudgeSelectedBoxes(int dx, int dy)
 void AtlasViewController::fitSelectedFramesInView(int padding)
 {
     if (!m_view || !m_document) return;
+    if (padding < 0) {
+        padding = AppConfig::instance().atlas().fitViewPadding;
+    }
     QList<int> selected = selectedBoxIndices();
     if (selected.isEmpty()) {
         fitInView();
@@ -432,10 +437,13 @@ void AtlasViewController::startMarqueeSelection(const QPointF &scenePos, Qt::Key
 
     if (!m_selectionRectItem) {
         m_selectionRectItem = new QGraphicsRectItem();
-        QPen pen(QColor(0, 120, 215), 1, Qt::DashLine);
+        QColor marqueeCol = AppConfig::instance().visuals().marqueeColor;
+        QPen pen(marqueeCol, 1, Qt::DashLine);
         pen.setCosmetic(true);
         m_selectionRectItem->setPen(pen);
-        m_selectionRectItem->setBrush(QBrush(QColor(0, 120, 215, 40)));
+        QColor fill = marqueeCol;
+        fill.setAlpha(40);
+        m_selectionRectItem->setBrush(QBrush(fill));
         m_selectionRectItem->setZValue(100.0);
         m_scene->addItem(m_selectionRectItem);
     } else if (m_selectionRectItem->scene() != m_scene) {
@@ -517,6 +525,22 @@ bool AtlasViewController::eventFilter(QObject *watched, QEvent *event)
             return true;
         }
 
+        // --- Context Menu (Atlas Background) ---
+        if (event->type() == QEvent::ContextMenu) {
+            QContextMenuEvent *cme = static_cast<QContextMenuEvent*>(event);
+            QGraphicsItem *item = m_view->itemAt(cme->pos());
+            AtlasBoxItem *boxItem = dynamic_cast<AtlasBoxItem*>(item);
+            if (!boxItem && item && item->parentItem()) {
+                boxItem = dynamic_cast<AtlasBoxItem*>(item->parentItem());
+            }
+            if (!boxItem) {
+                emit atlasContextMenuRequested(cme->pos());
+                return true;
+            }
+            // If it is a box item, let standard QGraphicsView delivery handle it so AtlasBoxItem::contextMenuEvent gets called
+            return false;
+        }
+
         // Mouse events
         if (event->type() == QEvent::MouseButtonPress ||
             event->type() == QEvent::MouseMove ||
@@ -558,10 +582,13 @@ bool AtlasViewController::eventFilter(QObject *watched, QEvent *event)
 
                     if (!m_newSlicePreviewItem) {
                         m_newSlicePreviewItem = new QGraphicsRectItem();
-                        QPen pen(QColor(0, 220, 100), 2, Qt::DashLine);
+                        QColor previewCol = AppConfig::instance().visuals().newSlicePreviewColor;
+                        QPen pen(previewCol, 2, Qt::DashLine);
                         pen.setCosmetic(true);
                         m_newSlicePreviewItem->setPen(pen);
-                        m_newSlicePreviewItem->setBrush(QBrush(QColor(0, 220, 100, 40)));
+                        QColor fill = previewCol;
+                        fill.setAlpha(40);
+                        m_newSlicePreviewItem->setBrush(QBrush(fill));
                         m_newSlicePreviewItem->setZValue(50.0);
                         m_scene->addItem(m_newSlicePreviewItem);
                     } else if (m_newSlicePreviewItem->scene() != m_scene) {
@@ -594,7 +621,8 @@ bool AtlasViewController::eventFilter(QObject *watched, QEvent *event)
                             scenePos.setY(std::clamp<double>(scenePos.y(), atlasBounds.top(), atlasBounds.bottom()));
                         }
                         QRect sliceRect = QRectF(m_newSliceStart, scenePos).normalized().toRect();
-                        if (sliceRect.width() >= 3 && sliceRect.height() >= 3) {
+                        int minSlice = AppConfig::instance().atlas().minSliceSize;
+                        if (sliceRect.width() >= minSlice && sliceRect.height() >= minSlice) {
                             if (m_undoStack) {
                                 m_undoStack->push(new AddSliceCommand(m_document, sliceRect));
                             } else {

@@ -48,7 +48,7 @@ public:
 
     // Animation CRUD & Selection
     void selectAnimation(const QString &name);
-    void createAnimation(const QString &name, const QList<int> &frameIndices, int fps = 12);
+    void createAnimation(const QString &name, const QList<int> &frameIndices, int fps = -1);
     void createAnimationFromSelection(const QList<int> &selectedIndices);
     void removeAnimation(const QString &name);
     void removeAnimations(const QStringList &names);

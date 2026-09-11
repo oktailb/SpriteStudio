@@ -47,6 +47,7 @@ set (${PROJECT_NAME}_SRC
     src/arrangementmodel.cpp
     src/aboutdialog.cpp
     src/atlasboxitem.cpp
+    src/config/appconfig.cpp
     src/version.h.in
     src/haiku.PackageInfo.in
     ${CMAKE_CURRENT_BINARY_DIR}/generated/version.h
@@ -59,6 +60,7 @@ set (${PROJECT_NAME}_UI
 
 set (${PROJECT_NAME}_INCLUDE
     include/mainwindow.h
+    include/config/appconfig.h
     include/controller/projectcontroller.h
     include/controller/animationcontroller.h
     include/controller/atlasviewcontroller.h

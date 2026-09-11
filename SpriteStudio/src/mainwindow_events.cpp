@@ -1,5 +1,6 @@
 #include "include/mainwindow.h"
 #include "ui_mainwindow.h"
+#include "include/config/appconfig.h"
 #include <QMouseEvent>
 #include <QDragMoveEvent>
 #include <QMimeData>
@@ -14,7 +15,8 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     if (m_atlasController && m_document && !m_document->selectedFrameIndices().isEmpty()) {
         int key = event->key();
         if (key == Qt::Key_Left || key == Qt::Key_Right || key == Qt::Key_Up || key == Qt::Key_Down) {
-            int step = (event->modifiers() & Qt::ShiftModifier) ? 10 : 1;
+            const AtlasConfig &cfg = AppConfig::instance().atlas();
+            int step = (event->modifiers() & Qt::ShiftModifier) ? cfg.nudgeStepLarge : cfg.nudgeStepSmall;
             int dx = 0;
             int dy = 0;
             if (key == Qt::Key_Left)  dx = -step;

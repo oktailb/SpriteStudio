@@ -19,11 +19,18 @@ ExtractorRegistry& ExtractorRegistry::instance()
 
 ExtractorRegistry::~ExtractorRegistry()
 {
-    for (Extractor *ext : m_ownedExtractors) {
-        delete ext;
-    }
-    m_ownedExtractors.clear();
     m_extractors.clear();
+    m_ownedExtractors.clear();
+}
+
+void ExtractorRegistry::registerExtractor(std::unique_ptr<Extractor> extractor)
+{
+    if (!extractor) return;
+    Extractor *raw = extractor.get();
+    if (m_extractors.contains(raw)) return;
+
+    m_extractors.append(raw);
+    m_ownedExtractors.push_back(std::move(extractor));
 }
 
 void ExtractorRegistry::registerExtractor(Extractor *extractor, bool takeOwnership)
@@ -32,9 +39,10 @@ void ExtractorRegistry::registerExtractor(Extractor *extractor, bool takeOwnersh
         return;
     }
 
-    m_extractors.append(extractor);
     if (takeOwnership) {
-        m_ownedExtractors.append(extractor);
+        registerExtractor(std::unique_ptr<Extractor>(extractor));
+    } else {
+        m_extractors.append(extractor);
     }
 }
 
@@ -43,16 +51,16 @@ void ExtractorRegistry::initDefaultExtractors()
     m_initialized = true;
 
     // 1. Static sprite sheets (PNG, JPG, BMP)
-    registerExtractor(new SpriteExtractor(), true);
+    registerExtractor(std::make_unique<SpriteExtractor>());
 
     // 2. Animated GIF
-    registerExtractor(new GifExtractor(), true);
+    registerExtractor(std::make_unique<GifExtractor>());
 
     // 3. TexturePacker & Aseprite JSON
-    registerExtractor(new JsonExtractor(), true);
+    registerExtractor(std::make_unique<JsonExtractor>());
 
     // 4. Godot Engine 4.x SpriteFrames (.tres)
-    registerExtractor(new GodotExtractor(), true);
+    registerExtractor(std::make_unique<GodotExtractor>());
 
     // 5. Look for external dynamic plugins in plugins/ directory
     QString pluginsPath = QDir(QCoreApplication::applicationDirPath()).filePath("plugins");

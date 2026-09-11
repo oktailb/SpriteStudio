@@ -2,6 +2,7 @@
 #include "include/animation/animationplayer.h"
 #include "include/model/spritedocument.h"
 #include "include/commands/commands.h"
+#include "include/config/appconfig.h"
 #include <QUndoStack>
 #include <QInputDialog>
 #include <QMessageBox>
@@ -134,12 +135,13 @@ bool AnimationController::isPlaying() const
 
 int AnimationController::fps() const
 {
-    return m_player ? m_player->fps() : 12;
+    return m_player ? m_player->fps() : AppConfig::instance().animation().defaultFps;
 }
 
 void AnimationController::setFps(int fps)
 {
-    if (fps <= 0) fps = 1;
+    const AnimationConfig &cfg = AppConfig::instance().animation();
+    fps = std::clamp(fps, cfg.minFps, cfg.maxFps);
     if (m_player) {
         m_player->setFps(fps);
     }
@@ -196,6 +198,9 @@ void AnimationController::selectAnimation(const QString &name)
 void AnimationController::createAnimation(const QString &name, const QList<int> &frameIndices, int fps)
 {
     if (!m_document || name.isEmpty() || frameIndices.isEmpty()) return;
+    if (fps <= 0) {
+        fps = AppConfig::instance().animation().defaultFps;
+    }
 
     if (name == QLatin1String("current")) {
         m_document->setAnimation(name, frameIndices, fps, true);

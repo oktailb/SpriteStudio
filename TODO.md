@@ -9,7 +9,7 @@ L'objectif est d'élever l'application d'un simple outil de découpe technique a
 
 | ID | Chantier | Priorité | Complexité | Statut |
 |---|---|---|---|---|
-| **M0** | [Assainissement Architectural & Dette Technique (Audit Critique)](#m0--assainissement-architectural--dette-technique-audit-critique) | **Haute** | Haute | 🟡 En cours (Pts 1 & 2 validés & testés) |
+| **M0** | [Assainissement Architectural & Dette Technique (Audit Critique)](#m0--assainissement-architectural--dette-technique-audit-critique) | **Haute** | Haute | 🟡 En cours (Pts 1, 2 & 3 validés & testés) |
 | **M1** | [Édition Interactive des Bounding Boxes (Atlas Slicing)](#m1--édition-interactive-des-bounding-boxes-atlas-slicing) | **Haute** | Moyenne | 🟢 ~95% - Déblocages clavier/UX validés |
 | **M2** | [Gestionnaire Complet d'Animations & Timeline](#m2--gestionnaire-complet-danimations--timeline) | **Haute** | Moyenne | 📝 Planifié |
 | **M3** | [Points d'Ancrage & Pivots (Origins & Offsets)](#m3--points-dancrage--pivots-origins--offsets) | **Moyenne** | Faible | 📝 Planifié |
@@ -56,12 +56,27 @@ L'application souffre d'une transition inachevée entre un code impératif legac
     - Suppression du rafraîchissement destructif de colonnes (`m_treeWidget->clear()` et `resizeColumnToContents` en boucle qui surchargeaient le heap via `QTextEngine::itemize` / `RtlAllocateHeap`).
   - Suite de tests unitaires dédiée `tests/test_controllers.cpp` (18 tests couvrant les 3 contrôleurs en mode headless/offscreen, la sélection rectangulaire avec modificateurs Ctrl/Shift et la non-récursion des signaux croisés, 100% succès sous CTest).
 
-### 3. Gestion Mémoire & Pratiques Modernes C++17
-- **Problème :** Omniprésence de pointeurs bruts nus (`new`/`delete` manuels sur `extractor`), absence de smart pointers (`std::unique_ptr`), et gestion hasardeuse du cycle de vie des objets graphiques de scène (risque de pointeurs pendants après `scene->clear()`).
-- **Solution Cible :**
-  - Généraliser `std::unique_ptr` pour tous les objets possédés.
-  - Sécuriser le graphe de scène Qt en respectant strictement la hiérarchie parent-enfant et l'ownership de `QGraphicsScene`.
-  - Éliminer les constantes magiques disséminées (`margin = 16.0`, `tolerance = 10`, `minSize = 3.0`) au profit d'un fichier de constantes ou de configuration typé.
+### 3. Gestion Mémoire & Pratiques Modernes C++17 — ✅ TERMINÉ
+- **État :** ✅ **Réfracté & Validé par tests unitaires**
+- **Réalisations :**
+  - **Adoption de `std::unique_ptr` et élimination des `delete` manuels :**
+    - `ExtractorRegistry` gère désormais ses instances d'extracteurs possédés via `std::vector<std::unique_ptr<Extractor>>`. Destructeur automatique et RAII garanti.
+    - `MainWindow::ui` et `jsonExtractorDialog::ui` migrés vers `std::unique_ptr`, suppression intégrale des `delete ui;` manuels.
+    - Hiérarchie d'ownership QObject clarifiée pour l'ensemble des sous-modèles (`ArrangementModel`, `FrameDelegate`, `AnimationPlayer`).
+  - **Sécurisation du cycle de vie des objets `QGraphicsScene` :**
+    - Unification du nettoyage dans `AtlasViewController::clearAtlas()` (détachement et libération explicite des items de preview `m_newSlicePreviewItem` et `m_selectionRectItem` avant l'appel à `m_scene->clear()`).
+    - Destructeur `~AtlasViewController()` simplifié et sécurisé contre les doubles libérations et pointeurs pendants.
+  - **Gestionnaire central de configuration maintenable (`AppConfig`) :**
+    - Création de `include/config/appconfig.h` et `src/config/appconfig.cpp` produisant et chargeant un fichier JSON propre et indenté (`spritestudio_config.json`).
+    - Localisation hybride : répertoire local/portable en priorité, puis chemin système standard `QStandardPaths::AppConfigLocation`.
+    - Tolérance totale aux pannes (*fail-safe*) : en cas de syntaxe JSON corrompue ou de champs manquants suite à une édition manuelle par l'utilisateur, l'application ne crashe jamais et bascule automatiquement sur les valeurs par défaut saines en consignant un avertissement.
+  - **Élimination complète des constantes magiques disséminées :**
+    - `AtlasBoxItem` : dimensions des poignées (`handleSize`), marges de survol (`handleMargin`), taille minimale (`minSliceSize`) et palette de couleurs complète (boîtes sélectionnées, non sélectionnées, survol, badges) branchées sur `AppConfig`.
+    - `AtlasViewController` : pas de zoom (`zoomStep`), bornes min/max (`zoomMin`, `zoomMax`), seuil alpha par défaut (`defaultAlphaThreshold`), pas de déplacement clavier (`nudgeStepSmall`, `nudgeStepLarge`), padding de cadrage (`fitViewPadding`) et couleurs d'aperçu lues depuis `AppConfig`.
+    - `AnimationController` : cadence FPS par défaut (`defaultFps`), bornes min/max (`minFps`, `maxFps`) pilotées par `AppConfig`.
+    - `ProjectController` : nombre maximum de fichiers récents (`maxRecentFiles`), tolérance de suppression d'arrière-plan (`backgroundRemovalTolerance`) et seuil alpha (`backgroundMinAlpha`) issus de `AppConfig`.
+  - **Suite de tests automatisée étendue :**
+    - 3 nouveaux tests unitaires dans `tests/test_controllers.cpp` (`testAppConfigDefaults`, `testAppConfigSaveAndLoad`, `testAppConfigCorruptJsonFallback`) portant la suite à 21 tests (100% de succès sous CTest).
 
 ### 4. Performance & Traitement d'Images sur le Thread Principal
 - **Problème :** Le flood-fill de `SpriteExtractor` et la suppression d'arrière-plan par balayage de pixels s'exécutent de façon synchrone sur le thread UI via des appels lents à `QImage::pixel(x, y)` et une pile `QStack<QPoint>`. Sur de grands atlas (2K/4K), l'interface freeze totalement.

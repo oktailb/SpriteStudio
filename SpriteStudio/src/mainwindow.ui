@@ -124,6 +124,16 @@
             </widget>
            </item>
            <item>
+            <widget class="QPushButton" name="btnRemoveBg">
+             <property name="text">
+              <string>Remove BG</string>
+             </property>
+             <property name="toolTip">
+              <string>Automatically remove background color and extract sprites</string>
+             </property>
+            </widget>
+           </item>
+           <item>
             <spacer name="spacerSliceTools">
              <property name="orientation">
               <enum>Qt::Orientation::Horizontal</enum>

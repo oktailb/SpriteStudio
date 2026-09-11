@@ -2,6 +2,7 @@
 #define JSONEXTRACTORDIALOG_H
 
 #include <QDialog>
+#include <memory>
 #include "extractor/export.h"
 #include "model/spritedocument.h"
 
@@ -31,7 +32,7 @@ private slots:
     void on_atlasSaveStrategy_currentIndexChanged(int index);
 
 private:
-    Ui::jsonExtractorDialog *ui;
+    std::unique_ptr<Ui::jsonExtractorDialog> ui;
     QString                   m_baseName;
     ExportOptions             m_opts;
     QList<QString>            m_selectedAnimations;

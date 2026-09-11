@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include "include/commands/commands.h"
 #include "include/extractor/extractorregistry.h"
+#include "include/config/appconfig.h"
 #include <QShortcut>
 #include <QSettings>
 #include <QFileInfo>
@@ -10,7 +11,7 @@
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
+    , ui(std::make_unique<Ui::MainWindow>())
     , frameModel(new ArrangementModel(this))
     , listDelegate(new FrameDelegate(this))
     , m_document(new SpriteDocument(this))
@@ -20,7 +21,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     setAcceptDrops(true);
 
-    // Initialize extractor registry
+    // Initialize configuration and extractor registry
+    AppConfig::instance();
     ExtractorRegistry::instance();
 
     setupControllers();
@@ -33,7 +35,6 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    delete ui;
 }
 
 void MainWindow::setupControllers()
@@ -71,6 +72,7 @@ void MainWindow::setupControllers()
     connect(m_projectController.get(), &ProjectController::backgroundRemoved, this, [this]() {
         m_atlasController->setAtlasImage(m_document->atlas());
         populateFrameList(m_document->frames(), m_document->boxes());
+        m_animationController->syncAnimationList();
     });
 
     // Connect AtlasViewController
@@ -192,6 +194,7 @@ void MainWindow::setupUIConnections()
     connect(ui->btnToolSelect, &QToolButton::clicked, this, &MainWindow::on_btnToolSelect_clicked);
     connect(ui->btnToolAddSlice, &QToolButton::clicked, this, &MainWindow::on_btnToolAddSlice_clicked);
     connect(ui->btnTrimSlice, &QPushButton::clicked, this, &MainWindow::on_btnTrimSlice_clicked);
+    connect(ui->btnRemoveBg, &QPushButton::clicked, this, &MainWindow::removeAtlasBackgroundAndRefresh);
 
     // Animation list context menu
     ui->animationList->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -215,6 +218,11 @@ void MainWindow::setupShortcuts()
     QAction *redoAction = m_undoStack->createRedoAction(this, tr("&Redo"));
     redoAction->setShortcut(QKeySequence::Redo);
     editMenu->addAction(redoAction);
+
+    editMenu->addSeparator();
+    QAction *removeBgAction = editMenu->addAction(tr("Auto Remove &Background"));
+    removeBgAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_B));
+    connect(removeBgAction, &QAction::triggered, this, &MainWindow::removeAtlasBackgroundAndRefresh);
 
     // Standard File Shortcuts
     ui->actionOpen->setShortcut(QKeySequence::Open);

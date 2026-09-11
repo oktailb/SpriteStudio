@@ -36,6 +36,16 @@ void MainWindow::onBoxContextMenuRequested(int index, const QPoint &screenPos)
 
     QMenu menu(this);
 
+    QAction *createAnimAction = menu.addAction(tr("Create animation from selection"));
+    createAnimAction->setEnabled(!currentSel.isEmpty());
+    connect(createAnimAction, &QAction::triggered, this, [this, currentSel]() {
+        if (m_animationController) {
+            m_animationController->createAnimationFromSelection(currentSel);
+        }
+    });
+
+    menu.addSeparator();
+
     QAction *trimAction = menu.addAction(tr("Trim to Pixels / Ajuster aux pixels"));
     connect(trimAction, &QAction::triggered, this, [this]() {
         if (m_atlasController) m_atlasController->trimSelectedSlice(ui->alphaThreshold ? ui->alphaThreshold->value() : 1);
@@ -53,6 +63,12 @@ void MainWindow::onBoxContextMenuRequested(int index, const QPoint &screenPos)
     connect(deleteAction, &QAction::triggered, this, [this]() {
         if (m_atlasController) m_atlasController->deleteSelectedSlices();
     });
+
+    menu.addSeparator();
+
+    QAction *removeBgAction = menu.addAction(tr("Auto Remove Background / Supprimer l'arrière-plan"));
+    removeBgAction->setEnabled(m_document && !m_document->atlas().isNull());
+    connect(removeBgAction, &QAction::triggered, this, &MainWindow::removeAtlasBackgroundAndRefresh);
 
     menu.exec(screenPos);
 }
@@ -95,11 +111,14 @@ void MainWindow::onAtlasContextMenuRequested(const QPoint &pos)
 
     menu.addSeparator();
 
-    QAction *removeBgAction = menu.addAction(tr("Auto Remove Background"));
+    QAction *removeBgAction = menu.addAction(tr("Auto Remove Background / Supprimer l'arrière-plan"));
     removeBgAction->setEnabled(m_document && !m_document->atlas().isNull());
     connect(removeBgAction, &QAction::triggered, this, &MainWindow::removeAtlasBackgroundAndRefresh);
 
-    menu.exec(ui->graphicsViewLayers->mapToGlobal(pos));
+    QPoint globalPos = (ui->graphicsViewLayers && ui->graphicsViewLayers->viewport())
+        ? ui->graphicsViewLayers->viewport()->mapToGlobal(pos)
+        : pos;
+    menu.exec(globalPos);
 }
 
 void MainWindow::removeAtlasBackgroundAndRefresh()

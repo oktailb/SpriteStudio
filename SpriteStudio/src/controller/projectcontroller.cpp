@@ -2,6 +2,7 @@
 #include "include/model/spritedocument.h"
 #include "include/extractor/extractorregistry.h"
 #include "include/extractor/spriteextractor.h"
+#include "include/config/appconfig.h"
 #include <QUndoStack>
 #include <QSettings>
 #include <QFile>
@@ -139,7 +140,8 @@ void ProjectController::addRecentFile(const QString &filePath)
     QStringList files = settings.value(QStringLiteral("recentFiles")).toStringList();
     files.removeAll(filePath);
     files.prepend(filePath);
-    while (files.size() > 10) {
+    int maxFiles = AppConfig::instance().project().maxRecentFiles;
+    while (files.size() > maxFiles) {
         files.removeLast();
     }
     settings.setValue(QStringLiteral("recentFiles"), files);
@@ -157,6 +159,11 @@ QImage ProjectController::removeBackgroundFromImage(const QImage &srcImage, int 
 {
     if (srcImage.isNull()) return QImage();
 
+    if (tolerance < 0) {
+        tolerance = AppConfig::instance().project().backgroundRemovalTolerance;
+    }
+    int minAlpha = AppConfig::instance().project().backgroundMinAlpha;
+
     QImage image = srcImage.convertToFormat(QImage::Format_ARGB32);
 
     // Find the most frequent color by sampling
@@ -167,7 +174,7 @@ QImage ProjectController::removeBackgroundFromImage(const QImage &srcImage, int 
     for (int y = 0; y < image.height(); y += 2) {
         for (int x = 0; x < image.width(); x += 2) {
             QRgb pixel = image.pixel(x, y);
-            if (qAlpha(pixel) < 10) continue;
+            if (qAlpha(pixel) < minAlpha) continue;
 
             histogram[pixel]++;
             if (histogram[pixel] > maxCount) {
@@ -187,7 +194,7 @@ QImage ProjectController::removeBackgroundFromImage(const QImage &srcImage, int 
         QRgb *scanLine = reinterpret_cast<QRgb*>(image.scanLine(y));
         for (int x = 0; x < image.width(); ++x) {
             QRgb pixel = scanLine[x];
-            if (qAlpha(pixel) < 10) continue;
+            if (qAlpha(pixel) < minAlpha) continue;
 
             int r = qRed(pixel);
             int g = qGreen(pixel);
@@ -212,11 +219,16 @@ bool ProjectController::removeAtlasBackgroundAndRefresh(int alphaThreshold,
     if (!m_document || m_document->atlas().isNull()) return false;
 
     emit statusMessage(tr("Removing background..."));
-    QImage cleanedImage = removeBackgroundFromImage(m_document->atlas(), 10);
+    int defaultTol = AppConfig::instance().project().backgroundRemovalTolerance;
+    QImage cleanedImage = removeBackgroundFromImage(m_document->atlas(), defaultTol);
 
     SpriteExtractor spriteExt;
     spriteExt.setSmartCropEnabled(smartCrop);
     spriteExt.setOverlapThreshold(overlapThreshold);
+
+    if (alphaThreshold < 0) {
+        alphaThreshold = AppConfig::instance().atlas().defaultAlphaThreshold;
+    }
 
     m_document->setAtlas(cleanedImage);
     spriteExt.extractFromImage(cleanedImage, *m_document, alphaThreshold, verticalTolerance);

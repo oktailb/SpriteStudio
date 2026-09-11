@@ -38,7 +38,7 @@ public:
      * @param tolerance Color difference tolerance (0-255).
      * @return Processed image with transparent background.
      */
-    static QImage removeBackgroundFromImage(const QImage &image, int tolerance = 10);
+    static QImage removeBackgroundFromImage(const QImage &image, int tolerance = -1);
 
     /**
      * @brief Removes the background from the document's atlas and re-extracts sprites.

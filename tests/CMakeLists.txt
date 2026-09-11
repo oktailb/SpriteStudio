@@ -58,6 +58,7 @@ add_executable(test_controllers
     ${CMAKE_SOURCE_DIR}/SpriteStudio/src/animation/animationplayer.cpp
     ${CMAKE_SOURCE_DIR}/SpriteStudio/src/commands/commands.cpp
     ${CMAKE_SOURCE_DIR}/SpriteStudio/src/atlasboxitem.cpp
+    ${CMAKE_SOURCE_DIR}/SpriteStudio/src/config/appconfig.cpp
     ${CMAKE_SOURCE_DIR}/SpriteStudio/src/extractor.cpp
     ${CMAKE_SOURCE_DIR}/SpriteStudio/src/extractor/extractorregistry.cpp
     ${CMAKE_SOURCE_DIR}/SpriteStudio/src/extractor/spriteextractor.cpp
@@ -65,6 +66,7 @@ add_executable(test_controllers
     ${CMAKE_SOURCE_DIR}/SpriteStudio/src/extractor/jsonextractor.cpp
     ${CMAKE_SOURCE_DIR}/SpriteStudio/src/extractor/godotextractor.cpp
 
+    ${CMAKE_SOURCE_DIR}/SpriteStudio/include/config/appconfig.h
     ${CMAKE_SOURCE_DIR}/SpriteStudio/include/controller/projectcontroller.h
     ${CMAKE_SOURCE_DIR}/SpriteStudio/include/controller/animationcontroller.h
     ${CMAKE_SOURCE_DIR}/SpriteStudio/include/controller/atlasviewcontroller.h

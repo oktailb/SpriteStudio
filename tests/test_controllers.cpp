@@ -3,12 +3,14 @@
 #include <QTemporaryDir>
 #include <QGraphicsView>
 #include <QUndoStack>
+#include <QContextMenuEvent>
 
 #include "model/spritedocument.h"
 #include "controller/projectcontroller.h"
 #include "controller/animationcontroller.h"
 #include "controller/atlasviewcontroller.h"
 #include "animation/animationplayer.h"
+#include "config/appconfig.h"
 
 class TestControllers : public QObject
 {
@@ -17,6 +19,11 @@ class TestControllers : public QObject
 private slots:
     void initTestCase();
     void cleanupTestCase();
+
+    // AppConfig tests
+    void testAppConfigDefaults();
+    void testAppConfigSaveAndLoad();
+    void testAppConfigCorruptJsonFallback();
 
     // ProjectController tests
     void testProjectControllerOpenJson();
@@ -40,6 +47,7 @@ private slots:
     void testAtlasViewControllerNudge();
     void testAtlasViewControllerTrimAndMerge();
     void testAtlasViewControllerMarqueeSelection();
+    void testAtlasViewControllerContextMenuSignals();
     void testControllerCrossSyncNoRecursion();
 
 private:
@@ -54,6 +62,109 @@ void TestControllers::initTestCase()
 
 void TestControllers::cleanupTestCase()
 {
+}
+
+// -----------------------------------------------------------------------------
+// AppConfig Tests
+// -----------------------------------------------------------------------------
+
+void TestControllers::testAppConfigDefaults()
+{
+    AppConfig &cfg = AppConfig::instance();
+    cfg.resetToDefaults();
+
+    // Atlas defaults
+    QCOMPARE(cfg.atlas().zoomMin, 0.1);
+    QCOMPARE(cfg.atlas().zoomMax, 10.0);
+    QCOMPARE(cfg.atlas().zoomStep, 1.15);
+    QCOMPARE(cfg.atlas().minSliceSize, 3);
+    QCOMPARE(cfg.atlas().defaultAlphaThreshold, 1);
+    QCOMPARE(cfg.atlas().defaultVerticalTolerance, 0);
+    QCOMPARE(cfg.atlas().nudgeStepSmall, 1);
+    QCOMPARE(cfg.atlas().nudgeStepLarge, 10);
+    QCOMPARE(cfg.atlas().fitViewPadding, 20);
+
+    // Visuals defaults
+    QCOMPARE(cfg.visuals().handleSize, 8.0);
+    QCOMPARE(cfg.visuals().handleMargin, 16.0);
+    QCOMPARE(cfg.visuals().selectedBoxColor, QColor(255, 200, 0));
+
+    // Animation defaults
+    QCOMPARE(cfg.animation().defaultFps, 12);
+    QCOMPARE(cfg.animation().minFps, 1);
+    QCOMPARE(cfg.animation().maxFps, 60);
+
+    // Project defaults
+    QCOMPARE(cfg.project().maxRecentFiles, 10);
+    QCOMPARE(cfg.project().backgroundRemovalTolerance, 10);
+    QCOMPARE(cfg.project().backgroundMinAlpha, 10);
+}
+
+void TestControllers::testAppConfigSaveAndLoad()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    QString tempConfigPath = tempDir.filePath(QStringLiteral("test_config.json"));
+
+    AppConfig &cfg = AppConfig::instance();
+    cfg.resetToDefaults();
+
+    // Modify some values
+    cfg.atlas().zoomMax = 20.0;
+    cfg.atlas().minSliceSize = 5;
+    cfg.animation().defaultFps = 24;
+    cfg.project().maxRecentFiles = 15;
+    cfg.visuals().selectedBoxColor = QColor(255, 0, 0);
+
+    // Save to temp path
+    bool saveOk = cfg.save(tempConfigPath);
+    QVERIFY(saveOk);
+    QVERIFY(QFile::exists(tempConfigPath));
+
+    // Reset to defaults
+    cfg.resetToDefaults();
+    QCOMPARE(cfg.atlas().zoomMax, 10.0);
+    QCOMPARE(cfg.animation().defaultFps, 12);
+
+    // Load back from temp path
+    bool loadOk = cfg.load(tempConfigPath);
+    QVERIFY(loadOk);
+
+    // Verify modified values are recovered
+    QCOMPARE(cfg.atlas().zoomMax, 20.0);
+    QCOMPARE(cfg.atlas().minSliceSize, 5);
+    QCOMPARE(cfg.animation().defaultFps, 24);
+    QCOMPARE(cfg.project().maxRecentFiles, 15);
+    QCOMPARE(cfg.visuals().selectedBoxColor, QColor(255, 0, 0));
+
+    // Clean up
+    cfg.resetToDefaults();
+}
+
+void TestControllers::testAppConfigCorruptJsonFallback()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    QString corruptPath = tempDir.filePath(QStringLiteral("corrupt.json"));
+
+    // Write incomplete / invalid JSON
+    {
+        QFile file(corruptPath);
+        QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Text));
+        file.write("{ \"atlas\": { \"zoom_max\": 999.0, INVALID SYNTAX ... ");
+        file.close();
+    }
+
+    AppConfig &cfg = AppConfig::instance();
+    cfg.resetToDefaults();
+
+    // Loading corrupt JSON must fail gracefully without throwing or crashing
+    bool loadOk = cfg.load(corruptPath);
+    QVERIFY(!loadOk);
+
+    // Safe defaults must be preserved
+    QCOMPARE(cfg.atlas().zoomMax, 10.0);
+    QCOMPARE(cfg.animation().defaultFps, 12);
 }
 
 // -----------------------------------------------------------------------------
@@ -169,6 +280,24 @@ void TestControllers::testProjectControllerBackgroundRemoval()
     QRgb centerPixel = cleaned.pixel(15, 15);
     QCOMPARE(qAlpha(centerPixel), 255);
     QCOMPARE(qBlue(centerPixel), 255);
+
+    // Test controller removeAtlasBackgroundAndRefresh with multi-sprite document
+    SpriteDocument doc;
+    QImage testImg2(60, 60, QImage::Format_ARGB32);
+    testImg2.fill(qRgb(255, 0, 0));
+    QPainter p2(&testImg2);
+    p2.fillRect(5, 5, 10, 10, QColor(0, 0, 255));
+    p2.fillRect(35, 35, 10, 10, QColor(0, 255, 0));
+    p2.end();
+
+    doc.setAtlas(testImg2);
+    ProjectController controller(&doc);
+    QSignalSpy spyBg(&controller, &ProjectController::backgroundRemoved);
+
+    bool ok = controller.removeAtlasBackgroundAndRefresh(10, 5, false, 0.5);
+    QVERIFY(ok);
+    QCOMPARE(spyBg.count(), 1);
+    QCOMPARE(doc.frameCount(), 2);
 }
 
 // -----------------------------------------------------------------------------
@@ -549,6 +678,26 @@ void TestControllers::testControllerCrossSyncNoRecursion()
     // 3. Modifying atlas selection again does not disrupt animation list
     atlasCtrl.setSelectedBoxIndices({1});
     QCOMPARE(doc.animation(QStringLiteral("current")).frameIndices, (QList<int>{1}));
+}
+
+void TestControllers::testAtlasViewControllerContextMenuSignals()
+{
+    QGraphicsView view;
+    SpriteDocument doc;
+    QImage atlas(100, 100, QImage::Format_ARGB32);
+    atlas.fill(Qt::transparent);
+    doc.setAtlas(atlas);
+    doc.addSlice(QRect(10, 10, 20, 20));
+
+    AtlasViewController atlasCtrl(&view, &doc);
+    QSignalSpy spyAtlasMenu(&atlasCtrl, &AtlasViewController::atlasContextMenuRequested);
+
+    // Context menu event on empty space (e.g. 80, 80)
+    QContextMenuEvent emptyEvent(QContextMenuEvent::Mouse, QPoint(80, 80), view.viewport()->mapToGlobal(QPoint(80, 80)));
+    QCoreApplication::sendEvent(view.viewport(), &emptyEvent);
+
+    QCOMPARE(spyAtlasMenu.count(), 1);
+    QCOMPARE(spyAtlasMenu.takeFirst().at(0).toPoint(), QPoint(80, 80));
 }
 
 #include <QApplication>

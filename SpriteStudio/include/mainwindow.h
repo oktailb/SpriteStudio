@@ -153,7 +153,7 @@ private:
     void populateFrameList(const QList<QPixmap> &frameList, const QList<SpriteBox> &boxList);
     void refreshFrameListDisplay();
 
-    Ui::MainWindow *ui = nullptr;
+    std::unique_ptr<Ui::MainWindow> ui;
     ArrangementModel *frameModel = nullptr;
     FrameDelegate *listDelegate = nullptr;
 
