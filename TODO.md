@@ -9,7 +9,7 @@ L'objectif est d'élever l'application d'un simple outil de découpe technique a
 
 | ID | Chantier | Priorité | Complexité | Statut |
 |---|---|---|---|---|
-| **M0** | [Assainissement Architectural & Dette Technique (Audit Critique)](#m0--assainissement-architectural--dette-technique-audit-critique) | **Haute** | Haute | 🟢 Validé (Pts 1, 2, 3, 4 & 5 validés & testés — 45 tests CTest 100%) |
+| **M0** | [Assainissement Architectural & Dette Technique (Audit Critique)](#m0--assainissement-architectural--dette-technique-audit-critique) | **Haute** | Haute | 🟢 Clôturé & Validé (73 tests CTest 100% — Multiplateforme) |
 | **M1** | [Édition Interactive des Bounding Boxes (Atlas Slicing)](#m1--édition-interactive-des-bounding-boxes-atlas-slicing) | **Haute** | Moyenne | 🟢 ~95% - Déblocages clavier/UX validés |
 | **M2** | [Gestionnaire Complet d'Animations & Timeline](#m2--gestionnaire-complet-danimations--timeline) | **Haute** | Moyenne | 📝 Planifié |
 | **M3** | [Points d'Ancrage & Pivots (Origins & Offsets)](#m3--points-dancrage--pivots-origins--offsets) | **Moyenne** | Faible | 📝 Planifié |
@@ -134,11 +134,32 @@ L'application souffre d'une transition inachevée entre un code impératif legac
     - Deux nouveaux tests unitaires dans `tests/test_controllers.cpp` : `testAtlasViewControllerMouseCenteredZoom` (vérification de la stabilité de la position sous le curseur) et `testI18nKeyTranslations` (vérification du chargement et du comportement des dictionnaires FR, EN et du fallback sur les clés non traduites).
     - Suite de tests globale portée à **45 tests unitaires individuels** sous CTest avec **100% de succès**.
 
-### 6. DevOps, Tests Automatisés & Qualité
-- **Problème :** Couverture de test à 0%. Aucun test unitaire automatique pour les algorithmes critiques (`computeTrimmedRect`, `AtlasPacker`, commandes Undo/Redo). Aucune intégration continue (CI).
-- **Solution Cible :**
-  - Mettre en place un projet de test unitaire via `QTest` / `CTest` dans CMake.
-  - Ajouter un workflow GitHub Actions multi-plateforme (Ubuntu, Windows, macOS) validant le build à chaque commit/PR.
+### 6. DevOps, Tests Automatisés & Qualité Multiplateforme — ✅ TERMINÉ
+- **État :** ✅ **Validé & Testé (3 suites de tests CTest, 73 tests unitaires, 100% succès)**
+- **Réalisations :**
+  - **Infrastructure de tests complète sous `QTest` / `CTest` :**
+    - Architecture modulaire articulée en 3 suites de tests spécialisées exécutables sans interface graphique (`QT_QPA_PLATFORM=offscreen`) :
+      - `test_extractors` (13 tests) : décodage et encodage des codecs (`SpriteExtractor`, `GifExtractor`, `JsonExtractor`, `GodotExtractor`), détection de contours et segmentation par vision par ordinateur (`SpriteDetector`).
+      - `test_controllers` (32 tests) : orchestration haut-niveau (`ProjectController`, `AnimationController`, `AtlasViewController`), zoom interactif centré au pixel près (`zoomAt`), gestion de configuration tolérante aux pannes (`AppConfig`), pile d'annulation et catalogues i18n trilingues (FR, EN, JA).
+      - `test_core` (28 tests) : empaquetage d'atlas (`AtlasPacker`), modèle de données documentaire (`SpriteDocument`), commandes réversibles (`QUndoCommand`) et robustesse multiplateforme.
+  - **Couverture exhaustive de l'empaqueteur d'atlas (`AtlasPacker`) :**
+    - Algorithmes d'étagère (`RowPacker`) et de grille (`GridPacker`) testés sur des jeux de sprites hétérogènes.
+    - Vérification stricte du non-chevauchement des boîtes calculées (`!rectA.intersects(rectB)`), du respect du rembourrage (*padding*) anti-saignement (*texture bleeding*) et de la fidélité des pixels copiés.
+    - Algorithme en puissances de deux (`PowerOfTwoPacker`) : garantie que les dimensions de l'atlas résultant sont rigoureusement des puissances de 2 ($2^n$, standard OpenGL, Vulkan, DirectX et Metal).
+    - Empaquetage ciblé par sous-ensemble d'indices de frames (`packIndices`).
+  - **Couverture rigoureuse du modèle central (`SpriteDocument`) :**
+    - Insertion (`insertFrame`), remplacement (`replaceFrame`), suppressions multiples ordonnées (`removeFrames`), permutation d'ordre (`reorderFrames`) avec propagation automatique aux indices d'animation.
+    - Fusion géométrique de frames (`mergeFrames`) avec calcul d'union de rectangles.
+    - Calcul fin de rognage alpha (`computeTrimmedRect`) selon différents seuils de transparence (0, 1, 128, 255) et gestion des frames vides.
+  - **Couverture isolée de l'ensemble des commandes `QUndoCommand` :**
+    - `AddSliceCommand`, `ChangeBoxRectCommand`, `CreateAnimationCommand`, `ReverseAnimationCommand`, `DeleteAnimationCommand`, `MergeFramesCommand`, `DeleteFramesCommand`, `EraseAtlasPixelsCommand`.
+    - Vérification systématique de la réversibilité stricte : application (`redo`), retour à l'état initial (`undo`) et réapplication conforme.
+  - **Priorité Multiplateforme (Windows, Linux, Apple macOS, Haiku OS) :**
+    - **Résolution des chemins :** Prise en charge universelle des séparateurs de dossiers (`\` sous Windows, `/` sous POSIX/Linux, macOS et Haiku) et insensibilité à la casse des extensions dans `projectName()`.
+    - **Alignement mémoire & endianness :** Validation de l'intégrité des pixels 32-bit ARGB et préservation des canaux alpha sans artefact sur architectures standard.
+    - **Configuration système portable :** Résolution adaptative via `QStandardPaths::AppConfigLocation` (`%APPDATA%` sous Windows, `~/.config` sous Linux, `Library/Application Support` sous macOS, `~/config/settings` sous Haiku).
+    - **Déploiement multiplateforme (CPack) :** Configurations prêtes pour Windows (`NSIS;ZIP`), Linux (`TGZ;RPM;DEB`), macOS (`PACKAGEMAKER;DRAGANDROP;BUNDLE`) et Haiku (`haiku.PackageInfo`).
+  - *Note :* L'automatisation GitHub Actions est conservée pour une étape ultérieure conformément à la demande de l'utilisateur.
 
 ---
 

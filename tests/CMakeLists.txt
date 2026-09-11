@@ -120,3 +120,44 @@ if (MINGW)
 endif()
 
 add_test(NAME test_controllers COMMAND test_controllers)
+
+add_executable(test_core
+    test_core.cpp
+    ${CMAKE_SOURCE_DIR}/SpriteStudio/src/model/spritedocument.cpp
+    ${CMAKE_SOURCE_DIR}/SpriteStudio/src/packer/atlaspacker.cpp
+    ${CMAKE_SOURCE_DIR}/SpriteStudio/src/commands/commands.cpp
+    ${CMAKE_SOURCE_DIR}/SpriteStudio/src/config/appconfig.cpp
+
+    ${CMAKE_SOURCE_DIR}/SpriteStudio/include/model/spritedocument.h
+    ${CMAKE_SOURCE_DIR}/SpriteStudio/include/packer/atlaspacker.h
+    ${CMAKE_SOURCE_DIR}/SpriteStudio/include/commands/commands.h
+    ${CMAKE_SOURCE_DIR}/SpriteStudio/include/config/appconfig.h
+)
+
+target_include_directories(test_core PRIVATE
+    ${CMAKE_SOURCE_DIR}/SpriteStudio
+    ${CMAKE_SOURCE_DIR}/SpriteStudio/include
+    ${CMAKE_BINARY_DIR}/SpriteStudio
+)
+
+target_compile_definitions(test_core PRIVATE
+    SAMPLE_DIR="${CMAKE_SOURCE_DIR}/sample"
+)
+
+target_link_libraries(test_core PRIVATE
+    Qt6::Core
+    Qt6::Gui
+    Qt6::Widgets
+    Qt6::Test
+)
+
+set_target_properties(test_core PROPERTIES
+    WIN32_EXECUTABLE FALSE
+)
+
+if (MINGW)
+    target_link_options(test_core PRIVATE -mconsole)
+endif()
+
+add_test(NAME test_core COMMAND test_core)
+
