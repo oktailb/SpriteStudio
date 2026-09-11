@@ -1,48 +1,55 @@
 /**
  * @file extractor.h
- * @brief Defines the abstract base class Extractor, the interface for all sprite extraction types and plugins.
+ * @brief Defines the Extractor base class, the pure I/O codec plugin interface for SpriteStudio.
  */
 
 #ifndef EXTRACTOR_H
 #define EXTRACTOR_H
 
 #include <QObject>
-#include <QPixmap>
-#include <QList>
-#include <QMap>
 #include <QString>
 #include <QStringList>
-#include <QPainter>
+#include <QVersionNumber>
+#include <QImage>
+#include <QPixmap>
+#include <QList>
 #include "export.h"
-
-class SpriteDocument;
+#include "model/spritedocument.h"
 
 /**
- * @brief Abstract base class and unified plugin interface for sprite extractors.
- *
- * This class defines the common interface that all sprite import/export mechanisms
- * must implement (e.g., SpriteExtractor for static sheets, GifExtractor for animated GIFs,
- * JsonExtractor for JSON atlas databases, GodotExtractor for Godot SpriteFrames).
- *
- * It manages the central state of extracted data: individual frames, the composite atlas,
- * bounding boxes, and animations. It also bridges seamlessly to SpriteDocument.
+ * @brief Structured error reporting for extractor operations.
  */
-class Extractor : public QObject, public ExportManager
-{
-    Q_OBJECT
-
-public:
-    /**
-     * @brief Structure representing the Bounding Box of a sprite within the atlas.
-     */
-    struct Box {
-        QRect       rect;
-        bool        selected = false;
-        int         index = 0;
-        int         groupId = 0;
-        QList<int>  overlappingBoxes;
+struct ExtractorError {
+    enum Code {
+        NoError = 0,
+        FileNotFound,
+        FileNotReadable,
+        FileNotWritable,
+        InvalidHeader,
+        CorruptedData,
+        UnsupportedVersion,
+        UnsupportedFormat,
+        ImageLoadFailed,
+        ParsingFailed,
+        PackingFailed,
+        WriteFailed
     };
 
+    Code    code = NoError;
+    QString message;
+    QString filePath;
+
+    bool isError() const { return code != NoError; }
+    QString toString() const {
+        if (code == NoError) return QStringLiteral("Success");
+        return filePath.isEmpty() ? message : QStringLiteral("%1: %2").arg(filePath, message);
+    }
+};
+
+/**
+ * @brief Parameters for static sprite sheet edge detection and segmentation.
+ */
+struct SpriteSheetOptions {
     enum CropStrategy {
         MergeStrategy,
         SeparateStrategy,
@@ -50,93 +57,68 @@ public:
         AlphaChannelStrategy
     };
 
-    struct AnimationData {
-        QList<int>  frameIndices;
-        int         fps = 60;
-    };
+    int          alphaThreshold = 20;
+    int          verticalTolerance = 5;
+    bool         smartCrop = true;
+    double       overlapThreshold = 0.1;
+    CropStrategy cropStrategy = SeparateStrategy;
+};
 
+/**
+ * @brief Pure I/O Codec Plugin Interface for all sprite formats.
+ *
+ * Each Extractor translates external file representations (PNG, GIF, JSON, Godot tres, etc.)
+ * directly into or from a central SpriteDocument. It holds NO internal document state.
+ */
+class Extractor : public QObject
+{
+    Q_OBJECT
+
+public:
     enum Capability {
         CanImport             = 0x01,
         CanExport             = 0x02,
         SupportsAnimations    = 0x04,
-        SupportsAtlasMetadata = 0x08,
-        SupportsMultiAtlas    = 0x10
+        SupportsAtlasMetadata = 0x08
     };
     Q_DECLARE_FLAGS(Capabilities, Capability)
+
+    // Alias for backward compatibility
+    using Box = SpriteBox;
 
     explicit Extractor(QObject *parent = nullptr);
     ~Extractor() override = default;
 
-    // Status & Progress API (Pull & Push)
+    // Metadata & Introspection
+    virtual QString id() const = 0;
+    virtual QString displayName() const = 0;
+    virtual QString description() const = 0;
+    virtual QVersionNumber version() const { return QVersionNumber(1, 0, 0); }
+    virtual QStringList supportedExtensions() const = 0;
+    virtual Capabilities capabilities() const { return CanImport; }
+
+    // Format detection
+    virtual bool canDecode(const QString &filePath) const;
+
+    // Primary I/O contract
+    virtual bool read(const QString &filePath, SpriteDocument &outDoc, ExtractorError *error = nullptr) = 0;
+    virtual bool write(const QString &filePath, const SpriteDocument &inDoc, const ExportOptions &options, ExtractorError *error = nullptr);
+
+    // Compatibility wrappers
+    bool extract(const QString &filePath, SpriteDocument &doc, QString *errorMsg = nullptr);
+    bool exportDocument(const QString &filePath, const SpriteDocument &doc, const ExportOptions &options, QString *errorMsg = nullptr);
+
+    // Progress & Status API
     int currentProgress() const { return m_progress; }
     QString currentStatusMessage() const { return m_statusMessage; }
+
+protected:
     void setProgress(int percentage);
     void setStatusMessage(const QString &message);
 
-    // Plugin metadata & capabilities
-    virtual QString id() const { return QString(); }
-    virtual QString displayName() const { return QString(); }
-    virtual QString description() const { return QString(); }
-    virtual QStringList supportedExtensions() const { return QStringList(); }
-    virtual Capabilities capabilities() const { return CanImport; }
-    virtual bool canDecode(const QString &filePath) const {
-        Q_UNUSED(filePath);
-        return false;
-    }
-
-    // Unified Document extraction and export operations
-    virtual bool extract(const QString &filePath, SpriteDocument &doc, QString *errorMsg = nullptr);
-    virtual bool exportDocument(const QString &filePath, const SpriteDocument &doc, const ExportOptions &options, QString *errorMsg = nullptr);
-
-    // Bridge helpers with SpriteDocument
-    void syncToDocument(SpriteDocument &doc) const;
-    void syncFromDocument(const SpriteDocument &doc);
-
-    // Legacy / direct extractor virtual methods
-    virtual QList<QPixmap> extractFrames(const QString &filePath, int alphaThreshold, int verticalTolerance) = 0;
-    virtual QList<QPixmap> extractFromPixmap(int alphaThreshold, int verticalTolerance) = 0;
-    virtual bool exportFrames(const QString &basePath, const QString &projectName, Extractor* in) = 0;
-
-    // Animation management
-    void setAnimation(const QString &name, const QList<int> &frameIndices, int fps = 60);
-    void removeAnimation(const QString &name);
-    QList<int> getAnimationFrames(const QString &name) const;
-    int getAnimationFps(const QString &name) const;
-    QStringList getAnimationNames() const;
-
-    // Frame manipulation
-    void reorderFrames(const QList<int> &newOrder);
-    void reverseAnimationFrames(const QString &animationName);
-    void removeFrame(int index);
-    void removeFrames(const QList<int> &indices);
-    void clearAtlasAreas(const QList<int> &indices);
-
-    void addFrame(const QPixmap &pixmap) {
-        if (!pixmap.isNull()) {
-            m_frames.append(pixmap);
-        }
-    }
-
-    void setSmartCropEnabled(bool newSmartCropEnabled);
-    bool smartCropEnabled() const;
-    double overlapThreshold() const;
-    void setOverlapThreshold(double newOverlapThreshold);
-    ExportOptions opts() const;
-
-    // Member variables
-    QList<QPixmap>                m_frames;
-    QImage                        m_atlas;
-    QList<Box>                    m_atlas_index;
-    QMap<QString, AnimationData>  m_animationsData;
-    QString                       m_filePath;
-    int                           m_maxFrameWidth = 0;
-    int                           m_maxFrameHeight = 0;
-    ExportOptions                 m_opts;
-    int                           m_progress = 0;
-    QString                       m_statusMessage;
-    bool                          m_smartCropEnabled = true;
-    double                        m_overlapThreshold = 0.1;
-    CropStrategy                  m_cropStrategy = SeparateStrategy;
+private:
+    int     m_progress = 0;
+    QString m_statusMessage;
 
 signals:
     void progress(int percentage);
@@ -146,7 +128,7 @@ signals:
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Extractor::Capabilities)
 
-#define Extractor_iid "com.spritestudio.Extractor/1.0"
+#define Extractor_iid "com.spritestudio.Extractor/2.0"
 Q_DECLARE_INTERFACE(Extractor, Extractor_iid)
 
 #endif // EXTRACTOR_H

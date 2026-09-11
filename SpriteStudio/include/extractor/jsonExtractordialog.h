@@ -2,8 +2,8 @@
 #define JSONEXTRACTORDIALOG_H
 
 #include <QDialog>
-#include "extractor/extractor.h"
 #include "extractor/export.h"
+#include "model/spritedocument.h"
 
 namespace Ui {
 class jsonExtractorDialog;
@@ -14,7 +14,7 @@ class jsonExtractorDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit jsonExtractorDialog(Extractor* in, QString baseName, QWidget *parent = nullptr);
+    explicit jsonExtractorDialog(const SpriteDocument &doc, const QString &baseName, QWidget *parent = nullptr);
     ~jsonExtractorDialog();
 
     ExportOptions getOpts() const;
@@ -31,8 +31,7 @@ private slots:
     void on_atlasSaveStrategy_currentIndexChanged(int index);
 
 private:
-    Ui::jsonExtractorDialog * ui;
-    Extractor *               m_in;
+    Ui::jsonExtractorDialog *ui;
     QString                   m_baseName;
     ExportOptions             m_opts;
     QList<QString>            m_selectedAnimations;

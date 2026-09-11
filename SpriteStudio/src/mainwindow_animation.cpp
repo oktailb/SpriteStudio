@@ -34,7 +34,6 @@ void MainWindow::createAnimationFromSelection()
 
 void MainWindow::createAnimation(QString name, QList<int> selectedIndices, int fps)
 {
-    syncToDocument();
     if (name == "current") {
         m_document->setAnimation(name, currentSelection, fps, true);
         syncFromDocument();
@@ -56,7 +55,7 @@ void MainWindow::createAnimation(QString name, QList<int> selectedIndices, int f
 
 void MainWindow::updateAnimationsList()
 {
-    if (!extractor) return;
+    if (!m_document) return;
 
     ui->animationList->blockSignals(true);
     ui->fps->blockSignals(true);
@@ -71,9 +70,9 @@ void MainWindow::updateAnimationsList()
 
     try {
         for (const QString &animName : previouslySelectedNames) {
-            if (extractor->getAnimationNames().contains(animName)) {
-                QList<int> frameIndices = extractor->getAnimationFrames(animName);
-                extractor->setAnimation(animName, frameIndices, currentFps);
+            if (m_document->hasAnimation(animName)) {
+                SpriteAnimation anim = m_document->animation(animName);
+                m_document->setAnimation(animName, anim.frameIndices, currentFps, anim.loop);
             }
         }
 
@@ -107,48 +106,47 @@ void MainWindow::reverseAnimationOrder()
     QTreeWidgetItem* selectedAnimation = selectedAnimations.first();
     QString animationName = selectedAnimation->text(0);
 
-    syncToDocument();
     m_undoStack->push(new ReverseAnimationCommand(m_document, animationName));
 }
 
 void MainWindow::syncAnimationListWidget()
 {
-  if (!extractor) return;
+    if (!m_document) return;
 
-  ui->animationList->blockSignals(true);
+    ui->animationList->blockSignals(true);
 
-         // Store current selection to restore it after refresh
-  QString currentSelectedName;
-  QList<QTreeWidgetItem*> selectedItems = ui->animationList->selectedItems();
-  if (!selectedItems.isEmpty()) {
-      currentSelectedName = selectedItems.first()->text(0);
+    // Store current selection to restore it after refresh
+    QString currentSelectedName;
+    QList<QTreeWidgetItem*> selectedItems = ui->animationList->selectedItems();
+    if (!selectedItems.isEmpty()) {
+        currentSelectedName = selectedItems.first()->text(0);
     }
 
-  ui->animationList->clear();
+    ui->animationList->clear();
 
-  QStringList animationNames = extractor->getAnimationNames();
-  for (const QString &name : animationNames) {
-      QList<int> frameIndices = extractor->getAnimationFrames(name);
-      int fps = extractor->getAnimationFps(name);
+    const auto &animMap = m_document->animations();
+    for (auto it = animMap.begin(); it != animMap.end(); ++it) {
+        const QString &name = it.key();
+        const SpriteAnimation &anim = it.value();
 
-      QTreeWidgetItem *item = new QTreeWidgetItem(ui->animationList);
-      item->setText(0, name);
-      item->setText(1, QString::number(fps));
+        QTreeWidgetItem *item = new QTreeWidgetItem(ui->animationList);
+        item->setText(0, name);
+        item->setText(1, QString::number(anim.fps));
 
-             // Show user numbers (1-index) in the order stored in the animation
-      QStringList framesStrList;
-      for (int frameIndex : frameIndices) {
-          framesStrList << QString::number(frameIndex + 1);
+        // Show user numbers (1-index) in the order stored in the animation
+        QStringList framesStrList;
+        for (int frameIndex : anim.frameIndices) {
+            framesStrList << QString::number(frameIndex + 1);
         }
-      item->setText(2, framesStrList.join(", "));
+        item->setText(2, framesStrList.join(", "));
 
-             // Restore selection
-      if (name == currentSelectedName) {
-          item->setSelected(true);
+        // Restore selection
+        if (name == currentSelectedName) {
+            item->setSelected(true);
         }
     }
 
-  ui->animationList->blockSignals(false);
+    ui->animationList->blockSignals(false);
 }
 
 void MainWindow::startAnimation()
@@ -167,34 +165,38 @@ void MainWindow::startAnimation()
 
 bool MainWindow::canStartAnimation() const
 {
+    if (!m_document) return false;
     QList<QTreeWidgetItem*> selectedAnimations = ui->animationList->selectedItems();
     if (selectedAnimations.isEmpty()) {
         return false;
     }
 
     QString animationName = selectedAnimations.first()->text(0);
-    return extractor->getAnimationNames().contains(animationName);
+    return m_document->hasAnimation(animationName);
 }
 
 void MainWindow::setupAnimationParameters()
 {
+    if (!m_document) return;
     QList<QTreeWidgetItem*> selectedAnimations = ui->animationList->selectedItems();
-    QString animationName = selectedAnimations.first()->text(0);
+    if (selectedAnimations.isEmpty()) return;
 
-    selectedFrameRows = extractor->getAnimationFrames(animationName);
+    QString animationName = selectedAnimations.first()->text(0);
+    SpriteAnimation anim = m_document->animation(animationName);
+
+    selectedFrameRows = anim.frameIndices;
 
     QList<int> validFrameRows;
     for (int frameIndex : selectedFrameRows) {
-        if (frameIndex >= 0 && frameIndex < extractor->m_frames.size()) {
+        if (frameIndex >= 0 && frameIndex < m_document->frameCount()) {
             validFrameRows.append(frameIndex);
         }
     }
     selectedFrameRows = validFrameRows;
 
-    int animationFps = extractor->getAnimationFps(animationName);
-    if (animationFps > 0) {
+    if (anim.fps > 0) {
         ui->fps->blockSignals(true);
-        ui->fps->setValue(animationFps);
+        ui->fps->setValue(anim.fps);
         ui->fps->blockSignals(false);
     }
 
@@ -259,7 +261,7 @@ void MainWindow::stopAnimation()
 
 void MainWindow::updateAnimation()
 {
-    if (!extractor || extractor->m_frames.isEmpty()) {
+    if (!m_document || m_document->frameCount() == 0) {
         stopAnimation();
         return;
     }
@@ -275,7 +277,7 @@ void MainWindow::updateAnimation()
 
     int frameListIndex = selectedFrameRows.at(currentAnimationFrameIndex);
 
-    if (frameListIndex < 0 || frameListIndex >= extractor->m_frames.size()) {
+    if (frameListIndex < 0 || frameListIndex >= m_document->frameCount()) {
         qWarning() << "Invalid frame index in animation:" << frameListIndex;
         stopAnimation();
         return;
@@ -297,10 +299,10 @@ void MainWindow::updateAnimation()
     ui->timeFrom->setDisplayFormat("mm:ss:zzz");
     ui->timeFrom->setTime(currentTime);
 
-    const QPixmap &currentFrame = extractor->m_frames.at(frameListIndex);
+    const QPixmap &currentFrame = m_document->frame(frameListIndex);
 
     QGraphicsScene *scene = ui->graphicsViewResult->scene();
-    scene->setSceneRect(0, 0, extractor->m_maxFrameWidth, extractor->m_maxFrameHeight);
+    scene->setSceneRect(0, 0, m_document->maxFrameWidth(), m_document->maxFrameHeight());
 
     QGraphicsPixmapItem *item = nullptr;
     const auto items = scene->items();
@@ -316,8 +318,8 @@ void MainWindow::updateAnimation()
         item->setPixmap(currentFrame);
     }
 
-    qreal x_offset = (extractor->m_maxFrameWidth - currentFrame.width()) / 2.0;
-    qreal y_offset = (extractor->m_maxFrameHeight - currentFrame.height()) / 2.0;
+    qreal x_offset = (m_document->maxFrameWidth() - currentFrame.width()) / 2.0;
+    qreal y_offset = (m_document->maxFrameHeight() - currentFrame.height()) / 2.0;
     item->setPos(x_offset, y_offset);
 
     currentAnimationFrameIndex++;
@@ -328,12 +330,13 @@ void MainWindow::updateAnimation()
 
 void MainWindow::updateCurrentAnimation()
 {
+  if (!m_document) return;
   // Always use currentSelection for real-time updates during selection
   if (currentSelection.isEmpty()) {
       removeCurrentAnimation();
-    } else {
+  } else {
       // Update the "current" animation with the current selection order
-      extractor->setAnimation("current", currentSelection, ui->fps->value());
+      m_document->setAnimation("current", currentSelection, ui->fps->value(), true);
 
       // Force sync of the animation list widget
       syncAnimationListWidget();
@@ -342,29 +345,29 @@ void MainWindow::updateCurrentAnimation()
       QList<QTreeWidgetItem*> currentItems = ui->animationList->findItems("current", Qt::MatchExactly);
       if (!currentItems.isEmpty()) {
           ui->animationList->setCurrentItem(currentItems.first());
-        }
-    }
+      }
+  }
 }
 
 void MainWindow::removeCurrentAnimation()
 {
   if (hasCurrentAnimation()) {
-      extractor->removeAnimation("current");
+      m_document->removeAnimation("current");
       syncAnimationListWidget();
 
       // If current was selected, cleanup and stop animation
       QList<QTreeWidgetItem*> selectedItems = ui->animationList->selectedItems();
       if (!selectedItems.isEmpty() && selectedItems.first()->text(0) == "current") {
           selectedItems.removeFirst();
-        }
+      }
       clearFrameSelections();
       stopAnimation();
       on_Pause_clicked();
-    }
+  }
 }
 
 bool MainWindow::hasCurrentAnimation() const
 {
-    if (!extractor) return false;
-    return extractor->getAnimationNames().contains("current");
+    if (!m_document) return false;
+    return m_document->hasAnimation("current");
 }

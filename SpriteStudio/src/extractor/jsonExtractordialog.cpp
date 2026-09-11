@@ -25,10 +25,9 @@ void setupImageFormatComboBox(QComboBox *comboBox) {
     comboBox->setModel(model);
 }
 
-jsonExtractorDialog::jsonExtractorDialog(Extractor* in, QString baseName, QWidget *parent)
+jsonExtractorDialog::jsonExtractorDialog(const SpriteDocument &doc, const QString &baseName, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::jsonExtractorDialog)
-    , m_in(in)
     , m_baseName(baseName)
     , m_selectedStrategy(AtlasStrategy::ATLASSTRATEGY_ORIGINAL_ATLAS)
 {
@@ -40,6 +39,7 @@ jsonExtractorDialog::jsonExtractorDialog(Extractor* in, QString baseName, QWidge
     ui->preview->setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
     ui->preview->setResizeAnchor(QGraphicsView::AnchorViewCenter);
     ui->preview->fitInView(ui->preview->sceneRect(), Qt::KeepAspectRatio);
+
     QGraphicsScene *sceneLayers = ui->preview->scene();
     if (!sceneLayers) {
         sceneLayers = new QGraphicsScene(this);
@@ -47,25 +47,30 @@ jsonExtractorDialog::jsonExtractorDialog(Extractor* in, QString baseName, QWidge
     }
     sceneLayers->clear();
 
-    QGraphicsPixmapItem *item = sceneLayers->addPixmap(QPixmap::fromImage(in->m_atlas));
-    sceneLayers->setSceneRect(in->m_atlas.rect());
-    ui->preview->fitInView(item, Qt::KeepAspectRatio);
-    if (in->m_animationsData.isEmpty() && !in->m_frames.isEmpty()) {
-        Extractor::AnimationData defaultAnim;
-        defaultAnim.fps = 12;
-        for (int i = 0; i < in->m_frames.size(); ++i) {
-            defaultAnim.frameIndices.append(i);
-        }
-        in->m_animationsData.insert(QStringLiteral("default"), defaultAnim);
+    if (!doc.atlas().isNull()) {
+        QGraphicsPixmapItem *item = sceneLayers->addPixmap(QPixmap::fromImage(doc.atlas()));
+        sceneLayers->setSceneRect(doc.atlas().rect());
+        ui->preview->fitInView(item, Qt::KeepAspectRatio);
     }
 
-    for(auto anim = in->m_animationsData.begin() ; anim != in->m_animationsData.end() ; ++anim) {
+    auto animMap = doc.animations();
+    if (animMap.isEmpty() && doc.frameCount() > 0) {
+        SpriteAnimation defaultAnim;
+        defaultAnim.name = QStringLiteral("default");
+        defaultAnim.fps = 12;
+        for (int i = 0; i < doc.frameCount(); ++i) {
+            defaultAnim.frameIndices.append(i);
+        }
+        animMap.insert(defaultAnim.name, defaultAnim);
+    }
+
+    for (auto anim = animMap.begin(); anim != animMap.end(); ++anim) {
         QListWidgetItem *listItem = new QListWidgetItem();
         listItem->setData(Qt::DisplayRole, anim.key() + " (" + QString::number(anim.value().frameIndices.count()) + " frames)");
         if (!anim.value().frameIndices.isEmpty()) {
             int firstIdx = anim.value().frameIndices.first();
-            if (firstIdx >= 0 && firstIdx < in->m_frames.size()) {
-                QImage deco = in->m_frames[firstIdx].toImage();
+            if (firstIdx >= 0 && firstIdx < doc.frameCount()) {
+                QImage deco = doc.frame(firstIdx).toImage();
                 listItem->setData(Qt::DecorationRole, deco.scaled(60, 64, Qt::KeepAspectRatio));
             }
         }
@@ -83,7 +88,7 @@ jsonExtractorDialog::jsonExtractorDialog(Extractor* in, QString baseName, QWidge
     ui->targetFormat->addItem("Aseprite", Format::FORMAT_ASEPRITE_JSON);
 
     setupImageFormatComboBox(ui->imageFormats);
-    int currentIndex = ui->imageFormats->findData(in->m_atlas.format(), Qt::UserRole, Qt::MatchExactly);
+    int currentIndex = ui->imageFormats->findData(doc.atlas().format(), Qt::UserRole, Qt::MatchExactly);
     ui->imageFormats->setCurrentIndex(currentIndex);
 
     ui->atlasSaveStrategy->addItem(tr("Use original Atlas"), AtlasStrategy::ATLASSTRATEGY_ORIGINAL_ATLAS);
@@ -120,31 +125,31 @@ Format jsonExtractorDialog::selectedFormat()
 
 QString jsonExtractorDialog::imageFormatAsString()
 {
-  return ui->imageFormats->currentText();
+    return ui->imageFormats->currentText();
 }
 
 QImage::Format jsonExtractorDialog::imageFormat()
 {
-  return (QImage::Format)ui->imageFormats->currentData(Qt::UserRole).toInt();
+    return (QImage::Format)ui->imageFormats->currentData(Qt::UserRole).toInt();
 }
 
 void jsonExtractorDialog::on_animations_itemSelectionChanged()
 {
-  QList<QListWidgetItem*> selection = ui->animations->selectedItems();
-  m_selectedAnimations.clear();
-  for (auto item : selection) {
-      m_selectedAnimations.push_back(item->data(Qt::UserRole).toString());
+    QList<QListWidgetItem*> selection = ui->animations->selectedItems();
+    m_selectedAnimations.clear();
+    for (auto item : selection) {
+        m_selectedAnimations.push_back(item->data(Qt::UserRole).toString());
     }
 }
 
 QList<QString> jsonExtractorDialog::selectedAnimations() const
 {
-  return m_selectedAnimations;
+    return m_selectedAnimations;
 }
 
 void jsonExtractorDialog::on_replaceExistingAtlas_checkStateChanged(const Qt::CheckState &state)
 {
-    ui->atlasSaveStrategy->setEnabled((state == Qt::Checked)?true:false);
+    ui->atlasSaveStrategy->setEnabled((state == Qt::Checked) ? true : false);
 }
 
 void jsonExtractorDialog::on_atlasSaveStrategy_currentIndexChanged(int index)

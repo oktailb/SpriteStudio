@@ -19,6 +19,7 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets)
 find_package(Qt6 REQUIRED COMPONENTS Multimedia)
 find_package(Qt6 REQUIRED COMPONENTS MultimediaWidgets)
 find_package(Qt6 REQUIRED COMPONENTS LinguistTools REQUIRED)
+find_package(Qt6 REQUIRED COMPONENTS Test)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -36,6 +37,9 @@ if(NOT DEFINED CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 endif()
 
 add_subdirectory(SpriteStudio)
+
+enable_testing()
+add_subdirectory(tests)
 
 install(TARGETS
     ${PROJECT_NAME}

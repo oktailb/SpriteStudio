@@ -4,29 +4,29 @@
 #include "extractor/extractor.h"
 
 /**
- * @brief Extractor derived class and plugin for Animated GIF sprites.
+ * @brief Extractor plugin for Animated GIF sprites.
  */
 class GifExtractor : public Extractor
 {
     Q_OBJECT
 public:
     explicit GifExtractor(QObject *parent = nullptr);
+    ~GifExtractor() override = default;
 
     // Plugin metadata
     QString id() const override { return QStringLiteral("gif_extractor"); }
     QString displayName() const override { return QStringLiteral("Animated GIF"); }
     QString description() const override { return QStringLiteral("Animated GIF format with frame sequence extraction."); }
+    QVersionNumber version() const override { return QVersionNumber(1, 1, 0); }
     QStringList supportedExtensions() const override {
         return { QStringLiteral("gif") };
     }
     Capabilities capabilities() const override {
         return CanImport | SupportsAnimations;
     }
-    bool canDecode(const QString &filePath) const override;
 
-    QList<QPixmap> extractFrames(const QString &filePath, int alphaThreshold, int verticalTolerance) override;
-    QList<QPixmap> extractFromPixmap(int alphaThreshold, int verticalTolerance) override;
-    bool           exportFrames(const QString &basePath, const QString &projectName, Extractor* in) override;
+    bool canDecode(const QString &filePath) const override;
+    bool read(const QString &filePath, SpriteDocument &outDoc, ExtractorError *error = nullptr) override;
 };
 
 #endif // GIFEXTRACTOR_H
