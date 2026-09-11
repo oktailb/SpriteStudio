@@ -84,6 +84,19 @@ void SpriteDocument::insertFrame(int index, const QPixmap &pixmap, const SpriteB
     emit animationsChanged();
 }
 
+void SpriteDocument::replaceFrame(int index, const QPixmap &pixmap, const SpriteBox &box)
+{
+    if (index < 0 || index >= m_frames.size()) return;
+
+    m_frames[index] = pixmap;
+    if (index < m_boxes.size() && !box.rect.isNull()) {
+        m_boxes[index] = box;
+    }
+
+    recalculateMaxFrameDimensions();
+    emit framesChanged();
+}
+
 void SpriteDocument::removeFrame(int index)
 {
     if (index < 0 || index >= m_frames.size()) return;
@@ -244,6 +257,73 @@ void SpriteDocument::setBox(int index, const SpriteBox &box)
         m_boxes[index] = box;
         emit frameUpdated(index);
     }
+}
+
+void SpriteDocument::updateBoxRect(int index, const QRect &newRect)
+{
+    if (index < 0 || index >= m_boxes.size() || m_atlas.isNull()) return;
+
+    QRect clampedRect = newRect.intersected(m_atlas.rect());
+    if (clampedRect.width() <= 0 || clampedRect.height() <= 0) return;
+
+    m_boxes[index].rect = clampedRect;
+    if (index < m_frames.size()) {
+        m_frames[index] = QPixmap::fromImage(m_atlas.copy(clampedRect));
+    }
+    recalculateMaxFrameDimensions();
+    emit frameUpdated(index);
+}
+
+int SpriteDocument::addSlice(const QRect &rect)
+{
+    if (m_atlas.isNull()) return -1;
+
+    QRect clampedRect = rect.intersected(m_atlas.rect());
+    if (clampedRect.width() <= 0 || clampedRect.height() <= 0) return -1;
+
+    int newIndex = m_frames.size();
+    SpriteBox newBox;
+    newBox.rect = clampedRect;
+    newBox.index = newIndex;
+    newBox.selected = true;
+
+    QPixmap framePixmap = QPixmap::fromImage(m_atlas.copy(clampedRect));
+    m_frames.append(framePixmap);
+    m_boxes.append(newBox);
+
+    recalculateMaxFrameDimensions();
+    emit framesChanged();
+    return newIndex;
+}
+
+QRect SpriteDocument::computeTrimmedRect(int index, int alphaThreshold) const
+{
+    if (index < 0 || index >= m_boxes.size() || m_atlas.isNull()) return QRect();
+
+    QRect boxRect = m_boxes[index].rect.intersected(m_atlas.rect());
+    if (boxRect.isEmpty()) return QRect();
+
+    int minX = boxRect.right() + 1;
+    int maxX = boxRect.left() - 1;
+    int minY = boxRect.bottom() + 1;
+    int maxY = boxRect.top() - 1;
+
+    for (int y = boxRect.top(); y <= boxRect.bottom(); ++y) {
+        for (int x = boxRect.left(); x <= boxRect.right(); ++x) {
+            QRgb pixel = m_atlas.pixel(x, y);
+            if (qAlpha(pixel) >= alphaThreshold) {
+                if (x < minX) minX = x;
+                if (x > maxX) maxX = x;
+                if (y < minY) minY = y;
+                if (y > maxY) maxY = y;
+            }
+        }
+    }
+
+    if (minX <= maxX && minY <= maxY) {
+        return QRect(minX, minY, maxX - minX + 1, maxY - minY + 1);
+    }
+    return boxRect;
 }
 
 void SpriteDocument::setBoxSelection(int index, bool selected)

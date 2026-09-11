@@ -30,6 +30,9 @@ set (${PROJECT_NAME}_SRC
     src/mainwindow_animation.cpp
     src/mainwindow_frames.cpp
     src/mainwindow_atlas.cpp
+    src/controller/projectcontroller.cpp
+    src/controller/animationcontroller.cpp
+    src/controller/atlasviewcontroller.cpp
     src/model/spritedocument.cpp
     src/packer/atlaspacker.cpp
     src/animation/animationplayer.cpp
@@ -43,6 +46,7 @@ set (${PROJECT_NAME}_SRC
     src/extractor/jsonExtractordialog.cpp
     src/arrangementmodel.cpp
     src/aboutdialog.cpp
+    src/atlasboxitem.cpp
     src/version.h.in
     src/haiku.PackageInfo.in
     ${CMAKE_CURRENT_BINARY_DIR}/generated/version.h
@@ -55,10 +59,14 @@ set (${PROJECT_NAME}_UI
 
 set (${PROJECT_NAME}_INCLUDE
     include/mainwindow.h
+    include/controller/projectcontroller.h
+    include/controller/animationcontroller.h
+    include/controller/atlasviewcontroller.h
     include/model/spritedocument.h
     include/packer/atlaspacker.h
     include/animation/animationplayer.h
     include/commands/commands.h
+    include/atlasboxitem.h
     include/extractor/extractor.h
     include/extractor/extractorregistry.h
     include/extractor/spriteextractor.h

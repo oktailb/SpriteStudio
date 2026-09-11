@@ -104,4 +104,39 @@ private:
     QString         m_animName;
 };
 
+/**
+ * @brief Command to change a bounding box rectangle (resize or move) with undo/redo.
+ */
+class ChangeBoxRectCommand : public QUndoCommand
+{
+public:
+    ChangeBoxRectCommand(SpriteDocument *doc, int boxIndex, const QRect &oldRect, const QRect &newRect, QUndoCommand *parent = nullptr);
+
+    void undo() override;
+    void redo() override;
+
+private:
+    SpriteDocument* m_doc;
+    int             m_index;
+    QRect           m_oldRect;
+    QRect           m_newRect;
+};
+
+/**
+ * @brief Command to manually add a new slice with undo/redo.
+ */
+class AddSliceCommand : public QUndoCommand
+{
+public:
+    AddSliceCommand(SpriteDocument *doc, const QRect &rect, QUndoCommand *parent = nullptr);
+
+    void undo() override;
+    void redo() override;
+
+private:
+    SpriteDocument* m_doc;
+    QRect           m_rect;
+    int             m_createdIndex = -1;
+};
+
 #endif // COMMANDS_H

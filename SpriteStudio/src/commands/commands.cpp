@@ -152,3 +152,59 @@ void ReverseAnimationCommand::undo()
 {
     m_doc->reverseAnimationFrames(m_animName);
 }
+
+// ============================================================================
+// ChangeBoxRectCommand
+// ============================================================================
+ChangeBoxRectCommand::ChangeBoxRectCommand(SpriteDocument *doc, int boxIndex, const QRect &oldRect, const QRect &newRect, QUndoCommand *parent)
+    : QUndoCommand(parent)
+    , m_doc(doc)
+    , m_index(boxIndex)
+    , m_oldRect(oldRect)
+    , m_newRect(newRect)
+{
+    setText(QObject::tr("Resize/Move Slice %1").arg(boxIndex + 1));
+}
+
+void ChangeBoxRectCommand::redo()
+{
+    m_doc->updateBoxRect(m_index, m_newRect);
+}
+
+void ChangeBoxRectCommand::undo()
+{
+    m_doc->updateBoxRect(m_index, m_oldRect);
+}
+
+// ============================================================================
+// AddSliceCommand
+// ============================================================================
+AddSliceCommand::AddSliceCommand(SpriteDocument *doc, const QRect &rect, QUndoCommand *parent)
+    : QUndoCommand(parent)
+    , m_doc(doc)
+    , m_rect(rect)
+    , m_createdIndex(-1)
+{
+    setText(QObject::tr("Add Slice"));
+}
+
+void AddSliceCommand::redo()
+{
+    if (m_createdIndex < 0) {
+        m_createdIndex = m_doc->addSlice(m_rect);
+    } else {
+        QPixmap pm = QPixmap::fromImage(m_doc->atlas().copy(m_rect));
+        SpriteBox box;
+        box.rect = m_rect;
+        box.index = m_createdIndex;
+        box.selected = true;
+        m_doc->insertFrame(m_createdIndex, pm, box);
+    }
+}
+
+void AddSliceCommand::undo()
+{
+    if (m_createdIndex >= 0 && m_createdIndex < m_doc->frameCount()) {
+        m_doc->removeFrame(m_createdIndex);
+    }
+}

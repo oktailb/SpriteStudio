@@ -1,550 +1,167 @@
-#include "mainwindow.h"
-#include "aboutdialog.h"
+#include "include/mainwindow.h"
 #include "ui_mainwindow.h"
-#include "qfiledialog.h"
-#include <QtGui>
+#include "include/aboutdialog.h"
+#include "include/extractor/extractorregistry.h"
+#include "include/commands/commands.h"
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QFile>
+#include <QTextStream>
 #include <QDialog>
 #include <QTextEdit>
-#include <QMessageBox>
-#include <QGraphicsPixmapItem>
-#include <QGraphicsScene>
-#include <QPen>
-#include <QMovie>
-#include <QGraphicsRectItem>
-#include "extractor/gifextractor.h"
-#include "extractor/spriteextractor.h"
-#include "extractor/jsonextractor.h"
+#include <QPushButton>
+#include <QVBoxLayout>
 
-void MainWindow::onAtlasContextMenuRequested(const QPoint &pos)
+static QString readTextFile(const QString &filePath)
 {
-    if (!extractor || extractor->m_atlas.isNull())
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return QString("Error: Cannot open file %1").arg(filePath);
+    }
+    QTextStream in(&file);
+    return in.readAll();
+}
+
+void MainWindow::on_actionLicence_triggered()
+{
+    QString licenseText = readTextFile(":/text/license.txt");
+    QDialog dialog;
+    dialog.setWindowTitle(tr("Licence"));
+    dialog.setMinimumSize(600, 400);
+    QTextEdit *textEdit = new QTextEdit(&dialog);
+    textEdit->setPlainText(licenseText);
+    textEdit->setReadOnly(true);
+    QPushButton *closeButton = new QPushButton(tr("Close"), &dialog);
+    QObject::connect(closeButton, &QPushButton::clicked, &dialog, &QDialog::accept);
+    QVBoxLayout *layout = new QVBoxLayout(&dialog);
+    layout->addWidget(textEdit);
+    layout->addWidget(closeButton);
+    dialog.exec();
+}
+
+void MainWindow::on_actionAbout_triggered()
+{
+    AboutDialog aboutDialog(this);
+    aboutDialog.exec();
+}
+
+void MainWindow::on_actionOpen_triggered()
+{
+    const QString title = tr("_open_file");
+    const QString formats = ExtractorRegistry::instance().openFilterString();
+    QString fileName = QFileDialog::getOpenFileName(this, title, "", formats);
+    if (!fileName.isEmpty()) {
+        processFile(fileName);
+    }
+}
+
+void MainWindow::on_actionSave_triggered()
+{
+    if (!m_projectController || !m_document || m_document->isEmpty()) {
+        QMessageBox::warning(this, tr("Save"), tr("Nothing to save."));
         return;
-
-    QMenu menu(this);
-    QList<int> selectedIndices = getSelectedFrameIndices();
-
-    if (!selectedIndices.isEmpty()) {
-        if (selectedIndices.size() > 1) {
-            QAction *createAnimAction = menu.addAction(tr("_create_animation"));
-            connect(createAnimAction, &QAction::triggered,
-                    this, &MainWindow::createAnimationFromSelection);
-
-            menu.addSeparator();
-        }
-
-        QString deleteText = (selectedIndices.size() > 1) ?
-                                 tr("_delete_selected_frames") : tr("_delete_frame");
-        QAction *deleteAction = menu.addAction(deleteText);
-        connect(deleteAction, &QAction::triggered,
-                this, &MainWindow::deleteSelectedFramesFromAtlas);
-
-        menu.addSeparator();
-
-        QAction *invertAction = menu.addAction(tr("_invert_selection"));
-        connect(invertAction, &QAction::triggered,
-                this, &MainWindow::invertSelection);
     }
-    else {
-        QAction *removeBgAction = menu.addAction(tr("_delete_background"));
-        connect(removeBgAction, &QAction::triggered, this, &MainWindow::removeAtlasBackgroundAndRefresh);
+
+    QString currentPath = m_projectController->currentFilePath();
+    if (currentPath.isEmpty()) {
+        on_actionExport_triggered();
+        return;
     }
-    menu.exec(ui->graphicsViewLayers->mapToGlobal(pos));
+
+    QString errorMsg;
+    if (!m_projectController->save(currentPath, &errorMsg)) {
+        QMessageBox::critical(this, tr("Save Error"), errorMsg);
+    }
+}
+
+void MainWindow::on_actionExport_triggered()
+{
+    if (!m_projectController || !m_document || m_document->isEmpty()) {
+        QMessageBox::warning(this, tr("Export"), tr("Nothing to export."));
+        return;
+    }
+
+    QString initialDir = m_projectController->currentFilePath().isEmpty()
+        ? QDir::homePath()
+        : QFileInfo(m_projectController->currentFilePath()).absolutePath();
+
+    const QString filter = ExtractorRegistry::instance().saveFilterString();
+    QString selectedFilter;
+    QString selectedFile = QFileDialog::getSaveFileName(this, tr("Export Atlas"), initialDir, filter, &selectedFilter);
+
+    if (selectedFile.isEmpty()) return;
+
+    ExportOptions options;
+    QString errorMsg;
+    if (!m_projectController->exportData(selectedFile, options, &errorMsg)) {
+        QMessageBox::critical(this, tr("Export Error"), errorMsg);
+    }
+}
+
+void MainWindow::on_actionExit_triggered()
+{
+    close();
 }
 
 void MainWindow::zoomSliderChanged(int val)
 {
-    zoomLabel->setText(QString::number(val) + "%");
-    zoomFactor = val / 100.0;
-    ui->graphicsViewLayers->resetTransform();
-    ui->graphicsViewLayers->scale(zoomFactor, zoomFactor);
-}
-
-void MainWindow::on_animationList_itemSelectionChanged()
-{
-    QList<QTreeWidgetItem*> selectedItems = ui->animationList->selectedItems();
-
-    if (selectedItems.isEmpty()) {
-        stopAnimation();
-        return;
-    }
-
-    QTreeWidgetItem *item = selectedItems.first();
-    QString animationName = item->text(0);
-
-    QList<int> frameIndices = extractor->getAnimationFrames(animationName);
-    int savedFps = extractor->getAnimationFps(animationName);
-
-    if (savedFps > 0) {
-        ui->fps->blockSignals(true);
-        ui->fps->setValue(savedFps);
-        ui->fps->blockSignals(false);
-    }
-
-    QTimer::singleShot(0, this, [this]() {
-        startAnimation();
-    });
-}
-
-void MainWindow::on_animationList_itemClicked(QTreeWidgetItem *item, int column)
-{
-    Q_UNUSED(column);
-
-    if (ui->animationList->selectedItems().contains(item) && animationTimer->isActive()) {
-        ui->animationList->clearSelection();
-    }
-    ui->animationList->setCurrentItem(item);
-
-    clearBoundingBoxHighlighters();
-    setBoundingBoxHighlighters(selectedFrameRows);
-    adjustZoomSliderToWindow();
-}
-
-void MainWindow::removeSelectedAnimation()
-{
-    QList<QTreeWidgetItem*> selectedItems = ui->animationList->selectedItems();
-    if (selectedItems.isEmpty()) return;
-
-    QStringList animationNames;
-    for (QTreeWidgetItem* item : selectedItems) {
-        QString name = item->text(0);
-        if (name != "current") {
-            animationNames.append(name);
-        }
-    }
-
-    if (!animationNames.isEmpty()) {
-        removeAnimations(animationNames);
+    if (m_atlasController) {
+        m_atlasController->setZoomFactor(static_cast<double>(val) / 100.0);
     }
 }
 
-void MainWindow::removeAnimations(const QStringList &animationNames)
+void MainWindow::on_framesList_clicked(const QModelIndex &index)
 {
-    if (animationNames.isEmpty()) return;
-
-    QMessageBox::StandardButton reply;
-    reply = QMessageBox::question(this, tr("_confirm"),
-                                  tr("_confirm_delete", "", animationNames.size()),
-                                  QMessageBox::Yes | QMessageBox::No);
-
-    if (reply == QMessageBox::Yes) {
-        syncToDocument();
-        for (const QString &animationName : animationNames) {
-            m_undoStack->push(new DeleteAnimationCommand(m_document, animationName));
-        }
-        stopAnimation();
-    }
+    if (!index.isValid() || !m_atlasController) return;
+    int row = index.row();
+    m_atlasController->setSelectedBoxIndices({row});
 }
 
-void MainWindow::on_animationList_customContextMenuRequested(const QPoint &pos)
+void MainWindow::onMergeFrames(int sourceRow, int targetRow)
 {
-    QTreeWidgetItem *item = ui->animationList->itemAt(pos);
-
-    if (item) {
-        QMenu menu(this);
-
-        QAction *deleteAction = menu.addAction(tr("_delete_animation"));
-        connect(deleteAction, &QAction::triggered,
-                this, &MainWindow::removeSelectedAnimation);
-
-        QAction *reverseOrderAction = menu.addAction(tr("_reverse_order"));
-        connect(reverseOrderAction, &QAction::triggered,
-                this, &MainWindow::reverseAnimationOrder);
-
-        menu.exec(ui->animationList->viewport()->mapToGlobal(pos));
+    if (!m_document) return;
+    if (m_undoStack) {
+        m_undoStack->push(new MergeFramesCommand(m_document, sourceRow, targetRow));
+    } else {
+        m_document->mergeFrames(sourceRow, targetRow);
     }
 }
 
 void MainWindow::on_framesList_customContextMenuRequested(const QPoint &pos)
 {
-    if (!extractor || extractor->m_frames.isEmpty())
-        return;
-
     QMenu menu(this);
-    QList<int> selectedIndices = getSelectedFrameIndices();
 
-    if (!selectedIndices.isEmpty()) {
-        if (selectedIndices.size() > 1) {
-            QAction *createAnimAction = menu.addAction(tr("_create_animation"));
-            connect(createAnimAction, &QAction::triggered,
-                    this, &MainWindow::createAnimationFromSelection);
-
-            QAction *reverseAction = menu.addAction(tr("_reverse_order"));
-            connect(reverseAction, &QAction::triggered,
-                    this, [this, selectedIndices]() {
-                        QList<int> indices = selectedIndices;
-                        reverseFramesOrder(indices);
-                    });
-
-            menu.addSeparator();
+    QAction *createAnimAction = menu.addAction(tr("Create animation from selection"));
+    createAnimAction->setEnabled(m_document && !m_document->selectedFrameIndices().isEmpty());
+    connect(createAnimAction, &QAction::triggered, this, [this]() {
+        if (m_animationController && m_document) {
+            m_animationController->createAnimationFromSelection(m_document->selectedFrameIndices());
         }
+    });
 
-        QString deleteText = (selectedIndices.size() > 1) ?
-                                 tr("_delete_selected_frames") : tr("_delete_frame");
-        QAction *deleteAction = menu.addAction(deleteText);
-        connect(deleteAction, &QAction::triggered,
-                this, &MainWindow::deleteSelectedFrame);
+    menu.addSeparator();
 
-        menu.addSeparator();
+    QAction *deleteFramesAction = menu.addAction(tr("Delete Selected Frames"));
+    deleteFramesAction->setEnabled(m_document && !m_document->selectedFrameIndices().isEmpty());
+    connect(deleteFramesAction, &QAction::triggered, this, &MainWindow::deleteSelectedFrame);
 
-        QAction *invertAction = menu.addAction(tr("_invert_selection"));
-        connect(invertAction, &QAction::triggered,
-                this, &MainWindow::invertSelection);
-    }
+    QAction *invertAction = menu.addAction(tr("Invert Selection"));
+    invertAction->setEnabled(m_document && m_document->frameCount() > 0);
+    connect(invertAction, &QAction::triggered, this, &MainWindow::invertSelection);
 
-    menu.exec(ui->framesList->viewport()->mapToGlobal(pos));
+    menu.exec(ui->framesList->mapToGlobal(pos));
 }
 
-void MainWindow::updateAnimationsAfterFrameRemoval(int removedRow, int mergedRow)
+void MainWindow::deleteSelectedFrame()
 {
-    if (!extractor) return;
-
-    QStringList animationNames = extractor->getAnimationNames();
-    for (const QString &name : animationNames) {
-        QList<int> frameIndices = extractor->getAnimationFrames(name);
-        QList<int> updatedIndices;
-        int fps = extractor->getAnimationFps(name);
-
-        for (int frameIndex : frameIndices) {
-            if (frameIndex == removedRow) {
-                if (!updatedIndices.contains(mergedRow)) {
-                    updatedIndices.append(mergedRow);
-                }
-            } else if (frameIndex > removedRow) {
-                updatedIndices.append(frameIndex - 1);
-            } else {
-                updatedIndices.append(frameIndex);
-            }
-        }
-
-        extractor->setAnimation(name, updatedIndices, fps);
+    if (m_atlasController) {
+        m_atlasController->deleteSelectedSlices();
     }
 }
 
-void MainWindow::onMergeFrames(int sourceRow, int targetRow)
+void MainWindow::invertSelection()
 {
-    syncToDocument();
-    if (sourceRow < 0 || sourceRow >= m_document->frameCount() ||
-        targetRow < 0 || targetRow >= m_document->frameCount() ||
-        sourceRow == targetRow) {
-        return;
+    if (m_atlasController) {
+        m_atlasController->invertSelection();
     }
-
-    m_undoStack->push(new MergeFramesCommand(m_document, sourceRow, targetRow));
-    clearBoundingBoxHighlighters();
-}
-
-QString readTextFile(const QString &filePath)
-{
-  QFile file(filePath);
-  if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-      return QString("Error: Cannot open file %1").arg(filePath);
-    }
-  QTextStream in(&file);
-  return in.readAll();
-}
-
-void MainWindow::on_actionLicence_triggered()
-{
-  QString licenseText = readTextFile(":/text/license.txt");
-  QDialog dialog;
-  dialog.setWindowTitle("Licence");
-  dialog.setMinimumSize(600, 400);
-  QTextEdit *textEdit = new QTextEdit(&dialog);
-  textEdit->setPlainText(licenseText);
-  textEdit->setReadOnly(true);
-  QPushButton *closeButton = new QPushButton("Close", &dialog);
-  QObject::connect(closeButton, &QPushButton::clicked, &dialog, &QDialog::accept);
-  QVBoxLayout *layout = new QVBoxLayout(&dialog);
-  layout->addWidget(textEdit);
-  layout->addWidget(closeButton);
-  dialog.exec();
-}
-
-void MainWindow::on_actionAbout_triggered()
-{
-  AboutDialog aboutDialog(this);
-  aboutDialog.exec();
-}
-
-void MainWindow::on_actionOpen_triggered()
-{
-  const QString title = tr("_open_file");
-  const QString formats = ExtractorRegistry::instance().openFilterString();
-  QString fileName = QFileDialog::getOpenFileName(this, title, "", formats);
-  if (fileName.isEmpty()) return;
-
-  currentFilePath = fileName;
-  processFile(currentFilePath);
-  statusLabel->setText(fileName);
-  setWindowTitle("SpriteStudio (" + fileName + ")");
-  addRecentFile(fileName);
-}
-
-void MainWindow::on_actionExit_triggered()
-{
-  delete extractor;
-  exit(EXIT_SUCCESS);
-}
-
-void MainWindow::on_fps_valueChanged(int fps)
-{
-    ui->timingLabel->setText(" -> " + tr("_timing") + ": " + QString::number(1000.0  / (double)fps, 'g', 4) + "ms");
-
-    updateAnimationsList();
-}
-
-void MainWindow::on_alphaThreshold_valueChanged(int threshold)
-{
-  Q_UNUSED(threshold);
-  if (!currentFilePath.isEmpty()) {
-      processFile(currentFilePath);
-    }
-}
-
-void MainWindow::on_enableSmartCropCheckbox_stateChanged(int state)
-{
-    if (extractor == nullptr) return;
-    if (!currentFilePath.isEmpty()) {
-        extractor->setSmartCropEnabled(state != 0);
-        if (ui->backgroundRemoval->isChecked())
-            removeAtlasBackground();
-        extractor->extractFromPixmap(ui->alphaThreshold->value(), ui->verticalTolerance->value());
-    }
-}
-
-void MainWindow::on_overlapThresholdSpinbox_valueChanged(double threshold)
-{
-    if (extractor == nullptr)
-        return;
-    if (!currentFilePath.isEmpty()) {
-        extractor->setOverlapThreshold(threshold);
-        if (ui->backgroundRemoval->isChecked())
-            removeAtlasBackground();
-        extractor->extractFromPixmap(ui->alphaThreshold->value(), ui->verticalTolerance->value());
-    }
-}
-
-void MainWindow::on_verticalTolerance_valueChanged(int verticalTolerance)
-{
-  Q_UNUSED(verticalTolerance);
-  if (!extractor) {
-      if (!currentFilePath.isEmpty()) {
-          processFile(currentFilePath);
-        }
-    }
-  else
-    {
-      extractor->extractFromPixmap(ui->alphaThreshold->value(), ui->verticalTolerance->value());
-    }
-}
-
-QColor MainWindow::getHighlightColor(int index, int total)
-{
-  if (total == 1) return Qt::magenta; // Single selection => magenta
-
-  // Multiple selection => rainbow
-  static QList<QColor> colorPalette = {
-    QColor(255, 0, 0, 50),
-    QColor(0, 150, 0, 50),
-    QColor(0, 0, 255, 50),
-    QColor(255, 165, 0, 50),
-    QColor(128, 0, 128, 50),
-    QColor(0, 128, 128, 50),
-    QColor(165, 42, 42, 50),
-    QColor(255, 192, 203, 50)
-  };
-
-  return colorPalette.at(index % colorPalette.size());
-}
-
-void MainWindow::on_framesList_clicked(const QModelIndex &index)
-{
-    Q_UNUSED(index);
-
-    if (!ui->graphicsViewLayers->scene() || !extractor) {
-        return;
-    }
-    statusLabel->setText("Frame " + QString::number(1 + index.data(Qt::UserRole).toInt()));
-
-    QList<int> selectedIndices;
-    selectedIndices.push_back(index.data(Qt::UserRole).toInt());
-
-    clearBoundingBoxHighlighters();
-    setBoundingBoxHighlighters(selectedIndices);
-    adjustZoomSliderToWindow();
-}
-
-void MainWindow::on_actionSave_triggered()
-{
-  syncToDocument();
-  if (!m_document || m_document->frameCount() == 0) {
-      QMessageBox::warning(this, tr("_export_error"), tr("_please_load_frames"));
-      return;
-  }
-
-  if (currentFilePath.isEmpty()) {
-      on_actionExport_triggered();
-      return;
-  }
-
-  Extractor *encoder = ExtractorRegistry::instance().findEncoder(currentFilePath);
-  if (!encoder) {
-      on_actionExport_triggered();
-      return;
-  }
-
-  connect(encoder, &Extractor::progress, progressBar, &QProgressBar::setValue);
-  connect(encoder, &Extractor::statusMessage, statusLabel, &QLabel::setText);
-
-  ExportOptions opts;
-  opts.compressJson = false;
-  QString errorMsg;
-  bool ok = encoder->exportDocument(currentFilePath, *m_document, opts, &errorMsg);
-  if (!ok) {
-      QMessageBox::warning(this, tr("Save Error"), errorMsg.isEmpty() ? tr("Save failed") : errorMsg);
-  } else {
-      addRecentFile(currentFilePath);
-      statusLabel->setText(tr("Saved: %1").arg(QFileInfo(currentFilePath).fileName()));
-  }
-}
-
-void MainWindow::on_actionExport_triggered()
-{
-  syncToDocument();
-  if (!m_document || m_document->frameCount() == 0) {
-      QMessageBox::warning(this, tr("_export_error"), tr("_please_load_frames"));
-      return;
-  }
-
-  QString initialDir = currentFilePath.isEmpty()
-      ? QDir::homePath()
-      : QFileInfo(currentFilePath).absolutePath();
-
-  const QString filter = ExtractorRegistry::instance().saveFilterString();
-  QString selectedFilter;
-  QString selectedFile = QFileDialog::getSaveFileName(
-      this,
-      tr("_export_atlas"),
-      initialDir,
-      filter,
-      &selectedFilter
-  );
-
-  if (selectedFile.isEmpty()) {
-      return;
-  }
-
-  // 1. Identify encoder primarily by the filter explicitly chosen by the user
-  Extractor *encoder = ExtractorRegistry::instance().findEncoderByFilter(selectedFilter);
-
-  // 2. Fallback to detection by file extension
-  if (!encoder) {
-      encoder = ExtractorRegistry::instance().findEncoder(selectedFile);
-  }
-
-  // 3. Fallback default
-  if (!encoder) {
-      encoder = ExtractorRegistry::instance().findExtractorById("json_extractor");
-  }
-
-  if (!encoder) {
-      QMessageBox::warning(this, tr("Export Error"), tr("No appropriate exporter found for this file."));
-      return;
-  }
-
-  // Ensure selectedFile has the expected extension for this encoder
-  QFileInfo fi(selectedFile);
-  QString ext = fi.suffix().toLower();
-  if (encoder->id() == "godot_extractor" && ext != "tres") {
-      selectedFile = fi.dir().filePath(fi.completeBaseName() + ".tres");
-  } else if (encoder->id() == "json_extractor" && ext != "json") {
-      selectedFile = fi.dir().filePath(fi.completeBaseName() + ".json");
-  } else if (encoder->id() == "gif_extractor" && ext != "gif") {
-      selectedFile = fi.dir().filePath(fi.completeBaseName() + ".gif");
-  } else if (ext.isEmpty() && !encoder->supportedExtensions().isEmpty()) {
-      selectedFile += "." + encoder->supportedExtensions().first();
-  }
-
-  connect(encoder, &Extractor::progress, progressBar, &QProgressBar::setValue);
-  connect(encoder, &Extractor::statusMessage, statusLabel, &QLabel::setText);
-
-  ExportOptions opts;
-  opts.compressJson = false;
-  QString errorMsg;
-  bool ok = encoder->exportDocument(selectedFile, *m_document, opts, &errorMsg);
-  if (!ok) {
-      QMessageBox::warning(this, tr("Export Error"), errorMsg.isEmpty() ? tr("Export failed") : errorMsg);
-  } else {
-      addRecentFile(selectedFile);
-      QMessageBox::information(this, tr("Export"), tr("Export completed successfully."));
-  }
-}
-
-void MainWindow::on_Play_clicked()
-{
-    QList<QTreeWidgetItem*> selectedAnimations = ui->animationList->selectedItems();
-    if (selectedAnimations.isEmpty()) {
-        return;
-    }
-
-    QString animName = selectedAnimations.first()->text(0);
-    SpriteAnimation anim = m_document->animation(animName);
-    if (!anim.frameIndices.isEmpty()) {
-        m_player->setSequence(anim.frameIndices, anim.fps, anim.loop);
-        m_player->play();
-    } else {
-        startAnimation();
-    }
-}
-
-void MainWindow::on_Pause_clicked()
-{
-    m_player->pause();
-    if (animationTimer->isActive()) {
-        animationTimer->stop();
-    }
-
-    ui->Play->setVisible(true);
-    ui->Pause->setVisible(false);
-}
-
-void MainWindow::on_spriteCleanButton_clicked()
-{
-
-}
-
-void MainWindow::on_spriteAlignButton_clicked()
-{
-    QGraphicsScene *scene = ui->graphicsViewResult->scene();
-    QList<QTreeWidgetItem*> selectedAnimations = ui->animationList->selectedItems();
-    QString animationName = selectedAnimations.first()->text(0);
-
-    scene->clear();
-    scene->setSceneRect(0, 0, extractor->m_maxFrameWidth, extractor->m_maxFrameHeight);
-
-    for (int frameId : extractor->m_animationsData[animationName].frameIndices) {
-        QPixmap currentFrame = extractor->m_frames[frameId];
-        QGraphicsPixmapItem *item = scene->addPixmap(currentFrame);
-
-        qreal x_offset = (extractor->m_maxFrameWidth - currentFrame.width()) / 2.0;
-        qreal y_offset = (extractor->m_maxFrameHeight - currentFrame.height()) / 2.0;
-        item->setPos(x_offset, y_offset);
-    }
-}
-
-void MainWindow::on_mirrorButton_clicked()
-{
-    QList<QTreeWidgetItem*> selectedAnimations = ui->animationList->selectedItems();
-    QString animationName = selectedAnimations.first()->text(0);
-    for (int frameId : extractor->m_animationsData[animationName].frameIndices) {
-        extractor->m_frames[frameId] = extractor->m_frames[frameId].transformed(QTransform().scale(-1, 1));
-    }
-    updateAnimation();
-}
-
-void MainWindow::on_sliderFrom_sliderMoved(int position)
-{
-    currentAnimationFrameIndex = position;
-    on_Pause_clicked();
-    updateAnimation();
 }

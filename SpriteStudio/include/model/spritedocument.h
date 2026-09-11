@@ -69,6 +69,7 @@ public:
     void setFrames(const QList<QPixmap> &frames, const QList<SpriteBox> &boxes);
     void addFrame(const QPixmap &pixmap, const SpriteBox &box = SpriteBox());
     void insertFrame(int index, const QPixmap &pixmap, const SpriteBox &box);
+    void replaceFrame(int index, const QPixmap &pixmap, const SpriteBox &box = SpriteBox());
     void removeFrame(int index);
     void removeFrames(const QList<int> &indices);
     void reorderFrames(const QList<int> &newOrder);
@@ -78,7 +79,11 @@ public:
     const QList<SpriteBox>& boxes() const { return m_boxes; }
     SpriteBox box(int index) const;
     void setBox(int index, const SpriteBox &box);
+    void updateBoxRect(int index, const QRect &newRect);
+    int addSlice(const QRect &rect);
+    QRect computeTrimmedRect(int index, int alphaThreshold = 1) const;
     void setBoxSelection(int index, bool selected);
+    void setFrameSelected(int index, bool selected) { setBoxSelection(index, selected); }
     void clearBoxSelections();
     QList<int> selectedFrameIndices() const;
 

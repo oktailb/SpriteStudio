@@ -1,151 +1,82 @@
 #include "include/mainwindow.h"
 #include "ui_mainwindow.h"
-#include "qfiledialog.h"
-#include <QtGui>
-#include <QDialog>
-#include <QTextEdit>
-#include <QMessageBox>
-#include <QGraphicsPixmapItem>
-#include <QGraphicsScene>
-#include <QPen>
-#include <QMovie>
-#include <QGraphicsRectItem>
+#include <QMouseEvent>
+#include <QDragMoveEvent>
+#include <QMimeData>
 
 void MainWindow::wheelEvent(QWheelEvent *event)
 {
-  if (event->modifiers() & Qt::ControlModifier) {
-      QGraphicsView *view = ui->graphicsViewLayers;
-      zoomFactor *= (event->angleDelta().y() > 0) ? 1.1 : 0.9;
-      view->resetTransform();
-      view->scale(zoomFactor, zoomFactor);
-      zoomSlider->setValue(zoomFactor * 100);
-      event->accept();
-    } else {
-      QMainWindow::wheelEvent(event);
+    QMainWindow::wheelEvent(event);
+}
+
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+    if (m_atlasController && m_document && !m_document->selectedFrameIndices().isEmpty()) {
+        int key = event->key();
+        if (key == Qt::Key_Left || key == Qt::Key_Right || key == Qt::Key_Up || key == Qt::Key_Down) {
+            int step = (event->modifiers() & Qt::ShiftModifier) ? 10 : 1;
+            int dx = 0;
+            int dy = 0;
+            if (key == Qt::Key_Left)  dx = -step;
+            if (key == Qt::Key_Right) dx = step;
+            if (key == Qt::Key_Up)    dy = -step;
+            if (key == Qt::Key_Down)  dy = step;
+
+            m_atlasController->nudgeSelectedBoxes(dx, dy);
+            event->accept();
+            return;
+        }
     }
+    QMainWindow::keyPressEvent(event);
 }
 
 bool MainWindow::eventFilter(QObject *watched, QEvent *event)
 {
-  if (watched == ui->graphicsViewLayers->viewport()) {
-      QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+    if (watched == ui->framesList->viewport()) {
+        if (event->type() == QEvent::DragMove) {
+            QDragMoveEvent *dmEvent = static_cast<QDragMoveEvent *>(event);
+            QPoint pos = dmEvent->position().toPoint();
+            QModelIndex index = ui->framesList->indexAt(pos);
 
-      if (event->type() == QEvent::MouseButtonPress) {
-          if (mouseEvent->button() == Qt::LeftButton && extractor) {
-              QPointF scenePos = ui->graphicsViewLayers->mapToScene(mouseEvent->pos());
-              startSelection(scenePos);
-              return true;
-            }
-        }
-      else if (event->type() == QEvent::MouseMove) {
-          if (isSelecting) {
-              QPointF scenePos = ui->graphicsViewLayers->mapToScene(mouseEvent->pos());
-              updateSelection(scenePos);
-              return true;
-            }
-        }
-      else if (event->type() == QEvent::MouseButtonRelease) {
-          if (mouseEvent->button() == Qt::LeftButton && isSelecting) {
-              endSelection();
-              return true;
-            }
-        }
-    }
+            ui->framesList->setDropIndicatorShown(false);
 
-  if (watched == ui->framesList->viewport()) {
+            if (index.isValid()) {
+                QRect rect = ui->framesList->visualRect(index);
+                int relativeX = pos.x() - rect.left();
+                int width = rect.width();
+                int margin = static_cast<int>(width * 0.2);
 
-      if (event->type() == QEvent::DragMove) {
-          QDragMoveEvent *dmEvent = static_cast<QDragMoveEvent *>(event);
-          QPoint pos = dmEvent->position().toPoint();
-          QModelIndex index = ui->framesList->indexAt(pos);
-
-                 // We will draw our wn indicator -> sisable the default one
-          ui->framesList->setDropIndicatorShown(false);
-
-          if (index.isValid()) {
-              // Catch overred item geometry
-              QRect rect = ui->framesList->visualRect(index);
-
-                     // Compute mouse relative position
-              int relativeX = pos.x() - rect.left();
-              int width = rect.width();
-
-                     // DETECTION AREA
-                     // 20% TOLERANCY -> TOO MUCH ? May merge when insertion requested
-              int margin = width * 0.2;
-
-              if (relativeX < margin) {
-                  // --- CASE : LEFT SIDE INSERTION ---
-                  // listDelegate->setHighlight(index.row(), FrameDelegate::InsertLeft);
-                  // clearMergeHighlight(); // not visible on atlas
-                }
-              else if (relativeX > (width - margin)) {
-                  // --- CASE : RIGHT SIDE INSERTION ---
-                  // listDelegate->setHighlight(index.row(), FrameDelegate::InsertRight);
-                  // clearMergeHighlight(); // not visible on atlas
-                }
-              else {
-                  // --- CASE : FUSION (CENTER) ---
-                  listDelegate->setHighlight(index.row(), FrameDelegate::Merge);
-                  setMergeHighlight(index, true); // shall be visible on atlas
+                if (relativeX < margin) {
+                    listDelegate->setHighlight(index.row(), FrameDelegate::InsertLeft);
+                } else if (relativeX > (width - margin)) {
+                    listDelegate->setHighlight(index.row(), FrameDelegate::InsertRight);
+                } else {
+                    listDelegate->setHighlight(index.row(), FrameDelegate::Merge);
                 }
             } else {
-              // empty space (start or end of the list)
-              listDelegate->setHighlight(-1, FrameDelegate::None);
-              clearMergeHighlight();
+                listDelegate->setHighlight(-1, FrameDelegate::None);
             }
 
-          ui->framesList->viewport()->update();
-        }
-      else if (event->type() == QEvent::DragLeave || event->type() == QEvent::Drop) {
-          listDelegate->setHighlight(-1, FrameDelegate::None);
-          clearMergeHighlight();
-          ui->framesList->viewport()->update();
+            ui->framesList->viewport()->update();
+        } else if (event->type() == QEvent::DragLeave || event->type() == QEvent::Drop) {
+            listDelegate->setHighlight(-1, FrameDelegate::None);
+            ui->framesList->viewport()->update();
         }
     }
 
-  return QMainWindow::eventFilter(watched, event);
+    return QMainWindow::eventFilter(watched, event);
 }
 
 void MainWindow::closeEvent(QCloseEvent *e)
 {
-  Q_UNUSED(e);
-}
-
-void MainWindow::timerEvent(QTimerEvent *event)
-{
-  Q_UNUSED(event);
-}
-
-void MainWindow::adjustZoomSliderToWindow()
-{
-    if (extractor == nullptr || extractor->m_atlas.isNull() || extractor->m_atlas.height() <= 0)
-        return;
-    zoomFactor = static_cast<double>(ui->graphicsViewLayers->viewport()->height()) / static_cast<double>(extractor->m_atlas.height());
-    if (zoomFactor <= 0.0)
-        zoomFactor = 1.0;
-    zoomSlider->blockSignals(true);
-    zoomSlider->setValue(static_cast<int>(zoomFactor * 100.0));
-    zoomSlider->blockSignals(false);
-    zoomLabel->setText(QString::number(static_cast<int>(zoomFactor * 100.0)) + "%");
+    e->accept();
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event)
 {
-  // Call the base class implementation first.
-  QMainWindow::resizeEvent(event);
-
-         // Re-fit the atlas view (graphicsViewLayers)
-  QGraphicsScene *atlasScene = ui->graphicsViewLayers->scene();
-  if (atlasScene && !atlasScene->sceneRect().isEmpty()) {
-      ui->graphicsViewLayers->fitInView(atlasScene->sceneRect(), Qt::KeepAspectRatio);
-      adjustZoomSliderToWindow();
-    }
-
-         // Re-fit the animation preview view (graphicsViewResult)
-  QGraphicsScene *resultScene = ui->graphicsViewResult->scene();
-  if (resultScene && !resultScene->sceneRect().isEmpty()) {
-      ui->graphicsViewResult->fitInView(resultScene->sceneRect(), Qt::KeepAspectRatio);
+    QMainWindow::resizeEvent(event);
+    if (m_atlasController) {
+        m_atlasController->adjustZoomToWindow();
     }
 }
 
@@ -154,14 +85,8 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event)
     if (event->mimeData()->hasUrls()) {
         const QList<QUrl> urls = event->mimeData()->urls();
         if (!urls.isEmpty()) {
-            QString localFile = urls.first().toLocalFile();
-            if (!localFile.isEmpty()) {
-                Extractor *decoder = ExtractorRegistry::instance().findDecoder(localFile);
-                if (decoder) {
-                    event->acceptProposedAction();
-                    return;
-                }
-            }
+            event->acceptProposedAction();
+            return;
         }
     }
     QMainWindow::dragEnterEvent(event);
@@ -173,11 +98,8 @@ void MainWindow::dropEvent(QDropEvent *event)
     if (!urls.isEmpty()) {
         QString localFile = urls.first().toLocalFile();
         if (!localFile.isEmpty()) {
+            processFile(localFile);
             event->acceptProposedAction();
-            currentFilePath = localFile;
-            processFile(currentFilePath);
-            statusLabel->setText(currentFilePath);
-            setWindowTitle("SpriteStudio (" + currentFilePath + ")");
             return;
         }
     }

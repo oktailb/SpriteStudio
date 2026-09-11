@@ -9,7 +9,7 @@ L'objectif est d'élever l'application d'un simple outil de découpe technique a
 
 | ID | Chantier | Priorité | Complexité | Statut |
 |---|---|---|---|---|
-| **M0** | [Assainissement Architectural & Dette Technique (Audit Critique)](#m0--assainissement-architectural--dette-technique-audit-critique) | **Haute** | Haute | 🟡 En cours (Pt 1 validé & testé) |
+| **M0** | [Assainissement Architectural & Dette Technique (Audit Critique)](#m0--assainissement-architectural--dette-technique-audit-critique) | **Haute** | Haute | 🟡 En cours (Pts 1 & 2 validés & testés) |
 | **M1** | [Édition Interactive des Bounding Boxes (Atlas Slicing)](#m1--édition-interactive-des-bounding-boxes-atlas-slicing) | **Haute** | Moyenne | 🟢 ~95% - Déblocages clavier/UX validés |
 | **M2** | [Gestionnaire Complet d'Animations & Timeline](#m2--gestionnaire-complet-danimations--timeline) | **Haute** | Moyenne | 📝 Planifié |
 | **M3** | [Points d'Ancrage & Pivots (Origins & Offsets)](#m3--points-dancrage--pivots-origins--offsets) | **Moyenne** | Faible | 📝 Planifié |
@@ -42,12 +42,19 @@ L'application souffre d'une transition inachevée entre un code impératif legac
     - `GodotExtractor` (Godot 4 `.tres` SpriteFrames import/export)
   - Suite de tests unitaires automatisée `tests/test_extractors.cpp` intégrée à CMake/CTest (10 tests, 100% succès).
 
-### 2. Monolithe "God Object" `MainWindow`
-- **Problème :** `MainWindow` dépasse les 2000 lignes de code réparties arbitrairement sur 6 fichiers source (`mainwindow_atlas.cpp`, `mainwindow_events.cpp`, etc.). Malgré ce découpage physique, tout réside dans la même classe qui gère à la fois le graphe de scène, la lecture multimédia, les dialogues, le décodage d'images et la logique métier.
-- **Solution Cible :** Extraire des contrôleurs dédiés :
-  - `AtlasViewController` : gestion exclusive de `QGraphicsView`, zoom, pan, outils et interaction avec `AtlasBoxItem`.
-  - `AnimationController` : synchronisation du lecteur `AnimationPlayer` avec `animationList`.
-  - `ProjectController` : I/O, ouverture, export et intégration undo/redo.
+### 2. Monolithe "God Object" `MainWindow` — ✅ TERMINÉ
+- **État :** ✅ **Réfracté & Validé par tests unitaires (18 tests, 100% succès)**
+- **Réalisations :**
+  - Démantèlement complet du "God Object" `MainWindow` en 3 contrôleurs autonomes :
+    - `AtlasViewController` (`include/controller/atlasviewcontroller.h` / `src/controller/atlasviewcontroller.cpp`) : gestion exclusive de `QGraphicsView`, zoom/pan, dessin interactif de découpe (`ToolAddSlice`), synchronisation des `AtlasBoxItem`, sélection par boîte et marquee selection, commandes de découpe (`Trim`, `Merge`, `Delete`, `Nudge`).
+    - `AnimationController` (`include/controller/animationcontroller.h` / `src/controller/animationcontroller.cpp`) : intégration du lecteur `AnimationPlayer`, arborescence `QTreeWidget`, rendu de frame sur scène d'aperçu, cadences FPS, synchronisation de l'animation active et commandes d'animation (`CreateAnimationCommand`, `ReverseAnimationCommand`, `DeleteAnimationCommand`).
+    - `ProjectController` (`include/controller/projectcontroller.h` / `src/controller/projectcontroller.cpp`) : chargement/sauvegarde de fichiers via les codecs `ExtractorRegistry`, gestion persistante de l'historique des fichiers récents (`QSettings`), suppression automatique d'arrière-plan de l'atlas.
+  - Transformation de `MainWindow` en orchestrateur léger reliant les signaux/slots des contrôleurs et déléguant l'ensemble de la logique métier (taille réduite de 72%, suppression des membres monolithiques).
+  - Résolution du segfault lors de la sélection au lasso / marquee :
+    - Détection et coupure de la récursion infinie de signaux entre `AtlasViewController::selectionChanged` et `AnimationController::updateCurrentAnimation` / `selectAnimation("current")`.
+    - Optimisation de la sélection par glissement : mise à jour visuelle légère des contours en cours de drag, application effective du document au relâchement de la souris (`endMarqueeSelection`).
+    - Suppression du rafraîchissement destructif de colonnes (`m_treeWidget->clear()` et `resizeColumnToContents` en boucle qui surchargeaient le heap via `QTextEngine::itemize` / `RtlAllocateHeap`).
+  - Suite de tests unitaires dédiée `tests/test_controllers.cpp` (18 tests couvrant les 3 contrôleurs en mode headless/offscreen, la sélection rectangulaire avec modificateurs Ctrl/Shift et la non-récursion des signaux croisés, 100% succès sous CTest).
 
 ### 3. Gestion Mémoire & Pratiques Modernes C++17
 - **Problème :** Omniprésence de pointeurs bruts nus (`new`/`delete` manuels sur `extractor`), absence de smart pointers (`std::unique_ptr`), et gestion hasardeuse du cycle de vie des objets graphiques de scène (risque de pointeurs pendants après `scene->clear()`).
